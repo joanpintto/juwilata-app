@@ -3,6 +3,8 @@ import { useEffect, useMemo, useState } from 'react'
 import { db, type ConfigVersion, type Equipo, type Jugador, type Partido, type Programado, type ResultadoLiga, type Rival, type Temporada } from './db'
 import { CONFIG_INICIAL, type Config } from './motor/config'
 import { reproducirTemporada, type Temporada as TemporadaCalculada } from './motor/temporada'
+import { partidosLiga, type PartidoLiga } from './motor/liga'
+import { calcularLogros, type ResultadoLogros } from './motor/logros'
 
 export interface Datos {
   equipo: Equipo
@@ -16,6 +18,8 @@ export interface Datos {
   config: Config
   configVersion: number
   calculo: TemporadaCalculada
+  liga: PartidoLiga[]
+  logros: ResultadoLogros
 }
 
 export function useDatos(): Datos | undefined {
@@ -45,7 +49,11 @@ export function useDatos(): Datos | undefined {
     const jugadores = [...base.jugadores].sort((a, b) => a.dorsal - b.dorsal)
     const rivales = [...base.rivales].sort((a, b) => a.nombre.localeCompare(b.nombre, 'es'))
     const programados = [...base.programados].sort((a, b) => a.jornada - b.jornada)
-    return { ...base, jugadores, rivales, programados, config: ultima.datos, configVersion: ultima.version, calculo }
+    const liga = partidosLiga(base.partidos, programados, base.resultadosLiga, rivales)
+    const logros = calcularLogros({
+      jugadores, partidos: base.partidos, calculo, config: ultima.datos, equipo: base.equipo, programados, rivales, liga,
+    })
+    return { ...base, jugadores, rivales, programados, config: ultima.datos, configVersion: ultima.version, calculo, liga, logros }
   }, [base])
 }
 

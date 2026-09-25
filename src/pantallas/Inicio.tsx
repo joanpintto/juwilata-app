@@ -1,8 +1,10 @@
-import { conSigno, fechaLarga, fmt1, fmt2, ir, nombreRival, nombreVisible, proximoPartido, type Datos } from '../datos'
+import { conSigno, fechaCorta, fechaLarga, fmt1, fmt2, ir, nombreRival, nombreVisible, proximoPartido, type Datos } from '../datos'
 import type { EstadoJugador } from '../motor/temporada'
 import { MiniCarta } from '../componentes/Carta'
 import { disenoDe } from '../componentes/disenos'
 import { Icono } from '../componentes/ui'
+import { EscudoLogro, Vitrina } from '../componentes/Logros'
+import { NOMBRE_NIVEL, type EstadoLogro } from '../motor/logros'
 import { Tendencia } from './Jugadores'
 
 interface Destacado {
@@ -18,7 +20,14 @@ function mejor(lista: EstadoJugador[], puntuar: (e: EstadoJugador) => number, fi
 }
 
 export function Inicio({ datos }: { datos: Datos }) {
-  const { equipo, temporada, calculo, config, jugadores, programados, partidos, rivales } = datos
+  const { equipo, temporada, calculo, config, jugadores, programados, partidos, rivales, logros } = datos
+  // Últimos 5 logros conseguidos (de jugadores y del equipo), el más reciente primero.
+  const ultimosLogros = [...logros.desbloqueos].reverse().slice(0, 5).map((d) => {
+    const base = d.jugadorId ? logros.jugadores[d.jugadorId]?.find((e) => e.def.id === d.logroId) : logros.equipo.find((e) => e.def.id === d.logroId)
+    const estado: EstadoLogro = { ...base!, nivel: d.nivel, fecha: d.fecha }
+    const j = d.jugadorId ? jugadores.find((x) => x.id === d.jugadorId) : null
+    return { d, estado, nombre: j ? nombreVisible(j) : equipo.nombre }
+  }).filter((x) => x.estado.def)
   const proximo = proximoPartido(programados, partidos)
   const lista = Object.values(calculo.jugadores)
   const res = calculo.partidos.map((r) => r.partido)
@@ -133,9 +142,28 @@ export function Inicio({ datos }: { datos: Datos }) {
         </section>
       )}
 
+      {ultimosLogros.length > 0 && (
+        <section className="tarjeta">
+          <h2>Últimos logros</h2>
+          <ul className="ultimos-logros">
+            {ultimosLogros.map(({ d, estado, nombre }, i) => (
+              <li key={i}>
+                <button onClick={() => d.jugadorId && ir(`/jugador/${d.jugadorId}`)} disabled={!d.jugadorId}>
+                  <EscudoLogro estado={estado} tam={40} />
+                  <div>
+                    <strong>{estado.def.nombre}{estado.def.niveles ? ` · ${NOMBRE_NIVEL[d.nivel]}` : ''}</strong>
+                    <span>{nombre} · {fechaCorta(d.fecha)}</span>
+                  </div>
+                </button>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+
       <section className="tarjeta">
         <h2>Vitrina del equipo</h2>
-        <p className="nota">Los logros del equipo llegan en la Fase 2.</p>
+        <Vitrina estados={logros.equipo} vacio="El equipo aún no tiene logros." />
       </section>
     </>
   )

@@ -6,6 +6,7 @@ import { etiquetas, nombrePosicion, rolPorId } from '../motor/config'
 import { Carta, MiniCarta } from '../componentes/Carta'
 import { DISENOS, disenoDe, disenosDesbloqueados } from '../componentes/disenos'
 import { GraficoEvolucion, Radar } from '../componentes/Graficos'
+import { Vitrina } from '../componentes/Logros'
 import { Cabecera, Hoja, Icono } from '../componentes/ui'
 import { avisar, confirmar } from '../componentes/dialogos'
 
@@ -240,7 +241,7 @@ export function FichaJugador({ datos, id }: { datos: Datos; id: string }) {
 
       {pestana === 'logros' && (
         <section className="tarjeta">
-          <p className="nota">La vitrina de logros llega en la Fase 2.</p>
+          <Vitrina estados={datos.logros.jugadores[j.id] ?? []} />
         </section>
       )}
 
