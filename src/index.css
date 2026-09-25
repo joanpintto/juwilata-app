@@ -844,7 +844,3 @@ input[type='range'] { width: 100%; accent-color: var(--dorado); }
 .notif__icono { width: 34px; height: 34px; border-radius: 10px; display: grid; place-items: center; flex-shrink: 0; background: var(--fondo); color: var(--dorado); }
 .notif__icono--rango { color: #7fd1a6; }
 .notif__icono--copia { color: var(--aviso); }
-
-.cartas-plantilla { display: grid; grid-template-columns: 1fr 1fr; gap: 6px 8px; }
-.cartas-plantilla button { transition: transform 0.12s; }
-.cartas-plantilla button:active { transform: scale(0.97); }

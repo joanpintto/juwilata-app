@@ -1,6 +1,7 @@
 import { SUBPESTANAS_PLANTILLA, ir, nombreVisible, type Datos } from '../datos'
+import { mediaVisible } from '../motor/calculo'
 import { POSICIONES, rolPorId } from '../motor/config'
-import { Carta } from '../componentes/Carta'
+import { MiniCarta } from '../componentes/Carta'
 import { disenoDe } from '../componentes/disenos'
 import { Cabecera, Icono, Subpestanas, Vacio } from '../componentes/ui'
 
@@ -41,17 +42,27 @@ export function Jugadores({ datos }: { datos: Datos }) {
         if (!lista.length) return null
         return (
           <section key={pos.id} className="grupo">
-            <h2 className="grupo__titulo">{pos.plural} · {lista.length}</h2>
-            <div className="cartas-plantilla">
+            <h2 className="grupo__titulo">{pos.plural}</h2>
+            <ul className="lista-jugadores">
               {lista.map((j) => {
                 const e = calculo.jugadores[j.id]
                 return (
-                  <button key={j.id} onClick={() => ir(`/jugador/${j.id}`)} aria-label={`${nombreVisible(j)}, ${rolPorId(config, j.rol).nombre}`}>
-                    <Carta jugador={j} media={e.media} atributos={e.atributos} tendencia={e.tendencia} diseno={disenoDe(j, e.media, config, e.rangosAlcanzados)} config={config} />
-                  </button>
+                  <li key={j.id}>
+                    <button onClick={() => ir(`/jugador/${j.id}`)}>
+                      <MiniCarta jugador={j} media={e.media} diseno={disenoDe(j, e.media, config, e.rangosAlcanzados)} config={config} ancho={54} />
+                      <div className="lista-jugadores__texto">
+                        <strong>{nombreVisible(j)}</strong>
+                        <span>#{j.dorsal} · {rolPorId(config, j.rol).nombre}</span>
+                      </div>
+                      <div className="lista-jugadores__media">
+                        {mediaVisible(e.media)}
+                        <Tendencia valor={e.tendencia} />
+                      </div>
+                    </button>
+                  </li>
                 )
               })}
-            </div>
+            </ul>
           </section>
         )
       })}
