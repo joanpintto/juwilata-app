@@ -34,9 +34,15 @@ export function media(attrs: Atributos, pesos: Atributos): number {
   return attrs.reduce((s, a, i) => s + a * w[i], 0)
 }
 
+/**
+ * Atributos de un jugador nuevo: el perfil de su rol (`(peso − 16,67%) × 30`),
+ * desplazado para que la media ponderada sea exactamente la base (60,0).
+ */
 export function atributosIniciales(pesos: Atributos, cfg: Config): Atributos {
   const w = pesosFraccion(pesos)
-  return w.map((wi) => cfg.atributosBase + (wi - 1 / 6) * cfg.atributosEscala) as Atributos
+  const perfil = w.map((wi) => (wi - 1 / 6) * cfg.atributosEscala)
+  const desfase = perfil.reduce((s, p, i) => s + p * w[i], 0)
+  return perfil.map((p) => cfg.atributosBase + p - desfase) as Atributos
 }
 
 /**

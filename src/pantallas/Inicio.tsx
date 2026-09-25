@@ -1,4 +1,4 @@
-import { conSigno, fmt1, fmt2, ir, nombreVisible, type Datos } from '../datos'
+import { conSigno, fechaLarga, fmt1, fmt2, ir, nombreRival, nombreVisible, proximoPartido, type Datos } from '../datos'
 import type { EstadoJugador } from '../motor/temporada'
 import { MiniCarta } from '../componentes/Carta'
 import { disenoDe } from '../componentes/disenos'
@@ -18,7 +18,8 @@ function mejor(lista: EstadoJugador[], puntuar: (e: EstadoJugador) => number, fi
 }
 
 export function Inicio({ datos }: { datos: Datos }) {
-  const { equipo, temporada, calculo, config, jugadores } = datos
+  const { equipo, temporada, calculo, config, jugadores, programados, partidos, rivales } = datos
+  const proximo = proximoPartido(programados, partidos)
   const lista = Object.values(calculo.jugadores)
   const res = calculo.partidos.map((r) => r.partido)
   const pj = res.length
@@ -71,6 +72,15 @@ export function Inicio({ datos }: { datos: Datos }) {
             <li>Después de cada partido, regístralo en <strong>Partidos</strong>.</li>
           </ol>
           <button className="boton" onClick={() => ir('/jugador/nuevo')}>Añadir el primer jugador</button>
+        </section>
+      ) : proximo ? (
+        <section className="tarjeta proximo">
+          <span className="proximo__j">J{proximo.jornada}</span>
+          <div className="proximo__texto">
+            <strong>{proximo.local ? 'vs' : 'en'} {nombreRival(rivales, proximo.rivalId)}</strong>
+            <span>{proximo.fecha ? fechaLarga(proximo.fecha) : 'Sin fecha'}{proximo.hora ? ` · ${proximo.hora}` : ''}</span>
+          </div>
+          <button className="boton boton--peq" onClick={() => ir(`/partido/nuevo/${proximo.id}`)}>Registrar</button>
         </section>
       ) : (
         <button className="boton boton--grande" onClick={() => ir('/partido/nuevo')}>

@@ -172,6 +172,22 @@ code { font-size: 12px; color: var(--dorado); }
 }
 .campo input:focus { border-color: var(--dorado); }
 .campo--corto { flex: 0 0 90px; }
+.campo--hora { flex: 0 0 120px; }
+/* iPhone: los campos de fecha y hora tienen un ancho propio que desborda la fila */
+.campo input[type='date'], .campo input[type='time'] {
+  -webkit-appearance: none; appearance: none; display: block; min-height: 46px; min-width: 0; text-align: left;
+}
+.campo input::-webkit-date-and-time-value { text-align: left; }
+.select, .input {
+  width: 100%; padding: 11px 12px; border-radius: 10px; border: 1px solid var(--borde); background: var(--fondo);
+  font-size: 16px; outline: none; color: var(--texto);
+}
+.select { -webkit-appearance: none; appearance: none; background-image: linear-gradient(45deg, transparent 50%, var(--dorado) 50%), linear-gradient(135deg, var(--dorado) 50%, transparent 50%); background-position: calc(100% - 18px) 50%, calc(100% - 13px) 50%; background-size: 5px 5px; background-repeat: no-repeat; padding-right: 32px; }
+.select:focus, .input:focus { border-color: var(--dorado); }
+.selector-rival { display: flex; flex-direction: column; gap: 6px; align-items: flex-start; }
+.selector-rival input { width: 100%; padding: 11px 12px; border-radius: 10px; border: 1px solid var(--borde); background: var(--fondo); font-size: 16px; outline: none; }
+.fila-campos--boton { align-items: center; }
+.fila-campos--boton .input { flex: 1; }
 .fila-campos { display: flex; gap: 10px; }
 
 .segmentos {
@@ -318,6 +334,11 @@ input[type='range'] { width: 100%; accent-color: var(--dorado); }
   background: rgba(22, 22, 23, 0.4);
 }
 .hueco--sel { outline: 2px solid var(--dorado); outline-offset: 3px; border-radius: 10px; }
+.hueco, .banquillo button { touch-action: none; -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
+.hueco--destino { outline: 2px dashed var(--dorado); outline-offset: 4px; border-radius: 12px; }
+.hueco--origen { opacity: 0.35; }
+.banquillo--destino { border-color: var(--dorado); background: var(--dorado-suave); }
+.fantasma { position: fixed; z-index: 70; pointer-events: none; transform: translate(-50%, -60%) scale(1.1); filter: drop-shadow(0 10px 18px rgba(0, 0, 0, 0.55)); }
 .media-titulares { display: flex; justify-content: space-between; align-items: center; padding: 12px 16px; border-radius: 14px; background: var(--fondo-2); border: 1px solid var(--borde); }
 .media-titulares span { font-size: 13px; color: var(--texto-2); }
 .media-titulares strong { font-family: 'Barlow Condensed', sans-serif; font-size: 28px; color: var(--dorado); }
@@ -370,7 +391,11 @@ input[type='range'] { width: 100%; accent-color: var(--dorado); }
   position: absolute; top: -6px; right: -6px; min-width: 20px; height: 20px; padding: 0 5px; border-radius: 99px;
   background: var(--dorado); color: #1b1410; font-size: 12px; font-weight: 700; display: grid; place-items: center;
 }
-.rapida__menos { width: 26px; height: 44px; color: var(--texto-2); font-size: 20px; }
+.rapida__menos {
+  width: 34px; height: 44px; margin-left: 4px; border-radius: 10px; display: grid; place-items: center;
+  border: 1.5px solid var(--alerta); background: rgba(200, 90, 99, 0.22); color: #ff9aa3;
+}
+.rapida__menos svg { stroke-width: 2.6; }
 .rapidas .enlace { margin-left: auto; }
 .mas-acciones { display: flex; flex-direction: column; gap: 12px; padding-top: 4px; border-top: 1px solid var(--borde); }
 .mas-acciones h3 { font-size: 14px; color: var(--texto-2); text-transform: uppercase; letter-spacing: 1px; margin: 6px 0 4px; }
@@ -481,3 +506,23 @@ input[type='range'] { width: 100%; accent-color: var(--dorado); }
 
 .foto-editor { max-width: 340px; }
 .foto-editor__lienzo { width: 70%; margin: 0 auto; aspect-ratio: 360 / 450; border-radius: 12px; background: #0e0e0f; touch-action: none; display: block; }
+
+/* ─── Calendario ───────────────────────────────────────────────────── */
+
+.calendario { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
+.calendario li { border-bottom: 1px solid var(--borde); }
+.calendario li:last-child { border-bottom: 0; }
+.calendario button { width: 100%; display: flex; align-items: center; gap: 12px; padding: 10px 0; text-align: left; }
+.calendario__j { width: 38px; font-family: 'Barlow Condensed', sans-serif; font-weight: 700; font-size: 18px; color: var(--dorado); }
+.calendario__texto { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.calendario__texto strong { font-size: 15px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.calendario__texto span { font-size: 12.5px; color: var(--texto-2); }
+.calendario .res { width: auto; padding: 0 8px; }
+.calendario--proximo .calendario__texto strong { color: var(--dorado); }
+.etiqueta--aplazado { background: rgba(217, 173, 85, 0.16); color: var(--aviso); }
+.etiqueta--proximo { background: var(--dorado-suave); color: var(--dorado); }
+.proximo { flex-direction: row; align-items: center; gap: 12px; }
+.proximo__j { font-family: 'Barlow Condensed', sans-serif; font-size: 30px; font-weight: 700; color: var(--dorado); line-height: 1; }
+.proximo__texto { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px; }
+.proximo__texto strong { font-size: 17px; }
+.proximo__texto span { font-size: 12.5px; color: var(--texto-2); }

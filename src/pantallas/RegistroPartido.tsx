@@ -1,6 +1,8 @@
 import { useState, type ReactNode } from 'react'
-import { copiaAutomatica, db, nuevoId, type Actuacion, type EstadoConvocatoria, type Partido } from '../db'
-import { colorNota, conSigno, fmt1, fmt2, hoy, ir, nombreVisible, type Datos } from '../datos'
+import { copiaAutomatica, db, nuevoId, type Actuacion, type EstadoConvocatoria, type Partido, type Programado } from '../db'
+import { colorNota, conSigno, fechaCorta, fmt1, fmt2, hoy, ir, nombreRival, nombreVisible, partidoDe, type Datos } from '../datos'
+import { SelectorRival } from '../componentes/SelectorRival'
+import { rivalPorNombre } from '../componentes/rivales'
 import { calcularNota, mediaVisible, rango } from '../motor/calculo'
 import { ACCIONES, ACCIONES_RAPIDAS, rolPorId, type AccionId } from '../motor/config'
 import { reproducirTemporada } from '../motor/temporada'
@@ -20,14 +22,15 @@ const ESTADOS: { id: EstadoConvocatoria; texto: string }[] = [
 
 const juega = (a: Actuacion) => (a.estado === 'titular' || a.estado === 'suplente') && a.minutos > 0
 
-export function RegistroPartido({ datos, id }: { datos: Datos; id?: string }) {
-  const { jugadores, partidos, equipo, config, configVersion, configs, temporada, calculo } = datos
+export function RegistroPartido({ datos, id, programadoId }: { datos: Datos; id?: string; programadoId?: string }) {
+  const { jugadores, partidos, equipo, config, configVersion, configs, temporada, calculo, rivales, programados } = datos
   const original = id ? partidos.find((p) => p.id === id) : undefined
   const duracion = equipo.duracionPartido
 
   const [paso, setPaso] = useState(0)
   const [abiertos, setAbiertos] = useState<Set<string>>(new Set())
   const [guardando, setGuardando] = useState(false)
+  const [claveRival, setClaveRival] = useState(0)
   const [p, setP] = useState<Partido>(() => {
     if (original) {
       // Añade al borrador los jugadores que no estaban en el partido (p. ej. fichajes nuevos).
@@ -39,12 +42,28 @@ export function RegistroPartido({ datos, id }: { datos: Datos; id?: string }) {
       }
       return { ...original, actuaciones: actuaciones.filter((a) => jugadores.some((j) => j.id === a.jugadorId)) }
     }
+    const prog = programados.find((g) => g.id === programadoId && !partidoDe(g, partidos))
     return {
-      id: nuevoId(), temporadaId: temporada.id, rival: '', fecha: hoy(), competicion: 'Liga', local: true,
+      ...desdeCalendario(prog),
+      id: nuevoId(), temporadaId: temporada.id,
       golesFavor: 0, golesContra: 0, mvpId: null, nominados: [], configVersion, creado: new Date().toISOString(), editado: null,
       actuaciones: jugadores.map((j) => ({ jugadorId: j.id, estado: 'no_convocado', minutos: 0, acciones: {}, posicion: j.posicion, rol: j.rol })),
     }
   })
+
+  // Datos del partido tomados del calendario (o vacíos si no viene de él).
+  function desdeCalendario(g: Programado | undefined) {
+    return {
+      programadoId: g?.id ?? null,
+      rivalId: g?.rivalId ?? null,
+      rival: g ? nombreRival(rivales, g.rivalId, '') : '',
+      fecha: g?.fecha ?? hoy(),
+      competicion: g?.competicion ?? 'Liga',
+      local: g?.local ?? true,
+    }
+  }
+  // Partidos del calendario que se pueden registrar (sin jugar), más el propio al editar.
+  const pendientes = programados.filter((g) => !partidoDe(g, partidos) || g.id === original?.programadoId)
 
   const cfgPartido = configs.find((c) => c.version === p.configVersion)?.datos ?? config
   const ctx = { golesFavor: p.golesFavor, golesContra: p.golesContra, duracion }
@@ -79,7 +98,7 @@ export function RegistroPartido({ datos, id }: { datos: Datos; id?: string }) {
   })()
 
   const validar = (): string | null => {
-    if (paso === 0 && !p.rival.trim()) return 'Escribe el nombre del rival.'
+    if (paso === 0 && !p.rival.trim()) return 'Elige o escribe el rival.'
     if (paso === 0 && !p.fecha) return 'Elige la fecha.'
     if (paso === 2 && nTitulares > 7) return `Hay ${nTitulares} titulares: como mucho 7.`
     if (paso === 2 && convocados.length === 0) return 'Convoca al menos a un jugador.'
@@ -130,9 +149,11 @@ export function RegistroPartido({ datos, id }: { datos: Datos; id?: string }) {
   const guardar = async () => {
     setGuardando(true)
     try {
+      const rival = p.rivalId ? rivales.find((r) => r.id === p.rivalId) : await rivalPorNombre(p.rival)
       const final: Partido = {
         ...p,
-        rival: p.rival.trim(),
+        rivalId: rival?.id ?? null,
+        rival: rival?.nombre ?? p.rival.trim(),
         nominados: candidatos,
         mvpId: mvpValido,
         actuaciones: p.actuaciones.map((a) => (juega(a) ? a : { ...a, acciones: {}, minutos: a.estado === 'titular' || a.estado === 'suplente' ? a.minutos : 0 })),
@@ -212,25 +233,50 @@ export function RegistroPartido({ datos, id }: { datos: Datos; id?: string }) {
 
       {paso === 0 && (
         <section className="tarjeta formulario">
-          <label className="campo">
+          {pendientes.length > 0 && (
+            <label className="campo">
+              <span>Partido del calendario</span>
+              <select
+                className="select"
+                value={p.programadoId ?? ''}
+                onChange={(e) => {
+                  const g = programados.find((x) => x.id === e.target.value)
+                  setP({ ...p, ...desdeCalendario(g) })
+                  setClaveRival((k) => k + 1)
+                }}
+              >
+                <option value="">Ninguno (amistoso u otro)</option>
+                {pendientes.map((g) => (
+                  <option key={g.id} value={g.id}>
+                    J{g.jornada} · {g.local ? 'vs' : 'en'} {nombreRival(rivales, g.rivalId)}{g.fecha ? ` · ${fechaCorta(g.fecha)}` : ''}{g.aplazado ? ' (aplazado)' : ''}
+                  </option>
+                ))}
+              </select>
+            </label>
+          )}
+          <div className="campo">
             <span>Rival</span>
-            <input value={p.rival} onChange={(e) => setP({ ...p, rival: e.target.value })} placeholder="Nombre del equipo rival" autoComplete="off" />
-          </label>
-          <div className="fila-campos">
-            <label className="campo">
-              <span>Fecha</span>
-              <input type="date" value={p.fecha} onChange={(e) => setP({ ...p, fecha: e.target.value })} />
-            </label>
-            <label className="campo">
-              <span>Competición</span>
-              <input value={p.competicion} onChange={(e) => setP({ ...p, competicion: e.target.value })} list="competiciones" />
-              <datalist id="competiciones">
-                <option value="Liga" />
-                <option value="Copa" />
-                <option value="Amistoso" />
-              </datalist>
-            </label>
+            <SelectorRival
+              key={claveRival}
+              rivales={rivales}
+              rivalId={p.rivalId ?? null}
+              nombre={p.rival}
+              onChange={(v) => setP({ ...p, rivalId: v.rivalId, rival: v.nombre })}
+            />
           </div>
+          <label className="campo">
+            <span>Fecha</span>
+            <input type="date" value={p.fecha} onChange={(e) => setP({ ...p, fecha: e.target.value })} />
+          </label>
+          <label className="campo">
+            <span>Competición</span>
+            <input value={p.competicion} onChange={(e) => setP({ ...p, competicion: e.target.value })} list="competiciones" />
+            <datalist id="competiciones">
+              <option value="Liga" />
+              <option value="Copa" />
+              <option value="Amistoso" />
+            </datalist>
+          </label>
           <div className="campo">
             <span>Campo</span>
             <div className="segmentos">
@@ -337,7 +383,7 @@ export function RegistroPartido({ datos, id }: { datos: Datos; id?: string }) {
                           </button>
                           {v > 0 && (
                             <button className="rapida__menos" onClick={() => cambiarAccion(a.jugadorId, id, v - 1)} aria-label={`Quitar ${def.nombre}`}>
-                              −
+                              <Icono nombre="menos" tam={16} />
                             </button>
                           )}
                         </div>

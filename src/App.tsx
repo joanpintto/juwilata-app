@@ -8,7 +8,8 @@ import { Jugadores } from './pantallas/Jugadores'
 import { Formacion } from './pantallas/Formacion'
 import { FichaJugador } from './pantallas/FichaJugador'
 import { EditarJugador } from './pantallas/EditarJugador'
-import { Partidos, Liga } from './pantallas/Partidos'
+import { Partidos } from './pantallas/Partidos'
+import { Liga } from './pantallas/Liga'
 import { DetallePartido } from './pantallas/DetallePartido'
 import { RegistroPartido } from './pantallas/RegistroPartido'
 import { Evoluciones } from './pantallas/Evoluciones'
@@ -53,9 +54,9 @@ function Pantalla({ seg, datos }: { seg: string[]; datos: Datos }): ReactNode {
       if (c === 'editar') return <EditarJugador datos={datos} id={b} />
       return <FichaJugador datos={datos} id={b} />
     case 'partidos':
-      return b === 'liga' ? <Liga /> : <Partidos datos={datos} />
+      return b === 'liga' ? <Liga datos={datos} /> : <Partidos datos={datos} />
     case 'partido':
-      if (b === 'nuevo') return <RegistroPartido datos={datos} />
+      if (b === 'nuevo') return <RegistroPartido key={c ?? 'nuevo'} datos={datos} programadoId={c} />
       if (c === 'editar') return <RegistroPartido datos={datos} id={b} />
       return <DetallePartido datos={datos} id={b} />
     case 'evoluciones':

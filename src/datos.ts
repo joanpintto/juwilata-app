@@ -1,6 +1,6 @@
 import { useLiveQuery } from 'dexie-react-hooks'
 import { useEffect, useMemo, useState } from 'react'
-import { db, type ConfigVersion, type Equipo, type Jugador, type Partido, type Temporada } from './db'
+import { db, type ConfigVersion, type Equipo, type Jugador, type Partido, type Programado, type Rival, type Temporada } from './db'
 import { CONFIG_INICIAL, type Config } from './motor/config'
 import { reproducirTemporada, type Temporada as TemporadaCalculada } from './motor/temporada'
 
@@ -10,6 +10,8 @@ export interface Datos {
   jugadores: Jugador[]
   partidos: Partido[]
   configs: ConfigVersion[]
+  rivales: Rival[]
+  programados: Programado[]
   config: Config
   configVersion: number
   calculo: TemporadaCalculada
@@ -19,16 +21,18 @@ export function useDatos(): Datos | undefined {
   const base = useLiveQuery(async () => {
     const equipo = await db.equipo.get('equipo')
     if (!equipo) return undefined
-    const [temporada, jugadores, partidos, configs] = await Promise.all([
+    const [temporada, jugadores, partidos, configs, rivales, programados] = await Promise.all([
       db.temporadas.get(equipo.temporadaActivaId),
       db.jugadores.toArray(),
       db.partidos.where('temporadaId').equals(equipo.temporadaActivaId).toArray(),
       db.configuraciones.orderBy('version').toArray(),
+      db.rivales.toArray(),
+      db.programados.where('temporadaId').equals(equipo.temporadaActivaId).toArray(),
     ])
     if (!temporada || !configs.length) return undefined
     // Las configuraciones antiguas se completan con los valores nuevos que les falten.
     const completas = configs.map((c) => ({ ...c, datos: { ...CONFIG_INICIAL, ...c.datos } }))
-    return { equipo, temporada, jugadores, partidos, configs: completas }
+    return { equipo, temporada, jugadores, partidos, configs: completas, rivales, programados }
   })
 
   return useMemo(() => {
@@ -37,7 +41,9 @@ export function useDatos(): Datos | undefined {
     const mapa = new Map(base.configs.map((c) => [c.version, c.datos]))
     const calculo = reproducirTemporada(base.jugadores, base.partidos, mapa, ultima.datos, base.equipo.duracionPartido)
     const jugadores = [...base.jugadores].sort((a, b) => a.dorsal - b.dorsal)
-    return { ...base, jugadores, config: ultima.datos, configVersion: ultima.version, calculo }
+    const rivales = [...base.rivales].sort((a, b) => a.nombre.localeCompare(b.nombre, 'es'))
+    const programados = [...base.programados].sort((a, b) => a.jornada - b.jornada)
+    return { ...base, jugadores, rivales, programados, config: ultima.datos, configVersion: ultima.version, calculo }
   }, [base])
 }
 
@@ -102,4 +108,23 @@ export const nombreVisible = (j: Jugador) => j.apodo?.trim() || j.nombre
 export const SUBPESTANAS_PLANTILLA = [
   { id: 'jugadores', texto: 'Jugadores', ruta: '/plantilla' },
   { id: 'formacion', texto: 'Formación', ruta: '/plantilla/formacion' },
+]
+
+/** Partido registrado a partir de un partido del calendario (si lo hay). */
+export function partidoDe(prog: Programado, partidos: Partido[]): Partido | undefined {
+  return partidos.find((p) => p.programadoId === prog.id)
+}
+
+/** Siguiente partido del calendario sin jugar ni aplazar. */
+export function proximoPartido(programados: Programado[], partidos: Partido[]): Programado | undefined {
+  return programados.find((g) => !g.aplazado && !partidoDe(g, partidos))
+}
+
+export function nombreRival(rivales: Rival[], id: string | null | undefined, porDefecto = 'Rival'): string {
+  return rivales.find((r) => r.id === id)?.nombre ?? porDefecto
+}
+
+export const SUBPESTANAS_PARTIDOS = [
+  { id: 'mis', texto: 'Mis partidos', ruta: '/partidos' },
+  { id: 'liga', texto: 'Liga', ruta: '/partidos/liga' },
 ]

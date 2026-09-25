@@ -98,7 +98,7 @@ Hay 9 roles de campo más el portero. Atributos: RIT, TIR, PAS, REG, DEF y FIS. 
 ### 5.3 Reglas generales
 
 - **La media que se ve en la carta es siempre la media ponderada real de los 6 atributos según el rol.**
-- **Atributos iniciales** de un jugador nuevo: `60 + (peso del rol − 16,67%) × 30`. Suman unos 360 puntos. Todo jugador nuevo empieza con carta de Bronce.
+- **Atributos iniciales** de un jugador nuevo: el perfil de su rol, `(peso del rol − 16,67%) × 30`, desplazado para que la media ponderada sea **exactamente 60,0**. Todo jugador nuevo empieza con carta de Bronce y media 60,0.
 - **Fichajes a mitad de temporada:** mismo proceso. Su historial empieza desde el partido en que llegan.
 - **Posiciones secundarias:** hasta 2, solo informativas. Un partido fuera de su posición se puntúa con la principal.
 - **Pierna buena:** derecha, izquierda o ambas. En la ficha aparece como Diestro, Zurdo o Ambidiestro. Solo informativa.
@@ -335,6 +335,7 @@ Idea: **subir es lo normal y bajar cuesta mucho**. No hay techo: cualquier jugad
 - **Partidos entre otros equipos:** solo el resultado.
 - **Clasificación** automática (3 puntos por victoria, 1 por empate, 0 por derrota).
 - **Calendario** manual. Un partido aplazado mantiene su número de jornada.
+- **Adelantado a la Fase 1:** equipos de la liga (rivales), calendario de nuestros partidos (jornada, rival, fecha y hora opcionales, local o visitante), botón de aplazar y «Registrar resultado» desde el calendario. En el registro de partido el rival se elige de la lista. Inicio muestra el próximo partido.
 
 ### Experiencia post-partido y notificaciones
 - **Secuencia animada al confirmar:** resultado → destacados → cambios de media → carta → MVP. Se salta tocando la pantalla y se puede desactivar.
@@ -432,7 +433,7 @@ La temporada aún no ha empezado, así que no hace falta cargar partidos anterio
   - copias de seguridad;
   - Inicio básico.
 - **Fase 2 (estadísticas, logros y emoción):**
-  - Liga;
+  - Liga: resultados entre otros equipos y clasificación (el calendario y los rivales ya están en la Fase 1);
   - Evoluciones completas (dashboard, gráficos, comparador y galería);
   - logros;
   - sugerencias de IF, POTM y TOTY;
@@ -463,11 +464,11 @@ Puntos que el diseño dejaba abiertos y que se han concretado al construir la Fa
 - **Ajustes → Avanzado:** «solo desde ahora» se consigue guardando la configuración con número de versión; cada partido recuerda con qué versión se calculó.
 
 ### Pantallas y datos
-- **Formación:** 4 esquemas de F7 (1-3-2-1, 1-2-3-1, 1-3-1-2, 1-2-2-2). En la Fase 1 se cambia tocando (arrastrar queda pendiente).
-- **Registro:** botón «Usar la formación» para marcar titulares de un toque. Si solo juega un portero, sus goles encajados se rellenan con el marcador.
+- **Formación:** 4 esquemas de F7 (1-3-2-1, 1-2-3-1, 1-3-1-2, 1-2-2-2). Los jugadores se arrastran entre huecos y banquillo, o se tocan dos seguidos para cambiarlos.
+- **Registro:** botón «Usar la formación» para marcar titulares de un toque. Las acciones rápidas (⚽ 🅰 🟨) se suman tocando el icono y se restan con el botón «−» que aparece al lado. Si solo juega un portero, sus goles encajados se rellenan con el marcador.
 - **Deshacer:** la última acción sobre partidos (registrar, editar o borrar) se puede deshacer.
 - **Tipografía:** Barlow Condensed se sirve desde la propia app (extraída de las plantillas de carta), así funciona sin conexión.
 - **Inicio → mejor defensa:** la mejor nota media de la temporada entre centrales y laterales.
 
 ### Pendiente de la Fase 1
-- **Recorte automático del fondo de la foto:** de momento la foto se encuadra a mano (arrastrar y acercar). Recortar el fondo en el propio móvil exige un modelo de segmentación que hay que empaquetar dentro de la app (sin servicios externos).
+- **Recorte automático del fondo de la foto** (aparcado de momento): de momento la foto se encuadra a mano (arrastrar y acercar). Recortar el fondo en el propio móvil exige un modelo de segmentación que hay que empaquetar dentro de la app (sin servicios externos).

@@ -1,5 +1,6 @@
 import Dexie, { type Table } from 'dexie'
-import { CONFIG_INICIAL, type Atributos, type Config, type Posicion } from './motor/config'
+import { CONFIG_INICIAL, rolPorId, type Atributos, type Config, type Posicion } from './motor/config'
+import { atributosIniciales } from './motor/calculo'
 import type { Acciones } from './motor/calculo'
 
 // ─── Modelo de datos (docs/DISENO.md §12) ─────────────────────────────
@@ -70,10 +71,31 @@ export interface Actuacion {
   rol: string
 }
 
+export interface Rival {
+  id: string
+  nombre: string
+  creado: string
+}
+
+/** Partido propio del calendario (programado antes de jugarse). */
+export interface Programado {
+  id: string
+  temporadaId: string
+  jornada: number
+  rivalId: string
+  fecha: string | null // AAAA-MM-DD; puede no saberse aún
+  hora: string | null // HH:MM
+  local: boolean
+  aplazado: boolean
+  competicion: string
+}
+
 export interface Partido {
   id: string
   temporadaId: string
   rival: string
+  rivalId?: string | null
+  programadoId?: string | null // si viene del calendario (jugado = tiene partido)
   fecha: string // AAAA-MM-DD
   competicion: string
   local: boolean
@@ -118,6 +140,8 @@ class JuwilataDB extends Dexie {
   configuraciones!: Table<ConfigVersion, number>
   copias!: Table<Copia, number>
   deshacer!: Table<Deshacer, string>
+  rivales!: Table<Rival, string>
+  programados!: Table<Programado, string>
 
   constructor() {
     super('juwilata')
@@ -132,6 +156,17 @@ class JuwilataDB extends Dexie {
       copias: '++id, fecha',
       deshacer: 'id',
     })
+    // v3: rivales y calendario; los atributos iniciales se rehacen para que
+    // todo jugador nuevo empiece con media ponderada 60,0 exacta.
+    this.version(3)
+      .stores({ rivales: 'id', programados: 'id, temporadaId' })
+      .upgrade(async (tx) => {
+        const ultima = await tx.table<ConfigVersion, number>('configuraciones').orderBy('version').last()
+        const cfg = { ...CONFIG_INICIAL, ...(ultima?.datos ?? {}) }
+        await tx.table<Jugador, string>('jugadores').toCollection().modify((j) => {
+          j.atributosIniciales = atributosIniciales(rolPorId(cfg, j.rolInicial).pesos, cfg)
+        })
+      })
   }
 }
 
@@ -230,13 +265,16 @@ export interface Exportacion {
   jugadores: Jugador[]
   partidos: Partido[]
   configuraciones: ConfigVersion[]
+  rivales?: Rival[]
+  programados?: Programado[]
 }
 
 export async function exportarDatos(): Promise<Exportacion> {
-  const [equipo, temporadas, jugadores, partidos, configuraciones] = await Promise.all([
+  const [equipo, temporadas, jugadores, partidos, configuraciones, rivales, programados] = await Promise.all([
     db.equipo.get('equipo'), db.temporadas.toArray(), db.jugadores.toArray(), db.partidos.toArray(), db.configuraciones.toArray(),
+    db.rivales.toArray(), db.programados.toArray(),
   ])
-  return { app: 'juwilata-united', formato: 1, exportado: new Date().toISOString(), equipo: equipo!, temporadas, jugadores, partidos, configuraciones }
+  return { app: 'juwilata-united', formato: 1, exportado: new Date().toISOString(), equipo: equipo!, temporadas, jugadores, partidos, configuraciones, rivales, programados }
 }
 
 export function validarExportacion(x: unknown): Exportacion {
@@ -247,17 +285,25 @@ export function validarExportacion(x: unknown): Exportacion {
     Array.isArray(d.temporadas) && Array.isArray(d.jugadores) && Array.isArray(d.partidos) &&
     Array.isArray(d.configuraciones) && d.configuraciones.length > 0 &&
     d.jugadores.every((j) => typeof j.id === 'string' && typeof j.nombre === 'string' && Array.isArray(j.atributosIniciales)) &&
-    d.partidos.every((p) => typeof p.id === 'string' && Array.isArray(p.actuaciones))
+    d.partidos.every((p) => typeof p.id === 'string' && Array.isArray(p.actuaciones)) &&
+    (d.rivales === undefined || Array.isArray(d.rivales)) &&
+    (d.programados === undefined || Array.isArray(d.programados))
   if (!ok) throw new Error('El archivo no es una copia válida de Juwilata United.')
   return d
 }
 
 export async function importarDatos(d: Exportacion): Promise<void> {
-  await db.transaction('rw', [db.equipo, db.temporadas, db.jugadores, db.partidos, db.configuraciones, db.deshacer], async () => {
-    await Promise.all([db.equipo.clear(), db.temporadas.clear(), db.jugadores.clear(), db.partidos.clear(), db.configuraciones.clear(), db.deshacer.clear()])
+  const tablas = [db.equipo, db.temporadas, db.jugadores, db.partidos, db.configuraciones, db.deshacer, db.rivales, db.programados]
+  await db.transaction('rw', tablas, async () => {
+    await Promise.all(tablas.map((t) => t.clear()))
+    await db.rivales.bulkPut(d.rivales ?? [])
+    await db.programados.bulkPut(d.programados ?? [])
     await db.equipo.put(d.equipo)
     await db.temporadas.bulkPut(d.temporadas)
-    await db.jugadores.bulkPut(d.jugadores)
+    // Los atributos iniciales siempre salen de la fórmula (media 60,0), también en copias antiguas.
+    const ultima = [...d.configuraciones].sort((a, b) => a.version - b.version).pop()
+    const cfg = { ...CONFIG_INICIAL, ...(ultima?.datos ?? {}) }
+    await db.jugadores.bulkPut(d.jugadores.map((j) => ({ ...j, atributosIniciales: atributosIniciales(rolPorId(cfg, j.rolInicial).pesos, cfg) })))
     await db.partidos.bulkPut(d.partidos)
     await db.configuraciones.bulkPut(d.configuraciones)
   })

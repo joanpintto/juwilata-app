@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState, type MouseEvent as EventoRaton, type PointerEvent as EventoPuntero } from 'react'
 import { db, ESQUEMAS } from '../db'
 import { SUBPESTANAS_PLANTILLA, fmt1, type Datos } from '../datos'
 import { nombrePosicion } from '../motor/config'
@@ -7,6 +7,16 @@ import { disenoDe } from '../componentes/disenos'
 import { Cabecera, Subpestanas, Vacio } from '../componentes/ui'
 
 type Seleccion = { tipo: 'slot'; id: string } | { tipo: 'banco'; jugadorId: string } | null
+type Origen = { tipo: 'slot'; id: string; jugadorId: string } | { tipo: 'banco'; jugadorId: string }
+
+/** Zona sobre la que está el dedo: «slot:<id>» o «banco». */
+function zonaEn(x: number, y: number): string | null {
+  for (const el of document.elementsFromPoint(x, y)) {
+    const z = (el as HTMLElement).closest?.('[data-zona]')
+    if (z) return z.getAttribute('data-zona')
+  }
+  return null
+}
 
 export function Formacion({ datos }: { datos: Datos }) {
   const { equipo, jugadores, calculo, config } = datos
@@ -49,6 +59,83 @@ export function Formacion({ datos }: { datos: Datos }) {
     setSel(null)
   }
 
+  // ─── Arrastrar (si el dedo se mueve) o tocar (si no) ───
+  const gesto = useRef<{ x: number; y: number; origen: Origen; arrastrando: boolean } | null>(null)
+  const [fantasma, setFantasma] = useState<{ x: number; y: number; jugadorId: string } | null>(null)
+  const [zona, setZona] = useState<string | null>(null)
+
+  // Mientras se arrastra, acercar el dedo al borde de la pantalla la desplaza
+  // (el banquillo queda por debajo del campo).
+  const dedo = useRef<{ x: number; y: number } | null>(null)
+  const arrastrando = fantasma !== null
+  useEffect(() => {
+    if (!arrastrando) return
+    let marco = 0
+    const paso = () => {
+      const d = dedo.current
+      if (d) {
+        const margen = 80
+        const v = d.y > window.innerHeight - margen ? 14 : d.y < margen ? -14 : 0
+        if (v) {
+          window.scrollBy(0, v)
+          setZona(zonaEn(d.x, d.y))
+        }
+      }
+      marco = requestAnimationFrame(paso)
+    }
+    marco = requestAnimationFrame(paso)
+    return () => cancelAnimationFrame(marco)
+  }, [arrastrando])
+
+  const soltarEn = async (origen: Origen, z: string) => {
+    if (z === 'banco') {
+      if (origen.tipo === 'slot') await guardar({ ...slots, [origen.id]: null })
+    } else {
+      const destino = z.slice('slot:'.length)
+      if (origen.tipo === 'slot') {
+        if (origen.id !== destino) await guardar({ ...slots, [destino]: slots[origen.id], [origen.id]: slots[destino] })
+      } else {
+        await guardar({ ...slots, [destino]: origen.jugadorId })
+      }
+    }
+    setSel(null)
+  }
+
+  const eventos = (origen: Origen | null, alTocar: () => void) => ({
+    onPointerDown: (e: EventoPuntero<HTMLElement>) => {
+      if (!origen) return
+      gesto.current = { x: e.clientX, y: e.clientY, origen, arrastrando: false }
+      e.currentTarget.setPointerCapture(e.pointerId)
+    },
+    onPointerMove: (e: EventoPuntero<HTMLElement>) => {
+      const g = gesto.current
+      if (!g) return
+      if (!g.arrastrando && Math.hypot(e.clientX - g.x, e.clientY - g.y) < 8) return
+      g.arrastrando = true
+      dedo.current = { x: e.clientX, y: e.clientY }
+      setFantasma({ x: e.clientX, y: e.clientY, jugadorId: g.origen.jugadorId })
+      setZona(zonaEn(e.clientX, e.clientY))
+    },
+    onPointerUp: async (e: EventoPuntero<HTMLElement>) => {
+      const g = gesto.current
+      gesto.current = null
+      if (!g || !g.arrastrando) return alTocar()
+      setFantasma(null)
+      setZona(null)
+      const z = zonaEn(e.clientX, e.clientY)
+      if (z) await soltarEn(g.origen, z)
+    },
+    onPointerCancel: () => {
+      gesto.current = null
+      setFantasma(null)
+      setZona(null)
+    },
+    // Teclado (sin puntero): se comporta como un toque.
+    onClick: (e: EventoRaton) => {
+      if (e.detail === 0) alTocar()
+    },
+  })
+
   const mini = (id: string, ancho: number) => {
     const e = calculo.jugadores[id]
     return <MiniCarta jugador={e.jugador} media={e.media} diseno={disenoDe(e.jugador, e.media, config, e.rangosAlcanzados)} config={config} ancho={ancho} />
@@ -84,9 +171,10 @@ export function Formacion({ datos }: { datos: Datos }) {
               return (
                 <button
                   key={p.id}
-                  className={`hueco ${activo ? 'hueco--sel' : ''} ${jid ? '' : 'hueco--vacio'}`}
+                  data-zona={`slot:${p.id}`}
+                  className={`hueco ${activo ? 'hueco--sel' : ''} ${jid ? '' : 'hueco--vacio'} ${zona === `slot:${p.id}` ? 'hueco--destino' : ''} ${fantasma && jid === fantasma.jugadorId ? 'hueco--origen' : ''}`}
                   style={{ left: `${p.x}%`, top: `${p.y}%` }}
-                  onClick={() => tocarSlot(p.id)}
+                  {...eventos(jid ? { tipo: 'slot', id: p.id, jugadorId: jid } : null, () => tocarSlot(p.id))}
                   aria-label={jid ? undefined : `Hueco de ${nombrePosicion(p.pos)}`}
                 >
                   {jid ? mini(jid, 70) : <span>{p.pos}</span>}
@@ -96,7 +184,7 @@ export function Formacion({ datos }: { datos: Datos }) {
           </div>
 
           <p className="nota centro">
-            {sel ? (sel.tipo === 'slot' ? 'Toca otro hueco para intercambiar o un suplente para ponerlo.' : 'Toca un hueco del campo para colocarlo.') : 'Toca un jugador y después otro hueco o jugador para cambiarlos.'}
+            {sel ? (sel.tipo === 'slot' ? 'Toca otro hueco para intercambiar o un suplente para ponerlo.' : 'Toca un hueco del campo para colocarlo.') : 'Arrastra un jugador a otro hueco o al banquillo, o tócalo y después toca dónde va.'}
             {sel?.tipo === 'slot' && slots[sel.id] && (
               <>
                 {' '}
@@ -110,15 +198,24 @@ export function Formacion({ datos }: { datos: Datos }) {
             <strong>{mediaTitulares !== null ? fmt1(mediaTitulares) : '—'}</strong>
           </div>
 
-          <div className="banquillo">
+          <div className={`banquillo ${zona === 'banco' ? 'banquillo--destino' : ''}`} data-zona="banco">
             {banquillo.length === 0 && <p className="nota">Banquillo vacío.</p>}
             {banquillo.map((j) => (
-              <button key={j.id} className={sel?.tipo === 'banco' && sel.jugadorId === j.id ? 'hueco--sel' : ''} onClick={() => tocarBanco(j.id)}>
+              <button
+                key={j.id}
+                className={`${sel?.tipo === 'banco' && sel.jugadorId === j.id ? 'hueco--sel' : ''} ${fantasma?.jugadorId === j.id ? 'hueco--origen' : ''}`}
+                {...eventos({ tipo: 'banco', jugadorId: j.id }, () => tocarBanco(j.id))}
+              >
                 {mini(j.id, 54)}
               </button>
             ))}
           </div>
         </>
+      )}
+      {fantasma && (
+        <div className="fantasma" style={{ left: fantasma.x, top: fantasma.y }} aria-hidden="true">
+          {mini(fantasma.jugadorId, 70)}
+        </div>
       )}
     </>
   )

@@ -1,13 +1,9 @@
 import { useLiveQuery } from 'dexie-react-hooks'
 import { db } from '../db'
-import { fechaCorta, ir, nombreVisible, type Datos } from '../datos'
+import { SUBPESTANAS_PARTIDOS, fechaCorta, ir, nombreVisible, type Datos } from '../datos'
 import { Cabecera, Icono, Subpestanas, Vacio } from '../componentes/ui'
 import { avisar, confirmar } from '../componentes/dialogos'
 
-const SUBPESTANAS = [
-  { id: 'mis', texto: 'Mis partidos', ruta: '/partidos' },
-  { id: 'liga', texto: 'Liga', ruta: '/partidos/liga' },
-]
 
 function resultado(gf: number, gc: number): 'V' | 'E' | 'D' {
   return gf > gc ? 'V' : gf === gc ? 'E' : 'D'
@@ -40,11 +36,15 @@ export function BannerDeshacer() {
 }
 
 export function Partidos({ datos }: { datos: Datos }) {
-  const { calculo, jugadores, equipo } = datos
+  const { calculo, jugadores, equipo, programados } = datos
   const lista = [...calculo.partidos].reverse()
   const v = calculo.partidos.filter((r) => r.partido.golesFavor > r.partido.golesContra).length
   const e = calculo.partidos.filter((r) => r.partido.golesFavor === r.partido.golesContra).length
   const d = calculo.partidos.length - v - e
+  const jornadaDe = (id: string | null | undefined) => {
+    const g = id ? programados.find((x) => x.id === id) : null
+    return g ? `J${g.jornada} · ` : ''
+  }
 
   return (
     <>
@@ -57,7 +57,7 @@ export function Partidos({ datos }: { datos: Datos }) {
           </button>
         }
       />
-      <Subpestanas opciones={SUBPESTANAS} activa="mis" />
+      <Subpestanas opciones={SUBPESTANAS_PARTIDOS} activa="mis" />
       <BannerDeshacer />
 
       {!jugadores.length && <Vacio titulo="Primero, la plantilla" texto="Añade jugadores antes de registrar el primer partido." accion={<button className="boton" onClick={() => ir('/jugador/nuevo')}>Añadir jugador</button>} />}
@@ -74,7 +74,9 @@ export function Partidos({ datos }: { datos: Datos }) {
               <button onClick={() => ir(`/partido/${p.id}`)}>
                 <span className={`res res--${r}`}>{r}</span>
                 <div className="lista-partidos__texto">
-                  <strong>{p.local ? 'vs' : 'en'} {p.rival}</strong>
+                  <strong>
+                    {jornadaDe(p.programadoId)}{p.local ? 'vs' : 'en'} {p.rival}
+                  </strong>
                   <span>{fechaCorta(p.fecha)} · {p.competicion}{mvp ? ` · ⭐ ${nombreVisible(mvp)}` : ''}</span>
                 </div>
                 <span className="lista-partidos__marcador">{p.golesFavor}-{p.golesContra}</span>
@@ -83,16 +85,6 @@ export function Partidos({ datos }: { datos: Datos }) {
           )
         })}
       </ul>
-    </>
-  )
-}
-
-export function Liga() {
-  return (
-    <>
-      <Cabecera titulo="Partidos" sub="Liga" />
-      <Subpestanas opciones={SUBPESTANAS} activa="liga" />
-      <Vacio titulo="Llega en la Fase 2" texto="Calendario, resultados de los demás equipos y clasificación automática." />
     </>
   )
 }
