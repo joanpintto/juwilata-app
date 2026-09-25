@@ -844,3 +844,23 @@ input[type='range'] { width: 100%; accent-color: var(--dorado); }
 .notif__icono { width: 34px; height: 34px; border-radius: 10px; display: grid; place-items: center; flex-shrink: 0; background: var(--fondo); color: var(--dorado); }
 .notif__icono--rango { color: #7fd1a6; }
 .notif__icono--copia { color: var(--aviso); }
+
+/* ─── Avanzado completo ────────────────────────────────────────────── */
+
+.chips--apartados { flex-wrap: nowrap; overflow-x: auto; margin: 0 -16px; padding: 0 16px 2px; scrollbar-width: none; }
+.chips--apartados::-webkit-scrollbar { display: none; }
+.chips--apartados button { flex-shrink: 0; }
+.tarjeta--aviso { border-color: rgba(200, 90, 99, 0.5); gap: 4px; }
+.tabla-pos { display: flex; flex-direction: column; gap: 6px; overflow-x: auto; }
+.tabla-pos__fila { display: grid; align-items: center; gap: 6px; font-size: 13px; }
+.tabla-pos__cab span { font-size: 11px; font-weight: 600; color: var(--texto-2); text-align: center; }
+.pesos { display: grid; grid-template-columns: repeat(6, 1fr); gap: 6px; }
+.pesos label { display: flex; flex-direction: column; align-items: center; gap: 4px; }
+.pesos span { font-size: 11px; font-weight: 600; color: var(--texto-2); }
+.pesos small { font-family: 'Barlow Condensed', sans-serif; font-size: 14px; color: var(--dorado); }
+.editor-logro__vista { display: flex; justify-content: center; }
+.metas { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.iconos-logro { display: grid; grid-template-columns: repeat(auto-fill, minmax(44px, 1fr)); gap: 6px; }
+.iconos-logro button { display: grid; place-items: center; padding: 4px; border-radius: 10px; border: 1px solid transparent; }
+.iconos-logro button.activa { border-color: var(--dorado); background: var(--dorado-suave); }
+.hoja { max-height: 88vh; overflow-y: auto; }

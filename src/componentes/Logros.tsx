@@ -142,7 +142,7 @@ export function Vitrina({ estados, vacio }: { estados: EstadoLogro[]; vacio?: st
           <div className="logro-detalle">
             <EscudoLogro estado={abierto} tam={110} />
             <h2>{abierto.def.nombre}</h2>
-            <span className="logro-detalle__cat">{abierto.def.categoria}{abierto.def.deLaCasa ? ' · de la casa' : ''}</span>
+            <span className="logro-detalle__cat">{abierto.def.categoria}{abierto.def.deLaCasa && abierto.def.categoria !== 'De la casa' ? ' · de la casa' : ''}</span>
             <p>{abierto.def.descripcion}</p>
             {abierto.def.niveles ? (
               <>

@@ -4,7 +4,7 @@
 import type { Datos } from '../datos'
 import { nombreVisible } from '../datos'
 import { rango } from './calculo'
-import { LOGROS, NOMBRE_NIVEL } from './logros'
+import { NOMBRE_NIVEL } from './logros'
 import { nombreMes, sugerenciasIF, sugerenciasPOTM, yaTiene } from './premios'
 
 export type TipoNotificacion = 'logro' | 'rango' | 'premio' | 'copia'
@@ -26,7 +26,7 @@ export function generarNotificaciones(d: Datos): Notificacion[] {
   }
 
   for (const x of d.logros.desbloqueos) {
-    const def = LOGROS.find((l) => l.id === x.logroId)
+    const def = d.logros.defs.find((l) => l.id === x.logroId)
     if (!def) continue
     lista.push({
       id: `logro:${x.jugadorId ?? 'equipo'}:${x.logroId}:${x.nivel}:${x.partidoId ?? x.fecha}`,

@@ -1,13 +1,18 @@
 // Logros (§11). Solo estéticos. Se calculan a partir de la temporada reproducida,
 // así que al editar un partido antiguo se revisan en cascada.
-import { SPLITS, splitDe, type Equipo, type Jugador, type Partido, type Programado, type Rival } from '../db'
-import type { Config, Posicion } from './config'
-import type { Temporada } from './temporada'
+import { SPLITS, splitDe, type Actuacion, type Equipo, type Jugador, type Partido, type Programado, type Rival } from '../db'
+import { MEDIDAS_CASA, type Config, type LogroCasa, type Posicion } from './config'
+import type { Paso, Temporada } from './temporada'
 import { NOSOTROS, clasificacion, esLiga, jornadasLider, rivalesDelSplit, splitDePartido, type PartidoLiga } from './liga'
 
 export type IconoLogro =
   | 'balon' | 'pase' | 'guante' | 'estrella' | 'diez' | 'fuego' | 'flecha' | 'corona' | 'calendario'
   | 'limpio' | 'carta' | 'rayo' | 'banco' | 'muro' | 'trofeo' | 'soldado' | 'fantasma' | 'palo' | 'debut' | 'escudo'
+
+export const ICONOS_LOGRO: IconoLogro[] = [
+  'balon', 'pase', 'guante', 'estrella', 'diez', 'fuego', 'flecha', 'corona', 'calendario', 'limpio',
+  'carta', 'rayo', 'banco', 'muro', 'trofeo', 'soldado', 'fantasma', 'palo', 'debut', 'escudo',
+]
 
 export interface LogroDef {
   id: string
@@ -60,13 +65,6 @@ export const LOGROS: LogroDef[] = [
   { id: 'portero-goleador', nombre: 'Portero goleador', descripcion: 'Marca un gol jugando de portero.', icono: 'rayo', categoria: 'Rarezas', ambito: 'jugador', repetible: true },
   { id: 'gol-defensa', nombre: 'Gol de defensa', descripcion: 'Marca un gol jugando de lateral o central.', icono: 'rayo', categoria: 'Rarezas', ambito: 'jugador', repetible: true },
   { id: 'banquillo-mvp', nombre: 'Del banquillo al MVP', descripcion: 'Sal de suplente y acaba siendo MVP.', icono: 'rayo', categoria: 'Rarezas', ambito: 'jugador', repetible: true },
-  // De la casa
-  { id: 'falsas-promesas', nombre: 'Falsas promesas', descripcion: '3 partidos seguidos sin ser convocado (las bajas no cuentan).', icono: 'fantasma', categoria: 'De la casa', ambito: 'jugador', repetible: true, deLaCasa: true },
-  { id: 'pata-de-palo', nombre: 'Pata de palo', descripcion: 'Falla 5 ocasiones claras en una temporada.', icono: 'palo', categoria: 'De la casa', ambito: 'jugador', deLaCasa: true },
-  { id: 'soldado-edy', nombre: 'Soldado de Edy', descripcion: 'Titularidades: 5, 10 y 15.', icono: 'soldado', categoria: 'De la casa', ambito: 'jugador', niveles: [5, 10, 15], unidad: plural('titular', 'titulares'), deLaCasa: true },
-  { id: 'debut-gala', nombre: 'Debut de gala', descripcion: 'Tu primera titularidad.', icono: 'debut', categoria: 'De la casa', ambito: 'jugador', deLaCasa: true },
-  { id: 'endrick', nombre: 'Endrick', descripcion: 'Suplencias: 5, 10 y 15.', icono: 'banco', categoria: 'De la casa', ambito: 'jugador', niveles: [5, 10, 15], unidad: plural('suplencia'), deLaCasa: true },
-
   // De equipo
   { id: 'eq-racha', nombre: 'En racha', descripcion: 'Victorias seguidas: 3, 5 y 8.', icono: 'fuego', categoria: 'Equipo', ambito: 'equipo', niveles: [3, 5, 8], unidad: plural('victoria') },
   { id: 'eq-invictos', nombre: 'Invictos', descripcion: 'Partidos seguidos sin perder: 5, 10 y 16.', icono: 'escudo', categoria: 'Equipo', ambito: 'equipo', niveles: [5, 10, 16], unidad: plural('partido') },
@@ -78,6 +76,21 @@ export const LOGROS: LogroDef[] = [
   { id: 'eq-campeones', nombre: 'Campeones', descripcion: 'Terminar un split de liga en 1ª posición.', icono: 'trofeo', categoria: 'Equipo', ambito: 'equipo', repetible: true },
   { id: 'eq-invicta', nombre: 'Temporada invicta', descripcion: 'Toda la temporada sin perder.', icono: 'escudo', categoria: 'Equipo', ambito: 'equipo' },
 ]
+
+/** Convierte los logros de la casa de la configuración en definiciones de logro. */
+export function defsCasa(cfg: Config): LogroDef[] {
+  return (cfg.logrosCasa ?? []).map((c) => {
+    const m = MEDIDAS_CASA.find((x) => x.id === c.medida)
+    const unidad = (n: number) =>
+      c.tipo === 'racha' ? `${n} seguidos` : c.tipo === 'partido' ? `${n} en un partido` : `${n} ${n === 1 ? (m?.singular ?? '') : (m?.plural ?? '')}`.trim()
+    return {
+      id: c.id, nombre: c.nombre, descripcion: c.descripcion, icono: (c.icono as IconoLogro) || 'estrella',
+      categoria: 'De la casa', ambito: 'jugador', deLaCasa: true, repetible: c.tipo !== 'total',
+      niveles: c.tipo === 'total' && c.metas.length === 3 ? (c.metas as [number, number, number]) : undefined,
+      unidad: c.tipo === 'total' && c.metas.length === 3 ? unidad : undefined,
+    } satisfies LogroDef
+  })
+}
 
 export type Nivel = 0 | 1 | 2 | 3 // 0 = pendiente; con niveles: 1 bronce, 2 plata, 3 oro; sin niveles: 1 = conseguido
 
@@ -99,6 +112,7 @@ export interface EstadoLogro {
 }
 
 export interface ResultadoLogros {
+  defs: LogroDef[]
   jugadores: Record<string, EstadoLogro[]>
   equipo: EstadoLogro[]
   desbloqueos: Desbloqueo[] // en orden cronológico
@@ -106,21 +120,23 @@ export interface ResultadoLogros {
 
 class Registro {
   desbloqueos: Desbloqueo[] = []
+  private defs: LogroDef[]
   valores = new Map<string, number>() // progreso por logro
   veces = new Map<string, number>()
   niveles = new Map<string, Nivel>()
   fechas = new Map<string, string>()
   private jugadorId: string | null
 
-  constructor(jugadorId: string | null) {
+  constructor(jugadorId: string | null, defs: LogroDef[]) {
     this.jugadorId = jugadorId
+    this.defs = defs
   }
 
   /** Marca un logro único o repetible. */
   conseguir(id: string, fecha: string, partidoId: string | null) {
     const v = (this.veces.get(id) ?? 0) + 1
     this.veces.set(id, v)
-    const def = LOGROS.find((l) => l.id === id)!
+    const def = this.defs.find((l) => l.id === id)!
     if (v === 1 || def.repetible) {
       this.niveles.set(id, 1)
       this.fechas.set(id, fecha)
@@ -130,7 +146,7 @@ class Registro {
 
   /** Actualiza un logro con niveles; registra cada nivel nuevo que se alcance. */
   valor(id: string, valor: number, fecha: string, partidoId: string | null) {
-    const def = LOGROS.find((l) => l.id === id)!
+    const def = this.defs.find((l) => l.id === id)!
     this.valores.set(id, Math.max(this.valores.get(id) ?? 0, valor))
     const antes = this.niveles.get(id) ?? 0
     let nivel: Nivel = 0
@@ -147,13 +163,57 @@ class Registro {
   }
 
   estados(ambito: 'jugador' | 'equipo'): EstadoLogro[] {
-    return LOGROS.filter((l) => l.ambito === ambito).map((def) => {
+    return this.defs.filter((l) => l.ambito === ambito).map((def) => {
       const nivel = this.niveles.get(def.id) ?? 0
       const veces = this.veces.get(def.id) ?? 0
       const progreso = def.niveles ? (this.valores.get(def.id) ?? 0) : veces
       const objetivo = def.niveles ? (def.niveles[Math.min(nivel, 2)] ?? def.niveles[2]) : 1
       return { def, nivel, veces, progreso, objetivo, fecha: this.fechas.get(def.id) ?? null }
     })
+  }
+}
+
+/**
+ * Valor de una medida de la casa en un partido; null = neutro (no suma ni corta
+ * rachas: p. ej. una baja, o no haber jugado para medidas que piden jugar).
+ */
+function valorCasa(c: LogroCasa, a: Actuacion, paso: Paso | undefined): number | null {
+  switch (c.medida) {
+    case 'titular':
+    case 'suplente':
+    case 'no_convocado':
+      if (a.estado === 'baja') return null
+      return a.estado === c.medida ? 1 : 0
+    case 'jugado':
+      return a.estado === 'baja' ? null : paso ? 1 : 0
+    case 'mvp':
+      return paso ? (paso.mvp ? 1 : 0) : null
+    case 'sin_tarjeta':
+      return paso ? ((a.acciones.amarilla ?? 0) + (a.acciones.roja ?? 0) === 0 ? 1 : 0) : null
+    case 'nota_alta':
+      return paso ? (paso.nota >= 7.5 ? 1 : 0) : null
+    default:
+      return paso ? (a.acciones[c.medida] ?? 0) : null
+  }
+}
+
+function evaluarCasa(c: LogroCasa, a: Actuacion, paso: Paso | undefined, st: { total: number; racha: number }, reg: Registro, fecha: string, partidoId: string) {
+  const v = valorCasa(c, a, paso)
+  if (v === null) return
+  const meta = c.metas[0] ?? 1
+  if (c.tipo === 'total') {
+    const antes = st.total
+    st.total += v
+    if (c.metas.length === 3) reg.valor(c.id, st.total, fecha, partidoId)
+    else if (antes < meta && st.total >= meta) reg.conseguir(c.id, fecha, partidoId)
+  } else if (c.tipo === 'racha') {
+    st.racha = v > 0 ? st.racha + 1 : 0
+    if (st.racha >= meta) {
+      reg.conseguir(c.id, fecha, partidoId)
+      st.racha = 0
+    }
+  } else if (v >= meta) {
+    reg.conseguir(c.id, fecha, partidoId)
   }
 }
 
@@ -174,35 +234,23 @@ export function calcularLogros(d: EntradaLogros): ResultadoLogros {
   const umbral = (id: string) => d.config.rangos.find((r) => r.id === id)?.desde ?? 999
   const jugadores: Record<string, EstadoLogro[]> = {}
   const todos: Desbloqueo[] = []
+  const casa = d.config.logrosCasa ?? []
+  const defs = [...LOGROS, ...defsCasa(d.config)]
 
   for (const j of d.jugadores) {
-    const reg = new Registro(j.id)
+    const reg = new Registro(j.id, defs)
+    const estadoCasa = new Map<string, { total: number; racha: number }>(casa.map((c) => [c.id, { total: 0, racha: 0 }]))
     const e = d.calculo.jugadores[j.id]
     const pasos = new Map(e?.historial.map((h) => [h.partidoId, h]) ?? [])
-    let goles = 0, asist = 0, ceros = 0, mvps = 0, jugados = 0, titular = 0, suplente = 0, ocasiones = 0
-    let rachaNota = 0, sinTarjeta = 0, noConvocado = 0
+    let goles = 0, asist = 0, ceros = 0, mvps = 0, jugados = 0
+    let rachaNota = 0, sinTarjeta = 0
 
     for (const p of partidos) {
       const a = p.actuaciones.find((x) => x.jugadorId === j.id)
       if (!a) continue // aún no estaba en el equipo
       const f = p.fecha
-      // Convocatoria (las bajas ni suman ni rompen la racha de Falsas promesas).
-      if (a.estado === 'no_convocado') {
-        noConvocado++
-        if (noConvocado === 3) {
-          reg.conseguir('falsas-promesas', f, p.id)
-          noConvocado = 0
-        }
-      } else if (a.estado !== 'baja') noConvocado = 0
-      if (a.estado === 'titular') {
-        titular++
-        if (titular === 1) reg.conseguir('debut-gala', f, p.id)
-        reg.valor('soldado-edy', titular, f, p.id)
-      }
-      if (a.estado === 'suplente') {
-        suplente++
-        reg.valor('endrick', suplente, f, p.id)
-      }
+      // Logros de la casa (reglas de la configuración).
+      for (const c of casa) evaluarCasa(c, a, pasos.get(p.id), estadoCasa.get(c.id)!, reg, f, p.id)
 
       const paso = pasos.get(p.id)
       if (!paso) continue // no jugó minutos
@@ -249,9 +297,6 @@ export function calcularLogros(d: EntradaLogros): ResultadoLogros {
       }
       sinTarjeta = n('amarilla') || n('roja') ? 0 : sinTarjeta + 1
       reg.valor('juego-limpio', sinTarjeta, f, p.id)
-      const antes = ocasiones
-      ocasiones += n('ocasionFallada')
-      if (antes < 5 && ocasiones >= 5) reg.conseguir('pata-de-palo', f, p.id)
 
       const m = paso.mediaDespues
       if (m >= umbral('plata') && !reg.niveles.get('primera-plata')) reg.conseguir('primera-plata', f, p.id)
@@ -273,7 +318,7 @@ export function calcularLogros(d: EntradaLogros): ResultadoLogros {
   }
 
   // ─── Equipo ───
-  const reg = new Registro(null)
+  const reg = new Registro(null, defs)
   let victorias = 0, invicto = 0, ceros = 0, goles = 0
   for (const p of partidos) {
     const f = p.fecha
@@ -317,7 +362,7 @@ export function calcularLogros(d: EntradaLogros): ResultadoLogros {
   todos.push(...reg.desbloqueos)
 
   todos.sort((a, b) => a.fecha.localeCompare(b.fecha))
-  return { jugadores, equipo: reg.estados('equipo'), desbloqueos: todos }
+  return { defs, jugadores, equipo: reg.estados('equipo'), desbloqueos: todos }
 }
 
 export const NOMBRE_NIVEL = ['', 'Bronce', 'Plata', 'Oro'] as const

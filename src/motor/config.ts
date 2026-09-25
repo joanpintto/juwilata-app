@@ -94,7 +94,47 @@ export interface Config {
 
   // Rangos (umbral inferior)
   rangos: { id: RangoId; nombre: string; desde: number }[]
+
+  // Logros de la casa (editables desde Ajustes → Avanzado)
+  logrosCasa: LogroCasa[]
 }
+
+/** Qué se cuenta en un logro de la casa. */
+export type MedidaCasa = AccionId | 'titular' | 'suplente' | 'no_convocado' | 'jugado' | 'mvp' | 'sin_tarjeta' | 'nota_alta'
+
+/**
+ * Regla de un logro de la casa:
+ * - total: suma en la temporada (1 meta, o 3 metas bronce/plata/oro);
+ * - racha: N partidos seguidos cumpliendo la medida (repetible);
+ * - partido: N o más en un mismo partido (repetible).
+ */
+export interface LogroCasa {
+  id: string
+  nombre: string
+  descripcion: string
+  icono: string
+  tipo: 'total' | 'racha' | 'partido'
+  medida: MedidaCasa
+  metas: number[] // 1 o 3 valores
+}
+
+export const MEDIDAS_CASA: { id: MedidaCasa; nombre: string; singular: string; plural: string; tipos: LogroCasa['tipo'][] }[] = [
+  { id: 'titular', nombre: 'Titularidades', singular: 'titular', plural: 'titulares', tipos: ['total', 'racha'] },
+  { id: 'suplente', nombre: 'Suplencias', singular: 'suplencia', plural: 'suplencias', tipos: ['total', 'racha'] },
+  { id: 'no_convocado', nombre: 'Sin convocar (las bajas no cuentan)', singular: 'sin convocar', plural: 'sin convocar', tipos: ['total', 'racha'] },
+  { id: 'jugado', nombre: 'Partidos jugados', singular: 'partido', plural: 'partidos', tipos: ['total', 'racha'] },
+  { id: 'mvp', nombre: 'MVPs', singular: 'MVP', plural: 'MVPs', tipos: ['total', 'racha'] },
+  { id: 'sin_tarjeta', nombre: 'Partidos sin tarjeta', singular: 'sin tarjeta', plural: 'sin tarjeta', tipos: ['total', 'racha'] },
+  { id: 'nota_alta', nombre: 'Partidos con 7,5 o más', singular: 'notable', plural: 'notables', tipos: ['total', 'racha'] },
+]
+
+export const LOGROS_CASA_INICIALES: LogroCasa[] = [
+  { id: 'falsas-promesas', nombre: 'Falsas promesas', descripcion: '3 partidos seguidos sin ser convocado (las bajas no cuentan).', icono: 'fantasma', tipo: 'racha', medida: 'no_convocado', metas: [3] },
+  { id: 'pata-de-palo', nombre: 'Pata de palo', descripcion: 'Falla 5 ocasiones claras en una temporada.', icono: 'palo', tipo: 'total', medida: 'ocasionFallada', metas: [5] },
+  { id: 'soldado-edy', nombre: 'Soldado de Edy', descripcion: 'Titularidades: 5, 10 y 15.', icono: 'soldado', tipo: 'total', medida: 'titular', metas: [5, 10, 15] },
+  { id: 'debut-gala', nombre: 'Debut de gala', descripcion: 'Tu primera titularidad.', icono: 'debut', tipo: 'total', medida: 'titular', metas: [1] },
+  { id: 'endrick', nombre: 'Endrick', descripcion: 'Suplencias: 5, 10 y 15.', icono: 'banco', tipo: 'total', medida: 'suplente', metas: [5, 10, 15] },
+]
 
 export type RangoId =
   | 'bronce' | 'bronce-brillante' | 'plata' | 'plata-brillante'
@@ -195,6 +235,8 @@ export const CONFIG_INICIAL: Config = {
     { id: 'elite', nombre: 'Élite', desde: 90 },
     { id: 'leyenda', nombre: 'Leyenda', desde: 95 },
   ],
+
+  logrosCasa: LOGROS_CASA_INICIALES,
 }
 
 export interface AccionDef {
