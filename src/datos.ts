@@ -1,7 +1,7 @@
 import { useLiveQuery } from 'dexie-react-hooks'
 import { useEffect, useMemo, useState } from 'react'
 import { db, type ConfigVersion, type Equipo, type Jugador, type Partido, type Temporada } from './db'
-import type { Config } from './motor/config'
+import { CONFIG_INICIAL, type Config } from './motor/config'
 import { reproducirTemporada, type Temporada as TemporadaCalculada } from './motor/temporada'
 
 export interface Datos {
@@ -26,7 +26,9 @@ export function useDatos(): Datos | undefined {
       db.configuraciones.orderBy('version').toArray(),
     ])
     if (!temporada || !configs.length) return undefined
-    return { equipo, temporada, jugadores, partidos, configs }
+    // Las configuraciones antiguas se completan con los valores nuevos que les falten.
+    const completas = configs.map((c) => ({ ...c, datos: { ...CONFIG_INICIAL, ...c.datos } }))
+    return { equipo, temporada, jugadores, partidos, configs: completas }
   })
 
   return useMemo(() => {

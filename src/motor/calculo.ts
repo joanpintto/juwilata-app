@@ -131,7 +131,7 @@ export function calcularNota(pos: Posicion, acciones: Acciones, minutos: number,
 
 /** notas: todas las notas de la temporada del jugador, la última al final. */
 export function notaPonderada(notas: number[], cfg: Config): number {
-  if (notas.length === 0) return cfg.notaNeutra
+  if (notas.length === 0) return cfg.notaBase
   const p = cfg.pesosNotaPonderada
   const ultimo = notas[notas.length - 1]
   const previas = notas.slice(-3, -1)
@@ -149,20 +149,20 @@ export function factorMinutos(minutos: number, cfg: Config): number {
   return Math.min(1, cfg.minutosBase + cfg.minutosPorMinuto * minutos)
 }
 
-/** Cambio de media por la evolución (sin premio de MVP). */
-export function cambioMedia(np: number, mediaActual: number, minutos: number, cfg: Config): number {
+/**
+ * Cambio de media por la evolución (sin premio de MVP).
+ * - Partido malo (nota por debajo del umbral): bajada pequeña, que casi no se nota
+ *   con medias bajas y se nota más con medias altas. Bajar cuesta más que subir.
+ * - Si no: subida según la nota ponderada, que se frena sola al subir la media.
+ * No hay techo: nadie deja de poder subir.
+ */
+export function cambioMedia(np: number, nota: number, mediaActual: number, minutos: number, cfg: Config): number {
   const fm = factorMinutos(minutos, cfg)
-  if (np < cfg.notaNeutra) {
-    const bajada = cfg.bajadaPorPunto * (cfg.notaNeutra - np) * fm
+  if (nota < cfg.umbralBajada) {
+    const bajada = cfg.bajadaPorPunto * (cfg.umbralBajada - nota) * interpolar(cfg.nivelBajada, mediaActual) * fm
     return -Math.min(cfg.topeBajada, bajada)
   }
-  const techo = interpolar(cfg.techo, np)
-  if (mediaActual > techo) {
-    const bajada = cfg.bajadaSobreTecho * (mediaActual - techo) * fm
-    return -Math.min(cfg.topeBajada, bajada)
-  }
-  const freno = cfg.frenoPuntos > 0 ? clamp((techo - mediaActual) / cfg.frenoPuntos, 0, 1) : 1
-  const subida = interpolar(cfg.ritmo, np) * interpolar(cfg.multiplicadorMedia, mediaActual) * fm * freno
+  const subida = interpolar(cfg.ritmo, np) * interpolar(cfg.multiplicadorMedia, mediaActual) * fm
   return Math.min(cfg.topeSubida, Math.max(0, subida))
 }
 
@@ -278,7 +278,7 @@ export function simular(nota: number, partidos: number, cfg: Config, opciones?: 
   for (let i = 0; i < partidos; i++) {
     notas.push(nota)
     const np = notaPonderada(notas, cfg)
-    m += cambioMedia(np, m, 50, cfg)
+    m += cambioMedia(np, nota, m, 50, cfg)
     if (opciones?.mvp) m += cfg.premioMvp * factorPremio(m, cfg)
     m = clamp(m, cfg.mediaMin, cfg.mediaMax)
     res.push(m)

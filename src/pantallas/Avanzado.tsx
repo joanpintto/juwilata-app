@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { db } from '../db'
-import { conSigno, fmt1, type Datos } from '../datos'
-import { simular } from '../motor/calculo'
+import { conSigno, fmt1, fmt2, type Datos } from '../datos'
+import { cambioMedia, simular } from '../motor/calculo'
 import { CONFIG_INICIAL, type Config, type Tabla } from '../motor/config'
 import { Cabecera, Hoja } from '../componentes/ui'
 import { avisar } from '../componentes/dialogos'
@@ -66,8 +66,10 @@ function Constante({ texto, valor, onChange }: { texto: string; valor: number; o
   )
 }
 
-const NOTAS_SIM = [6.5, 7, 7.5, 8, 8.5, 9]
+const NOTAS_SIM = [6, 6.5, 7, 7.5, 8, 8.5, 9]
 const PARTIDOS_SIM = [1, 4, 8, 16, 24, 32]
+const NOTAS_PARTIDO = [4, 5, 6, 7.5, 9]
+const MEDIAS_PARTIDO = [62, 70, 78, 86, 92]
 
 export function Avanzado({ datos }: { datos: Datos }) {
   const { config, configVersion, partidos } = datos
@@ -136,9 +138,41 @@ export function Avanzado({ datos }: { datos: Datos }) {
         <p className="nota">Con MVP en los 32 partidos, un jugador de 9 acaba en {fmt1(simular(9, 32, borrador, { mvp: true })[31])}.</p>
       </section>
 
-      <EditorTabla titulo="Ritmo" ayuda="Puntos de media por partido según la nota ponderada. Entre valores se interpola." tabla={borrador.ritmo} onChange={(t) => set('ritmo', t)} etiquetaX="Nota" etiquetaY="Ritmo" />
-      <EditorTabla titulo="Multiplicador" ayuda="Según la media actual (para las subidas)." tabla={borrador.multiplicadorMedia} onChange={(t) => set('multiplicadorMedia', t)} etiquetaX="Media" etiquetaY="×" />
-      <EditorTabla titulo="Techo por nota" ayuda="Media máxima a la que lleva cada nota. Por encima, la media baja." tabla={borrador.techo} onChange={(t) => set('techo', t)} etiquetaX="Nota" etiquetaY="Techo" />
+      <section className="tarjeta">
+        <h2>Un partido, según la media</h2>
+        <p className="nota">Cuánto cambia la media en un partido completo según el nivel del jugador, si viene jugando con esa misma nota.</p>
+        <div className="simulacion">
+          <table>
+            <thead>
+              <tr>
+                <th>Media</th>
+                {NOTAS_PARTIDO.map((n) => (
+                  <th key={n}>Nota {fmt1(n)}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {MEDIAS_PARTIDO.map((m) => (
+                <tr key={m}>
+                  <th>{m}</th>
+                  {NOTAS_PARTIDO.map((n) => {
+                    const c = cambioMedia(n, n, m, 50, borrador)
+                    return (
+                      <td key={n} className={c > 0.005 ? 'sube' : c < -0.005 ? 'baja' : ''}>
+                        {conSigno(c, fmt2)}
+                      </td>
+                    )
+                  })}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <EditorTabla titulo="Ritmo" ayuda="Puntos de media por partido según la nota ponderada (si el partido no fue malo). Entre valores se interpola." tabla={borrador.ritmo} onChange={(t) => set('ritmo', t)} etiquetaX="Nota" etiquetaY="Ritmo" />
+      <EditorTabla titulo="Multiplicador" ayuda="Según la media actual: cuanto más alta, más cuesta subir." tabla={borrador.multiplicadorMedia} onChange={(t) => set('multiplicadorMedia', t)} etiquetaX="Media" etiquetaY="×" />
+      <EditorTabla titulo="Cuánto se nota la bajada" ayuda="Según la media actual: con medias bajas casi no se baja; con medias altas, algo más." tabla={borrador.nivelBajada} onChange={(t) => set('nivelBajada', t)} etiquetaX="Media" etiquetaY="×" />
 
       <section className="tarjeta">
         <h2>Nota ponderada</h2>
@@ -149,11 +183,10 @@ export function Avanzado({ datos }: { datos: Datos }) {
 
       <section className="tarjeta">
         <h2>Subidas, bajadas y minutos</h2>
-        <Constante texto="Freno antes del techo (puntos)" valor={borrador.frenoPuntos} onChange={(v) => set('frenoPuntos', v)} />
-        <Constante texto="Tope de subida por partido" valor={borrador.topeSubida} onChange={(v) => set('topeSubida', v)} />
+        <Constante texto="Se baja con una nota por debajo de" valor={borrador.umbralBajada} onChange={(v) => set('umbralBajada', v)} />
+        <Constante texto="Bajada por cada punto por debajo" valor={borrador.bajadaPorPunto} onChange={(v) => set('bajadaPorPunto', v)} />
         <Constante texto="Tope de bajada por partido" valor={borrador.topeBajada} onChange={(v) => set('topeBajada', v)} />
-        <Constante texto="Bajada por punto bajo 6,0" valor={borrador.bajadaPorPunto} onChange={(v) => set('bajadaPorPunto', v)} />
-        <Constante texto="Bajada sobre el techo (fracción)" valor={borrador.bajadaSobreTecho} onChange={(v) => set('bajadaSobreTecho', v)} />
+        <Constante texto="Tope de subida por partido" valor={borrador.topeSubida} onChange={(v) => set('topeSubida', v)} />
         <Constante texto="Factor de minutos: base" valor={borrador.minutosBase} onChange={(v) => set('minutosBase', v)} />
         <Constante texto="Factor de minutos: por minuto" valor={borrador.minutosPorMinuto} onChange={(v) => set('minutosPorMinuto', v)} />
       </section>
@@ -188,9 +221,9 @@ export function Avanzado({ datos }: { datos: Datos }) {
 
 function soloEvolucion(c: Config): Partial<Config> {
   return {
-    ritmo: c.ritmo, multiplicadorMedia: c.multiplicadorMedia, techo: c.techo, pesosNotaPonderada: c.pesosNotaPonderada,
-    frenoPuntos: c.frenoPuntos, topeSubida: c.topeSubida, topeBajada: c.topeBajada, bajadaPorPunto: c.bajadaPorPunto,
-    bajadaSobreTecho: c.bajadaSobreTecho, minutosBase: c.minutosBase, minutosPorMinuto: c.minutosPorMinuto,
+    ritmo: c.ritmo, multiplicadorMedia: c.multiplicadorMedia, nivelBajada: c.nivelBajada, pesosNotaPonderada: c.pesosNotaPonderada,
+    umbralBajada: c.umbralBajada, bajadaPorPunto: c.bajadaPorPunto, topeSubida: c.topeSubida, topeBajada: c.topeBajada,
+    minutosBase: c.minutosBase, minutosPorMinuto: c.minutosPorMinuto,
     premioMvp: c.premioMvp, premioNominado: c.premioNominado, premioDesde: c.premioDesde, premioReduccion: c.premioReduccion,
   }
 }

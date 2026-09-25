@@ -121,7 +121,7 @@ export function reproducirTemporada(
       const nota = calcularNota(a.posicion, a.acciones, a.minutos, ctx, cfg)
       e.notas.push(nota)
       const np = notaPonderada(e.notas, cfg)
-      const evolucion = cambioMedia(np, mediaAntes, a.minutos, cfg)
+      const evolucion = cambioMedia(np, nota, mediaAntes, a.minutos, cfg)
 
       // 1) Las acciones dan forma a los atributos; 2) la media la fija la evolución.
       const delta = cambiosAtributos(a.posicion, a.acciones, a.minutos, ctx, e.atributos, cfg)

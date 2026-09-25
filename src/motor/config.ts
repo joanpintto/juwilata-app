@@ -58,17 +58,15 @@ export interface Config {
 
   // Evolución de la media
   pesosNotaPonderada: { ultimo: number; dosAnteriores: number; temporada: number }
-  ritmo: Tabla // nota ponderada → puntos por partido
-  multiplicadorMedia: Tabla // media actual → multiplicador
-  techo: Tabla // nota ponderada → techo de media
-  frenoPuntos: number // la subida se frena en los N últimos puntos antes del techo
+  ritmo: Tabla // nota ponderada → puntos por partido (subidas)
+  multiplicadorMedia: Tabla // media actual → multiplicador de las subidas
+  umbralBajada: number // un partido con nota por debajo de esto hace bajar la media
+  bajadaPorPunto: number // por cada punto de nota por debajo del umbral
+  nivelBajada: Tabla // media actual → cuánto se nota la bajada (poco al principio, más arriba)
   minutosBase: number // 0,65
   minutosPorMinuto: number // 0,02
   topeSubida: number
   topeBajada: number
-  bajadaPorPunto: number // por cada punto de nota por debajo de 6,0
-  bajadaSobreTecho: number // 3% de la diferencia
-  notaNeutra: number // 6,0
   mediaMin: number
   mediaMax: number
 
@@ -139,26 +137,25 @@ export const CONFIG_INICIAL: Config = {
   },
 
   pesosNotaPonderada: { ultimo: 0.5, dosAnteriores: 0.3, temporada: 0.2 },
+  // Calibrado para que, empezando en 60 y jugando 32 partidos con la misma nota,
+  // un 6 acabe en ~75 y un 9 en ~90 (sin MVPs).
   ritmo: [
-    { x: 6.0, y: 0 }, { x: 6.5, y: 0.4 }, { x: 7.0, y: 0.53 }, { x: 7.5, y: 0.65 },
-    { x: 8.0, y: 0.8 }, { x: 8.5, y: 0.98 }, { x: 9.0, y: 1.14 },
+    { x: 5.5, y: 0 }, { x: 6.0, y: 0.4 }, { x: 6.5, y: 0.48 }, { x: 7.0, y: 0.57 }, { x: 7.5, y: 0.67 },
+    { x: 8.0, y: 0.8 }, { x: 8.5, y: 0.95 }, { x: 9.0, y: 1.14 },
   ],
   multiplicadorMedia: [
     { x: 60, y: 1.4 }, { x: 65, y: 1.25 }, { x: 70, y: 1.1 }, { x: 75, y: 1.0 }, { x: 80, y: 0.8 },
     { x: 85, y: 0.55 }, { x: 90, y: 0.35 }, { x: 95, y: 0.2 }, { x: 99, y: 0.1 },
   ],
-  techo: [
-    { x: 6.0, y: 75 }, { x: 6.5, y: 79 }, { x: 7.0, y: 83 }, { x: 7.5, y: 86 },
-    { x: 8.0, y: 89 }, { x: 8.5, y: 92 }, { x: 9.0, y: 94 },
+  umbralBajada: 5.5,
+  bajadaPorPunto: 0.2,
+  nivelBajada: [
+    { x: 60, y: 0.1 }, { x: 70, y: 0.3 }, { x: 80, y: 0.6 }, { x: 85, y: 0.85 }, { x: 90, y: 1.0 },
   ],
-  frenoPuntos: 3,
   minutosBase: 0.65,
   minutosPorMinuto: 0.02,
   topeSubida: 1.5,
-  topeBajada: 1.0,
-  bajadaPorPunto: 0.5,
-  bajadaSobreTecho: 0.03,
-  notaNeutra: 6.0,
+  topeBajada: 0.5,
   mediaMin: 60,
   mediaMax: 99,
 
