@@ -118,6 +118,10 @@ export default function App() {
       </main>
       {!enAsistente && (
         <nav className="barra">
+          <div className="barra__marca" aria-hidden="true">
+            <img src={`${import.meta.env.BASE_URL}escudo.png`} alt="" />
+            <span>{datos.equipo.nombre}</span>
+          </div>
           {PESTANAS.map((p) => (
             <button key={p.id} className={p.id === activa ? 'activa' : ''} onClick={() => ir(p.ruta)}>
               <Icono nombre={p.icono} />

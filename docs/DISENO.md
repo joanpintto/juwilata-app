@@ -445,7 +445,7 @@ La temporada aún no ha empezado, así que no hace falta cargar partidos anterio
   - logros;
   - sugerencias de IF, POTM y TOTY;
   - secuencia post-partido y notificaciones.
-- **Fase 3 (personalización y temporadas):**
+- **Fase 3 (personalización y temporadas):** ✅ construida (ver §17).
   - Ajustes → Avanzado;
   - varias temporadas con historial;
   - pantalla adaptada a tablet y ordenador.
@@ -513,3 +513,30 @@ Puntos que el diseño dejaba abiertos y que se han concretado al construir la Fa
 ### Notificaciones
 - Campana en Inicio con el número de nuevas: logros, cartas nuevas por subir de rango, IF y POTM sugeridos y aviso de copia manual.
 - Se calculan a partir de los datos; solo se guarda cuáles se han visto.
+
+---
+
+## 17. Concreciones de la Fase 3
+
+### Ajustes → Avanzado completo
+- Apartados: Evolución (con simulación), Nota (con ejemplos), Roles, Rangos, Atributos, Premios y Logros de la casa. Todo se guarda como una nueva versión de la configuración, recalculando toda la temporada o solo desde ahora.
+- Validaciones: los pesos de cada rol suman 100 y los rangos van de menor a mayor; si no, no se deja aplicar.
+- Los pesos de los roles, los rangos y los logros de la casa se aplican siempre a todo (la media visible siempre usa los pesos actuales).
+
+### Logros de la casa configurables
+- Cada uno es una regla: **total** (suma, con 1 meta o 3 niveles; por temporada o de carrera), **racha** (N partidos seguidos, repetible) o **en un partido** (N o más en un mismo partido, repetible).
+- Se puede contar: titularidades, suplencias, sin convocar (las bajas ni suman ni cortan), partidos jugados, MVPs, partidos sin tarjeta, partidos con 7,5 o más, o cualquier acción del registro.
+- Los 5 iniciales quedan como ejemplos editables (Debut de gala es de carrera; los demás, por temporada). Se pueden crear, editar y borrar, con icono propio.
+
+### Varias temporadas
+- Ajustes → Temporadas: empezar una nueva (nombre, fecha, quién sigue y si se copian los equipos de la liga), ver una anterior, renombrar y borrar (solo si no tiene partidos).
+- **Cada jugador que sigue empieza la temporada con los atributos con los que acabó la anterior**; los fichajes nuevos, con media 60. Se calcula en cadena: editar un partido de una temporada pasada cambia el punto de partida de las siguientes.
+- Los jugadores que no siguen pasan a «Ya no están en el equipo» (Plantilla → Jugadores), con su historial intacto y la opción de reincorporarlos.
+- La ficha tiene selector de temporada (estadísticas, forma, radar e historial de esa temporada) y totales de carrera.
+- **Logros de carrera** (goles, asistencias, MVPs, porterías a cero, rangos alcanzados…) suman todas las temporadas; Veterano, Juego limpio y los «total» de la casa por temporada se reinician; los de equipo cuentan por temporada.
+- Cada temporada tiene su propia lista de equipos de la liga, su calendario y sus resultados.
+
+### Tablet y ordenador
+- Desde 700 px de ancho: barra lateral estrecha con las 5 secciones y contenido centrado más ancho.
+- Desde 1100 px: menú lateral completo con el escudo y el nombre del equipo.
+- Hojas y diálogos centrados; galería de 3 o 4 columnas; el móvil sigue igual.
