@@ -18,6 +18,7 @@ import { Ajustes } from './pantallas/Ajustes'
 import { Avanzado } from './pantallas/Avanzado'
 import { Copias } from './pantallas/Copias'
 import { Premios } from './pantallas/Premios'
+import { Notificaciones } from './pantallas/Notificaciones'
 
 const PESTANAS = [
   { id: 'inicio', texto: 'Inicio', ruta: '/', icono: 'inicio' },
@@ -65,6 +66,8 @@ function Pantalla({ seg, datos }: { seg: string[]; datos: Datos }): ReactNode {
       return <DetallePartido datos={datos} id={b} />
     case 'premios':
       return <Premios datos={datos} />
+    case 'notificaciones':
+      return <Notificaciones datos={datos} />
     case 'evoluciones':
       return <Evoluciones datos={datos} vista={b} id={c} />
     case 'ajustes':

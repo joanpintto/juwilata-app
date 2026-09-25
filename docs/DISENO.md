@@ -438,7 +438,7 @@ La temporada aún no ha empezado, así que no hace falta cargar partidos anterio
   - recálculo en cascada;
   - copias de seguridad;
   - Inicio básico.
-- **Fase 2 (estadísticas, logros y emoción):**
+- **Fase 2 (estadísticas, logros y emoción):** ✅ construida (ver §16).
   - Liga: resultados entre otros equipos y clasificación (el calendario y los rivales ya están en la Fase 1);
   - Evoluciones completas (dashboard, gráficos, comparador y galería);
   - logros;
@@ -478,3 +478,36 @@ Puntos que el diseño dejaba abiertos y que se han concretado al construir la Fa
 
 ### Pendiente de la Fase 1
 - **Recorte automático del fondo de la foto** (aparcado de momento): de momento la foto se encuadra a mano (arrastrar y acercar). Recortar el fondo en el propio móvil exige un modelo de segmentación que hay que empaquetar dentro de la app (sin servicios externos).
+
+---
+
+## 16. Concreciones de la Fase 2
+
+### Liga
+- La clasificación cuenta nuestros partidos con competición «Liga» y los resultados entre otros equipos, que se apuntan por jornada en Partidos → Liga → Otros resultados.
+- Desempate: puntos, diferencia de goles, goles a favor y nombre.
+
+### Logros
+- Se calculan siempre a partir de la temporada reproducida, así que se revisan solos al editar un partido. Solo se guarda lo registrado.
+- Los contadores (goles, asistencias, MVPs, titularidades…) cuentan la temporada activa. Sumarán varias temporadas cuando llegue el historial (Fase 3).
+- **Muro:** porterías a cero jugando de portero, central o lateral más de la mitad del partido.
+- **Falsas promesas:** 3 partidos seguidos como no convocado; la baja ni suma ni corta la racha. Repetible.
+- **En racha (individual):** cada 3 partidos seguidos con 7,5 o más cuenta una vez.
+- **Líder:** ir 1º tras cualquier jornada (o ahora mismo). **Campeones:** 1º cuando todos los partidos de liga del calendario están jugados. **Temporada invicta:** jugados todos los partidos de la temporada sin perder.
+- Escudos: marco bronce/plata/oro para los de niveles (con puntos de nivel), dorado champán con interior granate para los únicos, cinta con el hito (meta alcanzada, «×n» si se repite, o la fecha), gris con barra de progreso si están pendientes.
+- Se ven en la ficha del jugador (pestaña Logros) y en Inicio (vitrina del equipo y últimos logros).
+
+### Evoluciones
+- Cuatro apartados: Ranking, Comparar (también desde la ficha), Galería (buscador y filtros por posición y rango) y Gráficos (media del equipo, evolución de hasta 4 jugadores, goles por partido y nota media por jugador).
+- Colores de las series validados para el fondo oscuro; cada jugador mantiene su color aunque se quiten otros. Al tocar un gráfico se ven los valores y hay una vista de datos en tabla.
+
+### Premios (IF, POTM, TOTY)
+- Pantalla Premios (desde Evoluciones) con botones para darlos; lo que se da queda registrado para no sugerirlo otra vez.
+- **IF:** la mejor nota ponderada de cada partido si llega a 8,0; también aparece en el detalle del partido.
+- **POTM:** «ajustado por minutos» = × mín(1, minutos jugados / 75% de los minutos posibles del mes).
+- **TOTY:** «ajustado por partidos» = × mín(1, partidos jugados / 50% de los del equipo). Producción = goles + asistencias. Defensas = centrales y laterales. Es provisional hasta acabar la temporada.
+- Todas estas constantes están en la configuración.
+
+### Notificaciones
+- Campana en Inicio con el número de nuevas: logros, cartas nuevas por subir de rango, IF y POTM sugeridos y aviso de copia manual.
+- Se calculan a partir de los datos; solo se guarda cuáles se han visto.

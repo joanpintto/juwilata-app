@@ -48,6 +48,9 @@ const TRAZOS: Record<string, ReactNode> = {
   subir: <path d="M12 16V5m0 0L7.5 9.5M12 5l4.5 4.5M5 19.5h14" />,
   deshacer: <path d="M9 7 4.5 11.5 9 16M5 11.5h9.5a5 5 0 0 1 0 10H11" />,
   estrella: <path d="m12 3.8 2.5 5.2 5.7.8-4.1 4 1 5.6L12 16.7l-5.1 2.7 1-5.6-4.1-4 5.7-.8Z" />,
+  campana: <path d="M6 16.5V11a6 6 0 0 1 12 0v5.5l1.5 2H4.5ZM10 20.5a2 2 0 0 0 4 0" />,
+  'flecha-arriba': <path d="M12 19V5M6 11l6-6 6 6" />,
+  escudo: <path d="M12 3 19 6v6c0 5-3 8.2-7 9-4-.8-7-4-7-9V6Z" />,
 }
 
 export function Icono({ nombre, tam = 22 }: { nombre: keyof typeof TRAZOS | string; tam?: number }) {

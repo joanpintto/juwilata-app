@@ -97,6 +97,7 @@ code { font-size: 12px; color: var(--dorado); }
   background: linear-gradient(135deg, #3d0714, var(--fondo-2) 70%);
 }
 .portada img { width: 46px; height: auto; }
+.portada > div { flex: 1; min-width: 0; }
 .portada h1 { font-size: 30px; font-weight: 700; line-height: 1; }
 .portada p { margin: 5px 0 0; font-size: 12.5px; color: var(--texto-2); }
 
@@ -823,3 +824,23 @@ input[type='range'] { width: 100%; accent-color: var(--dorado); }
 .sugerencia__texto { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
 .sugerencia strong { font-size: 14.5px; }
 .sugerencia span { font-size: 12px; color: var(--texto-2); }
+
+/* ─── Notificaciones ───────────────────────────────────────────────── */
+
+.campana { position: relative; width: 42px; height: 42px; border-radius: 12px; display: grid; place-items: center; background: rgba(0, 0, 0, 0.25); border: 1px solid var(--borde); flex-shrink: 0; align-self: flex-start; }
+.campana__globo {
+  position: absolute; top: -6px; right: -6px; min-width: 20px; height: 20px; padding: 0 5px; border-radius: 99px;
+  background: var(--dorado); color: #1b1410; font-size: 11.5px; font-weight: 700; display: grid; place-items: center;
+}
+.notifs { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
+.notifs li { border-bottom: 1px solid var(--borde); }
+.notifs li:last-child { border-bottom: 0; }
+.notif { width: 100%; display: flex; align-items: flex-start; gap: 12px; padding: 10px 0; text-align: left; }
+.notif > div { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.notif strong { font-size: 14.5px; }
+.notif span { font-size: 12.5px; color: var(--texto-2); line-height: 1.4; }
+.notif em { font-style: normal; font-size: 11.5px; color: var(--texto-3); white-space: nowrap; padding-top: 2px; }
+.notif--nueva strong::before { content: ''; display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: var(--dorado); margin-right: 6px; vertical-align: middle; }
+.notif__icono { width: 34px; height: 34px; border-radius: 10px; display: grid; place-items: center; flex-shrink: 0; background: var(--fondo); color: var(--dorado); }
+.notif__icono--rango { color: #7fd1a6; }
+.notif__icono--copia { color: var(--aviso); }

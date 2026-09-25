@@ -3,6 +3,7 @@ import type { EstadoJugador } from '../motor/temporada'
 import { MiniCarta } from '../componentes/Carta'
 import { disenoDe } from '../componentes/disenos'
 import { Icono } from '../componentes/ui'
+import { Campana } from './Notificaciones'
 import { EscudoLogro, Vitrina } from '../componentes/Logros'
 import { NOMBRE_NIVEL, type EstadoLogro } from '../motor/logros'
 import { nombreMes, sugerenciasIF, sugerenciasPOTM, yaTiene } from '../motor/premios'
@@ -79,6 +80,7 @@ export function Inicio({ datos }: { datos: Datos }) {
           <h1>{equipo.nombre}</h1>
           <p>Temporada {temporada.nombre} · desde {equipo.fundado}</p>
         </div>
+        <Campana datos={datos} />
       </header>
 
       {!jugadores.length ? (

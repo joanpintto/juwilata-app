@@ -155,6 +155,7 @@ class JuwilataDB extends Dexie {
   rivales!: Table<Rival, string>
   programados!: Table<Programado, string>
   resultadosLiga!: Table<ResultadoLiga, string>
+  vistas!: Table<{ id: string }, string>
 
   constructor() {
     super('juwilata')
@@ -182,6 +183,8 @@ class JuwilataDB extends Dexie {
       })
     // v4: resultados de liga entre otros equipos.
     this.version(4).stores({ resultadosLiga: 'id, temporadaId' })
+    // v5: notificaciones ya vistas (las notificaciones se calculan; aquí solo se marca lo leído).
+    this.version(5).stores({ vistas: 'id' })
   }
 }
 
