@@ -1,10 +1,10 @@
 import { useEffect, useRef, useState, type MouseEvent as EventoRaton, type PointerEvent as EventoPuntero } from 'react'
 import { db, ESQUEMAS } from '../db'
-import { SUBPESTANAS_PLANTILLA, fmt1, type Datos } from '../datos'
+import { SUBPESTANAS_PLANTILLA, fmt1, ir, type Datos } from '../datos'
 import { nombrePosicion } from '../motor/config'
 import { MiniCarta } from '../componentes/Carta'
 import { disenoDe } from '../componentes/disenos'
-import { Cabecera, Subpestanas, Vacio } from '../componentes/ui'
+import { Cabecera, Icono, Subpestanas, Vacio } from '../componentes/ui'
 
 type Seleccion = { tipo: 'slot'; id: string } | { tipo: 'banco'; jugadorId: string } | null
 type Origen = { tipo: 'slot'; id: string; jugadorId: string } | { tipo: 'banco'; jugadorId: string }
@@ -143,7 +143,15 @@ export function Formacion({ datos }: { datos: Datos }) {
 
   return (
     <>
-      <Cabecera titulo="Plantilla" sub="Formación" />
+      <Cabecera
+        titulo="Plantilla"
+        sub={`${jugadores.length} jugadores · formación ${esquema}`}
+        acciones={
+          <button className="boton boton--peq" onClick={() => ir('/jugador/nuevo')}>
+            <Icono nombre="mas" tam={18} /> Añadir
+          </button>
+        }
+      />
       <Subpestanas opciones={SUBPESTANAS_PLANTILLA} activa="formacion" />
 
       <div className="segmentos segmentos--esquemas">
@@ -155,7 +163,11 @@ export function Formacion({ datos }: { datos: Datos }) {
       </div>
 
       {jugadores.length === 0 ? (
-        <Vacio titulo="Sin jugadores" texto="Añade jugadores en la pestaña Jugadores para montar la formación." />
+        <Vacio
+          titulo="Sin jugadores"
+          texto="Añade a tu plantilla, portero incluido, para montar la formación. Todos empiezan con carta de Bronce."
+          accion={<button className="boton" onClick={() => ir('/jugador/nuevo')}>Añadir el primero</button>}
+        />
       ) : (
         <>
           <div className="campo-f7">

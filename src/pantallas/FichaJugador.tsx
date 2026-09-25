@@ -21,7 +21,7 @@ export function FichaJugador({ datos, id }: { datos: Datos; id: string }) {
   const [hojaEspecial, setHojaEspecial] = useState(false)
   const [elegido, setElegido] = useState<string | null>(null)
 
-  if (!e) return <Cabecera titulo="Jugador no encontrado" atras="/plantilla" />
+  if (!e) return <Cabecera titulo="Jugador no encontrado" atras="/plantilla/jugadores" />
   const j = e.jugador
   const rol = rolPorId(config, j.rol)
   const s = e.estadisticas
@@ -51,7 +51,7 @@ export function FichaJugador({ datos, id }: { datos: Datos; id: string }) {
       }
     })
     avisar(`${j.nombre} eliminado`)
-    ir('/plantilla', true)
+    ir('/plantilla/jugadores', true)
   }
 
   const usarComoActiva = async (d: string) => {
@@ -94,7 +94,7 @@ export function FichaJugador({ datos, id }: { datos: Datos; id: string }) {
     <>
       <Cabecera
         titulo={nombreVisible(j)}
-        atras="/plantilla"
+        atras={true}
         acciones={
           <>
             <select className="selector-temporada" value={temporada.id} aria-label="Temporada" onChange={() => {}}>

@@ -116,8 +116,8 @@ export function colorNota(nota: number): string {
 export const nombreVisible = (j: Jugador) => j.apodo?.trim() || j.nombre
 
 export const SUBPESTANAS_PLANTILLA = [
-  { id: 'jugadores', texto: 'Jugadores', ruta: '/plantilla' },
-  { id: 'formacion', texto: 'Formación', ruta: '/plantilla/formacion' },
+  { id: 'formacion', texto: 'Formación', ruta: '/plantilla' },
+  { id: 'jugadores', texto: 'Jugadores', ruta: '/plantilla/jugadores' },
 ]
 
 /** Partido registrado a partir de un partido del calendario (si lo hay). */

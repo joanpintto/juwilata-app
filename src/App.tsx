@@ -52,7 +52,7 @@ function Pantalla({ seg, datos }: { seg: string[]; datos: Datos }): ReactNode {
     case undefined:
       return <Inicio datos={datos} />
     case 'plantilla':
-      return b === 'formacion' ? <Formacion datos={datos} /> : <Jugadores datos={datos} />
+      return b === 'jugadores' ? <Jugadores datos={datos} /> : <Formacion datos={datos} />
     case 'jugador':
       if (b === 'nuevo') return <EditarJugador datos={datos} />
       if (c === 'editar') return <EditarJugador datos={datos} id={b} />

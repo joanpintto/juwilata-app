@@ -31,7 +31,7 @@ export function EditarJugador({ datos, id }: { datos: Datos; id?: string }) {
   const [archivo, setArchivo] = useState<File | null>(null)
   const [guardando, setGuardando] = useState(false)
 
-  if (id && !existente) return <Cabecera titulo="Jugador no encontrado" atras="/plantilla" />
+  if (id && !existente) return <Cabecera titulo="Jugador no encontrado" atras="/plantilla/jugadores" />
 
   const cambiarPosicion = (p: Posicion) => {
     setPosicion(p)
