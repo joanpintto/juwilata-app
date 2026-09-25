@@ -27,7 +27,19 @@ export default defineConfig({
       },
       workbox: {
         globPatterns: ['**/*.{js,css,html,png,svg,woff2}'],
+        // El recorte de fondo (modelo + motor, ~28 MB) no se descarga al instalar:
+        // solo la primera vez que se usa, y luego queda guardado para usarlo sin conexión.
+        globIgnores: ['**/recorte/**'],
         runtimeCaching: [
+          {
+            urlPattern: ({ url }) => url.pathname.includes('/recorte/'),
+            handler: 'CacheFirst',
+            options: {
+              cacheName: 'recorte-fondo',
+              expiration: { maxEntries: 10 },
+              cacheableResponse: { statuses: [0, 200] },
+            },
+          },
           {
             urlPattern: /^https:\/\/fonts\.(googleapis|gstatic)\.com\/.*/i,
             handler: 'CacheFirst',

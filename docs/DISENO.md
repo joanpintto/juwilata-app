@@ -106,7 +106,7 @@ Hay 9 roles de campo más el portero. Atributos: RIT, TIR, PAS, REG, DEF y FIS. 
   - el selector de rol solo muestra los roles de la posición elegida;
   - al guardar, **la media se recalcula al momento** con los nuevos pesos;
   - antes, la app avisa: "su media pasa de 80 a 77. ¿Confirmar?".
-- **Fotos:** el fondo se recorta en el propio dispositivo y se guarda como PNG.
+- **Fotos:** se encuadran a mano y, si se quiere, el fondo se quita automáticamente en el propio dispositivo (ver §19). Se guardan como PNG.
 
 ---
 
@@ -478,7 +478,7 @@ Puntos que el diseño dejaba abiertos y que se han concretado al construir la Fa
 - **Inicio → mejor defensa:** la mejor nota media de la temporada entre centrales y laterales.
 
 ### Pendiente de la Fase 1
-- **Recorte automático del fondo de la foto** (aparcado de momento): de momento la foto se encuadra a mano (arrastrar y acercar). Recortar el fondo en el propio móvil exige un modelo de segmentación que hay que empaquetar dentro de la app (sin servicios externos).
+- ~~Recorte automático del fondo de la foto~~: hecho, ver §19.
 
 ---
 
@@ -553,3 +553,13 @@ Decisiones del usuario: los compañeros **solo ven** (cartas, clasificación, lo
 - **Seguridad:** las tablas de Supabase están cerradas; solo se usan funciones que piden el **código** del enlace para leer (22 caracteres aleatorios) o la **clave** del administrador para escribir (32 caracteres, guardada solo en su móvil y cifrada en la nube). Cualquiera que tenga el enlace puede ver el equipo: se manda solo al grupo.
 - **Plan gratuito de Supabase:** sobra (500 MB y 5 GB de descarga al mes). Si nadie abre la app en una semana, Supabase pausa el proyecto; se reactiva desde su web.
 - Configuración: `.env` (dirección y clave pública) y `docs/supabase.sql` (se pega en Supabase → SQL Editor).
+
+---
+
+## 19. Recorte automático del fondo
+
+- En el editor de la foto hay un botón **✂️ Quitar fondo** (y otro para volver a ponerlo). En una foto ya guardada, **"Encuadrar o quitar fondo"** la abre de nuevo en el editor.
+- Se hace **en el propio móvil** con el modelo de segmentación de personas de MediaPipe (`selfie_multiclass_256x256`), empaquetado dentro de la app en `public/recorte/`. **La foto nunca sale del dispositivo.**
+- El modelo pesa unos **28 MB** y no va en la instalación inicial: se descarga la primera vez que se pulsa el botón (la app avisa) y queda guardado; a partir de ahí funciona sin conexión.
+- Se eligió el modelo multiclase frente al pequeño (250 KB) porque deja el borde limpio, sin halo de color alrededor del jugador.
+- Mientras se ve sin fondo, detrás aparece un damero para que se note la transparencia; en la carta el jugador queda directamente sobre el fondo de la carta.

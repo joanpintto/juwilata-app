@@ -506,7 +506,13 @@ input[type='range'] { width: 100%; accent-color: var(--dorado); }
 }
 
 .foto-editor { max-width: 340px; }
-.foto-editor__lienzo { width: 70%; margin: 0 auto; aspect-ratio: 360 / 450; border-radius: 12px; background: #0e0e0f; touch-action: none; display: block; }
+.foto-editor__marco { position: relative; width: 70%; margin: 0 auto; border-radius: 12px; overflow: hidden; background: #0e0e0f; }
+.foto-editor__marco--sin-fondo { background: repeating-conic-gradient(#2a2a2e 0 25%, #1c1c1f 0 50%) 0 0 / 18px 18px; }
+.foto-editor__lienzo { width: 100%; aspect-ratio: 360 / 450; touch-action: none; display: block; }
+.foto-editor__trabajando { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; padding: 14px; text-align: center; font-size: 0.85rem; line-height: 1.35; background: rgb(14 14 15 / 0.82); }
+.cargando-punto { width: 26px; height: 26px; border-radius: 50%; border: 3px solid rgb(204 163 124 / 0.25); border-top-color: var(--dorado); animation: girar-punto 0.8s linear infinite; }
+@keyframes girar-punto { to { transform: rotate(360deg); } }
+.editor-carta__acciones-foto { display: flex; gap: 18px; justify-content: center; flex-wrap: wrap; }
 
 /* ─── Calendario ───────────────────────────────────────────────────── */
 

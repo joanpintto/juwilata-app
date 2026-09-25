@@ -28,7 +28,7 @@ export function EditarJugador({ datos, id }: { datos: Datos; id?: string }) {
   const [pierna, setPierna] = useState<Pierna>(existente?.pierna ?? 'derecha')
   const [secundarias, setSecundarias] = useState<Posicion[]>(existente?.secundarias ?? [])
   const [foto, setFoto] = useState<string | null>(existente?.foto ?? null)
-  const [archivo, setArchivo] = useState<File | null>(null)
+  const [archivo, setArchivo] = useState<File | string | null>(null)
   const [guardando, setGuardando] = useState(false)
 
   if (id && !existente) return <Cabecera titulo="Jugador no encontrado" atras="/plantilla/jugadores" />
@@ -131,7 +131,10 @@ export function EditarJugador({ datos, id }: { datos: Datos; id?: string }) {
           />
         </label>
         {foto && (
-          <button className="enlace" onClick={() => setFoto(null)}>Quitar foto</button>
+          <div className="editor-carta__acciones-foto">
+            <button className="enlace" onClick={() => setArchivo(foto)}>✂️ Encuadrar o quitar fondo</button>
+            <button className="enlace" onClick={() => setFoto(null)}>Quitar foto</button>
+          </div>
         )}
       </div>
 
@@ -208,7 +211,7 @@ export function EditarJugador({ datos, id }: { datos: Datos; id?: string }) {
 
       {archivo && (
         <FotoEditor
-          archivo={archivo}
+          origen={archivo}
           onCancelar={() => setArchivo(null)}
           onListo={(png) => {
             setFoto(png)
