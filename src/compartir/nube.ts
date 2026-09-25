@@ -19,7 +19,9 @@ export async function rpc<T>(funcion: string, args: Record<string, unknown>): Pr
       method: 'POST',
       headers: {
         apikey: NUBE_CLAVE_PUBLICA,
-        Authorization: `Bearer ${NUBE_CLAVE_PUBLICA}`,
+        // La clave clásica (anon, un JWT «eyJ…») va también como Authorization; la nueva
+        // (sb_publishable_…) solo en apikey.
+        ...(NUBE_CLAVE_PUBLICA.startsWith('eyJ') ? { Authorization: `Bearer ${NUBE_CLAVE_PUBLICA}` } : {}),
         'Content-Type': 'application/json',
       },
       body: JSON.stringify(args),
