@@ -1,0 +1,242 @@
+// Configuración editable: todas las constantes de las fórmulas viven aquí
+// y se guardan en la base de datos con número de versión (Ajustes → Avanzado).
+// Nada de la lógica del motor debe tener números «a fuego».
+
+export type Posicion = 'POR' | 'DFC' | 'LAT' | 'MED' | 'DEL'
+export type Atributos = [number, number, number, number, number, number]
+
+export const POSICIONES: { id: Posicion; nombre: string; plural: string; corto: string }[] = [
+  { id: 'POR', nombre: 'Portero', plural: 'Porteros', corto: 'POR' },
+  { id: 'DFC', nombre: 'Central', plural: 'Centrales', corto: 'DFC' },
+  { id: 'LAT', nombre: 'Lateral', plural: 'Laterales', corto: 'LAT' },
+  { id: 'MED', nombre: 'Centrocampista', plural: 'Centrocampistas', corto: 'MED' },
+  { id: 'DEL', nombre: 'Delantero', plural: 'Delanteros', corto: 'DEL' },
+]
+
+export const ETIQUETAS_CAMPO = ['RIT', 'TIR', 'PAS', 'REG', 'DEF', 'FIS'] as const
+export const ETIQUETAS_PORTERO = ['REF', 'EST', 'BLO', 'COL', 'SAQ', 'FIS'] as const
+
+export interface RolDef {
+  id: string
+  nombre: string
+  sigla: string
+  posicion: Posicion
+  pesos: Atributos // en %, suman 100
+}
+
+export type Tabla = { x: number; y: number }[]
+
+export type AccionId =
+  | 'gol' | 'asistencia' | 'paseClave' | 'ocasionCreada' | 'disparoPuerta' | 'regate'
+  | 'recuperacion' | 'intercepcion' | 'entrada' | 'despeje' | 'duelo'
+  | 'ocasionFallada' | 'error' | 'perdida'
+  | 'propia' | 'amarilla' | 'roja' | 'penaltiCometido' | 'penaltiFallado'
+  | 'parada' | 'paradaDificil' | 'penaltiParado' | 'golEncajado' | 'salida'
+
+export interface Config {
+  // Jugadores y atributos
+  roles: RolDef[]
+  atributosBase: number // 60
+  atributosEscala: number // 30
+  atributoMin: number
+  atributoMax: number
+
+  // Nota del partido
+  notaBase: number
+  ajusteResultado: { ganarAmplio: number; ganar: number; empate: number; perder: number; perderAmplio: number }
+  margenAmplio: number // 3 goles o más
+  ofensivas: Partial<Record<AccionId, number>>
+  defensivas: Partial<Record<AccionId, number>>
+  porteriaCeroCampo: Record<Exclude<Posicion, 'POR'>, number>
+  multiplicadores: Record<Posicion, { of: number; def: number }>
+  negativasPosicion: Record<'ocasionFallada' | 'error' | 'perdida', Record<Posicion, number>>
+  negativasGenerales: Partial<Record<AccionId, number>>
+  portero: {
+    parada: number; paradaDificil: number; penaltiParado: number; porteriaCero: number
+    golEncajado: number; salida: number; gol: number; asistencia: number
+  }
+
+  // Evolución de la media
+  pesosNotaPonderada: { ultimo: number; dosAnteriores: number; temporada: number }
+  ritmo: Tabla // nota ponderada → puntos por partido
+  multiplicadorMedia: Tabla // media actual → multiplicador
+  techo: Tabla // nota ponderada → techo de media
+  frenoPuntos: number // la subida se frena en los N últimos puntos antes del techo
+  minutosBase: number // 0,65
+  minutosPorMinuto: number // 0,02
+  topeSubida: number
+  topeBajada: number
+  bajadaPorPunto: number // por cada punto de nota por debajo de 6,0
+  bajadaSobreTecho: number // 3% de la diferencia
+  notaNeutra: number // 6,0
+  mediaMin: number
+  mediaMax: number
+
+  // MVP
+  premioMvp: number
+  premioNominado: number
+  premioDesde: number // 75
+  premioRango: number // 24
+  premioReduccion: number // 0,6
+
+  // Atributos por acciones
+  atribTope: number // ±0,4 por atributo y partido
+  atribFactorSecundario: number // «y un poco»
+  atribMinutos: { desde: number; valor: number } // muchos minutos → FIS
+  correctorCada: number
+  correctorUmbral: number
+  correctorAjuste: number
+
+  // Rangos (umbral inferior)
+  rangos: { id: RangoId; nombre: string; desde: number }[]
+}
+
+export type RangoId =
+  | 'bronce' | 'bronce-brillante' | 'plata' | 'plata-brillante'
+  | 'oro' | 'oro-brillante' | 'elite' | 'leyenda'
+
+export const CONFIG_INICIAL: Config = {
+  roles: [
+    { id: 'DC', nombre: 'Delantero Posicional', sigla: 'DC', posicion: 'DEL', pesos: [15, 35, 10, 15, 5, 20] },
+    { id: 'DM', nombre: 'Delantero Móvil', sigla: 'DM', posicion: 'DEL', pesos: [22, 25, 13, 22, 5, 13] },
+    { id: 'MCO', nombre: 'MC Ofensivo', sigla: 'MCO', posicion: 'MED', pesos: [12, 20, 28, 24, 8, 8] },
+    { id: 'MC', nombre: 'MC Box to Box', sigla: 'MC', posicion: 'MED', pesos: [18, 13, 20, 15, 16, 18] },
+    { id: 'MCD', nombre: 'MC Defensivo', sigla: 'MCD', posicion: 'MED', pesos: [10, 8, 27, 15, 22, 18] },
+    { id: 'CAR', nombre: 'Lateral Carrilero', sigla: 'CAR', posicion: 'LAT', pesos: [26, 14, 19, 20, 12, 9] },
+    { id: 'LAT', nombre: 'Lateral Defensivo', sigla: 'LAT', posicion: 'LAT', pesos: [21, 10, 18, 11, 23, 17] },
+    { id: 'DFS', nombre: 'Central de Salida', sigla: 'DFS', posicion: 'DFC', pesos: [9, 5, 27, 10, 34, 15] },
+    { id: 'DFC', nombre: 'Central de Contención', sigla: 'DFC', posicion: 'DFC', pesos: [8, 3, 12, 4, 48, 25] },
+    { id: 'POC', nombre: 'Portero Clásico', sigla: 'POR', posicion: 'POR', pesos: [25, 22, 20, 18, 5, 10] },
+    { id: 'POL', nombre: 'Portero Líbero', sigla: 'POR', posicion: 'POR', pesos: [20, 15, 13, 20, 20, 12] },
+  ],
+  atributosBase: 60,
+  atributosEscala: 30,
+  atributoMin: 1,
+  atributoMax: 99,
+
+  notaBase: 6.0,
+  ajusteResultado: { ganarAmplio: 0.35, ganar: 0.2, empate: 0, perder: -0.2, perderAmplio: -0.35 },
+  margenAmplio: 3,
+  ofensivas: { gol: 1.2, asistencia: 0.8, paseClave: 0.25, ocasionCreada: 0.2, disparoPuerta: 0.15, regate: 0.15 },
+  defensivas: { recuperacion: 0.15, intercepcion: 0.15, entrada: 0.15, despeje: 0.1, duelo: 0.1 },
+  porteriaCeroCampo: { DFC: 0.5, LAT: 0.4, MED: 0.3, DEL: 0.2 },
+  multiplicadores: {
+    DEL: { of: 1.0, def: 1.35 },
+    MED: { of: 1.15, def: 1.1 },
+    LAT: { of: 1.2, def: 1.2 },
+    DFC: { of: 1.35, def: 1.0 },
+    POR: { of: 1.0, def: 1.0 },
+  },
+  negativasPosicion: {
+    ocasionFallada: { DEL: -1.0, MED: -0.87, LAT: -0.83, DFC: -0.7, POR: -0.7 },
+    error: { DEL: -0.8, MED: -0.9, LAT: -1.0, DFC: -1.1, POR: -1.1 },
+    perdida: { DEL: -0.3, MED: -0.35, LAT: -0.4, DFC: -0.45, POR: -0.45 },
+  },
+  negativasGenerales: { propia: -1.5, amarilla: -0.5, roja: -2.0, penaltiCometido: -0.6, penaltiFallado: -0.6 },
+  portero: {
+    parada: 0.25, paradaDificil: 0.5, penaltiParado: 1.5, porteriaCero: 1.0,
+    golEncajado: -0.3, salida: 0.15, gol: 2.5, asistencia: 1.5,
+  },
+
+  pesosNotaPonderada: { ultimo: 0.5, dosAnteriores: 0.3, temporada: 0.2 },
+  ritmo: [
+    { x: 6.0, y: 0 }, { x: 6.5, y: 0.4 }, { x: 7.0, y: 0.53 }, { x: 7.5, y: 0.65 },
+    { x: 8.0, y: 0.8 }, { x: 8.5, y: 0.98 }, { x: 9.0, y: 1.14 },
+  ],
+  multiplicadorMedia: [
+    { x: 60, y: 1.4 }, { x: 65, y: 1.25 }, { x: 70, y: 1.1 }, { x: 75, y: 1.0 }, { x: 80, y: 0.8 },
+    { x: 85, y: 0.55 }, { x: 90, y: 0.35 }, { x: 95, y: 0.2 }, { x: 99, y: 0.1 },
+  ],
+  techo: [
+    { x: 6.0, y: 75 }, { x: 6.5, y: 79 }, { x: 7.0, y: 83 }, { x: 7.5, y: 86 },
+    { x: 8.0, y: 89 }, { x: 8.5, y: 92 }, { x: 9.0, y: 94 },
+  ],
+  frenoPuntos: 3,
+  minutosBase: 0.65,
+  minutosPorMinuto: 0.02,
+  topeSubida: 1.5,
+  topeBajada: 1.0,
+  bajadaPorPunto: 0.5,
+  bajadaSobreTecho: 0.03,
+  notaNeutra: 6.0,
+  mediaMin: 60,
+  mediaMax: 99,
+
+  premioMvp: 0.2,
+  premioNominado: 0.1,
+  premioDesde: 75,
+  premioRango: 24,
+  premioReduccion: 0.6,
+
+  atribTope: 0.4,
+  atribFactorSecundario: 0.35,
+  atribMinutos: { desde: 40, valor: 0.05 },
+  correctorCada: 5,
+  correctorUmbral: 4.5,
+  correctorAjuste: 0.4,
+
+  rangos: [
+    { id: 'bronce', nombre: 'Bronce', desde: 60 },
+    { id: 'bronce-brillante', nombre: 'Bronce Brillante', desde: 65 },
+    { id: 'plata', nombre: 'Plata', desde: 70 },
+    { id: 'plata-brillante', nombre: 'Plata Brillante', desde: 75 },
+    { id: 'oro', nombre: 'Oro', desde: 80 },
+    { id: 'oro-brillante', nombre: 'Oro Brillante', desde: 85 },
+    { id: 'elite', nombre: 'Élite', desde: 90 },
+    { id: 'leyenda', nombre: 'Leyenda', desde: 95 },
+  ],
+}
+
+export interface AccionDef {
+  id: AccionId
+  nombre: string
+  icono: string
+  grupo: 'ofensiva' | 'defensiva' | 'negativa' | 'portero'
+  soloPortero?: boolean
+}
+
+// Catálogo de acciones que se pueden registrar en un partido (solo nombres e iconos).
+export const ACCIONES: AccionDef[] = [
+  { id: 'gol', nombre: 'Gol', icono: '⚽', grupo: 'ofensiva' },
+  { id: 'asistencia', nombre: 'Asistencia', icono: '🅰', grupo: 'ofensiva' },
+  { id: 'paseClave', nombre: 'Pase clave', icono: '🔑', grupo: 'ofensiva' },
+  { id: 'ocasionCreada', nombre: 'Ocasión creada', icono: '✨', grupo: 'ofensiva' },
+  { id: 'disparoPuerta', nombre: 'Disparo a puerta', icono: '🎯', grupo: 'ofensiva' },
+  { id: 'regate', nombre: 'Regate', icono: '🌀', grupo: 'ofensiva' },
+  { id: 'recuperacion', nombre: 'Recuperación', icono: '🧲', grupo: 'defensiva' },
+  { id: 'intercepcion', nombre: 'Intercepción', icono: '✋', grupo: 'defensiva' },
+  { id: 'entrada', nombre: 'Entrada ganada', icono: '🦵', grupo: 'defensiva' },
+  { id: 'despeje', nombre: 'Despeje', icono: '🧹', grupo: 'defensiva' },
+  { id: 'duelo', nombre: 'Duelo ganado', icono: '💪', grupo: 'defensiva' },
+  { id: 'parada', nombre: 'Parada', icono: '🧤', grupo: 'portero', soloPortero: true },
+  { id: 'paradaDificil', nombre: 'Parada difícil', icono: '🦘', grupo: 'portero', soloPortero: true },
+  { id: 'penaltiParado', nombre: 'Penalti parado', icono: '🛑', grupo: 'portero', soloPortero: true },
+  { id: 'salida', nombre: 'Salida ganada', icono: '🚀', grupo: 'portero', soloPortero: true },
+  { id: 'golEncajado', nombre: 'Gol encajado', icono: '🥅', grupo: 'portero', soloPortero: true },
+  { id: 'ocasionFallada', nombre: 'Ocasión clara fallada', icono: '😬', grupo: 'negativa' },
+  { id: 'error', nombre: 'Error', icono: '⚠️', grupo: 'negativa' },
+  { id: 'perdida', nombre: 'Pérdida peligrosa', icono: '💨', grupo: 'negativa' },
+  { id: 'propia', nombre: 'Gol en propia', icono: '🙈', grupo: 'negativa' },
+  { id: 'amarilla', nombre: 'Amarilla', icono: '🟨', grupo: 'negativa' },
+  { id: 'roja', nombre: 'Roja', icono: '🟥', grupo: 'negativa' },
+  { id: 'penaltiCometido', nombre: 'Penalti cometido', icono: '🚫', grupo: 'negativa' },
+  { id: 'penaltiFallado', nombre: 'Penalti fallado', icono: '❌', grupo: 'negativa' },
+]
+
+export const ACCIONES_RAPIDAS: AccionId[] = ['gol', 'asistencia', 'amarilla']
+
+export function rolPorId(cfg: Config, id: string): RolDef {
+  return cfg.roles.find((r) => r.id === id) ?? cfg.roles[0]
+}
+
+export function rolesDePosicion(cfg: Config, pos: Posicion): RolDef[] {
+  return cfg.roles.filter((r) => r.posicion === pos)
+}
+
+export function nombrePosicion(pos: Posicion): string {
+  return POSICIONES.find((p) => p.id === pos)?.nombre ?? pos
+}
+
+export function etiquetas(pos: Posicion): readonly string[] {
+  return pos === 'POR' ? ETIQUETAS_PORTERO : ETIQUETAS_CAMPO
+}

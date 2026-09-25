@@ -1,6 +1,6 @@
 # Juwilata United: documento de diseño
 
-Fuente de verdad de la app. Todo lo que aparece aquí está **cerrado**, salvo lo que se marca como pendiente. Última actualización: 25-09-2026.
+Fuente de verdad de la app. Todo lo que aparece aquí está **cerrado**, salvo lo que se marca como pendiente. Última actualización: 25-09-2026 (Fase 1).
 
 ---
 
@@ -416,7 +416,7 @@ La temporada aún no ha empezado, así que no hace falta cargar partidos anterio
   - cuenta de GitHub y proyecto publicado solo;
   - este documento dentro del proyecto;
   - primera versión instalada en el iPhone.
-- **Fase 1 (la app de cada jornada):**
+- **Fase 1 (la app de cada jornada):** ✅ construida (ver §15 para lo que queda pendiente de ella).
   - Ajustes → Avanzado básico: edición de las tablas de evolución, con simulación y recálculo;
   - configuración del equipo;
   - jugadores (portero incluido);
@@ -438,3 +438,33 @@ La temporada aún no ha empezado, así que no hace falta cargar partidos anterio
   - varias temporadas con historial;
   - pantalla adaptada a tablet y ordenador.
 - **Fase 4 (compartir con el equipo, futuro):** sincronización y servidor, por decidir.
+
+---
+
+## 15. Concreciones de la Fase 1
+
+Puntos que el diseño dejaba abiertos y que se han concretado al construir la Fase 1. Todos los valores numéricos están en la configuración (Ajustes → Avanzado), no en la lógica.
+
+### Algoritmo
+- **Media y atributos:** la media la fija la fórmula de evolución (§6.2). Las acciones (§6.3) solo cambian la *forma* de los atributos: después, el cambio que falta para llegar a la nueva media se reparte por igual entre los 6 atributos. Así la media de la carta es siempre la media ponderada real.
+- **Nota ponderada con pocos partidos:** si aún no hay 2 partidos anteriores, se usa lo que haya y se reparten los pesos. En el primer partido, la nota ponderada es la nota del partido.
+- **Bajada por nota baja:** se mira la nota ponderada (igual que el ritmo). Con nota ponderada por debajo de 6,0 solo se aplica esa bajada, no la del techo.
+- **Techo para 6,0:** 75 (el documento empezaba en 6,5). Editable.
+- **Media visible:** la parte entera (80,9 se ve 80), para que cuadre con los rangos y con «faltan X para…».
+- **Portero:** ocasión clara fallada, error y pérdida peligrosa usan los valores del central. Pase clave y demás acciones ofensivas suman su valor normal.
+- **«Y un poco»** en los atributos = 35% del efecto principal. Jugar 40 minutos o más sube FIS +0,05.
+- **Corrector suave:** compara cada atributo con el perfil esperado para su rol y su media (no con la media a secas); si se aleja más de 4,5, se acerca 0,4, sin cambiar la media.
+- **Sin MVP:** si se pulsa «Ningún MVP esta jornada», nadie recibe premio (tampoco los nominados).
+- **Minutos:** los suplentes empiezan con 0. Quien juega 0 minutos no tiene nota ni evolución. La portería a cero cuenta si juega más de la mitad del partido.
+- **Cambio de rol:** cada actuación guarda la posición y el rol que tenía el jugador ese día, así que cambiar de rol no reescribe partidos pasados. Si el jugador aún no ha jugado, sus atributos iniciales se rehacen para el nuevo rol.
+- **Ajustes → Avanzado:** «solo desde ahora» se consigue guardando la configuración con número de versión; cada partido recuerda con qué versión se calculó.
+
+### Pantallas y datos
+- **Formación:** 4 esquemas de F7 (1-3-2-1, 1-2-3-1, 1-3-1-2, 1-2-2-2). En la Fase 1 se cambia tocando (arrastrar queda pendiente).
+- **Registro:** botón «Usar la formación» para marcar titulares de un toque. Si solo juega un portero, sus goles encajados se rellenan con el marcador.
+- **Deshacer:** la última acción sobre partidos (registrar, editar o borrar) se puede deshacer.
+- **Inicio → mejor defensa:** la mejor nota media de la temporada entre centrales y laterales.
+
+### Pendiente de la Fase 1
+- **Recorte automático del fondo de la foto:** de momento la foto se encuadra a mano (arrastrar y acercar). Recortar el fondo en el propio móvil exige un modelo de segmentación que hay que empaquetar dentro de la app (sin servicios externos).
+- **Diseños de carta:** las 11 plantillas aprobadas no estaban en el proyecto; las cartas actuales (8 rangos + IF, POTM y TOTY) son una versión provisional en SVG con la forma y la distribución de §7.2, a sustituir por las aprobadas.

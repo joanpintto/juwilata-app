@@ -7,10 +7,12 @@
     "dev": "vite",
     "build": "tsc -b && vite build",
     "lint": "oxlint",
+    "verificar": "node --experimental-strip-types scripts/verificar-motor.ts",
     "preview": "vite preview"
   },
   "dependencies": {
     "dexie": "^4.4.6",
+    "dexie-react-hooks": "^4.4.0",
     "react": "^19.2.8",
     "react-dom": "^19.2.8"
   },

@@ -1,101 +1,109 @@
-import { useEffect, useState } from 'react'
-import { registrarApertura, pedirAlmacenamientoPersistente, type Diagnostico } from './db'
+import { useEffect, useState, type ReactNode } from 'react'
+import { inicializar, pedirAlmacenamientoPersistente, registrarApertura } from './db'
+import { ir, useDatos, useRuta, type Datos } from './datos'
+import { DialogosRaiz, Icono } from './componentes/ui'
+import { Inicio } from './pantallas/Inicio'
+import { Jugadores } from './pantallas/Jugadores'
+import { Formacion } from './pantallas/Formacion'
+import { FichaJugador } from './pantallas/FichaJugador'
+import { EditarJugador } from './pantallas/EditarJugador'
+import { Partidos, Liga } from './pantallas/Partidos'
+import { DetallePartido } from './pantallas/DetallePartido'
+import { RegistroPartido } from './pantallas/RegistroPartido'
+import { Evoluciones } from './pantallas/Evoluciones'
+import { Ajustes } from './pantallas/Ajustes'
+import { Avanzado } from './pantallas/Avanzado'
+import { Copias } from './pantallas/Copias'
 
-function esInstalada(): boolean {
-  const iosStandalone = (navigator as Navigator & { standalone?: boolean }).standalone === true
-  return iosStandalone || window.matchMedia('(display-mode: standalone)').matches
+const PESTANAS = [
+  { id: 'inicio', texto: 'Inicio', ruta: '/', icono: 'inicio' },
+  { id: 'plantilla', texto: 'Plantilla', ruta: '/plantilla', icono: 'plantilla' },
+  { id: 'partidos', texto: 'Partidos', ruta: '/partidos', icono: 'partidos' },
+  { id: 'evoluciones', texto: 'Evoluciones', ruta: '/evoluciones', icono: 'evoluciones' },
+  { id: 'ajustes', texto: 'Ajustes', ruta: '/ajustes', icono: 'ajustes' },
+]
+
+function pestanaDe(seg: string[]): string {
+  switch (seg[0]) {
+    case 'plantilla':
+    case 'jugador':
+      return 'plantilla'
+    case 'partidos':
+    case 'partido':
+      return 'partidos'
+    case 'evoluciones':
+      return 'evoluciones'
+    case 'ajustes':
+      return 'ajustes'
+    default:
+      return 'inicio'
+  }
 }
 
-function formatear(iso: string): string {
-  return new Date(iso).toLocaleString('es-ES', { dateStyle: 'medium', timeStyle: 'short' })
-}
-
-type Estado = 'ok' | 'aviso' | 'error'
-
-function Fila({ estado, titulo, detalle }: { estado: Estado; titulo: string; detalle: string }) {
-  return (
-    <li className={`fila fila--${estado}`}>
-      <span className="fila__punto" aria-hidden="true" />
-      <div>
-        <div className="fila__titulo">{titulo}</div>
-        <div className="fila__detalle">{detalle}</div>
-      </div>
-    </li>
-  )
+function Pantalla({ seg, datos }: { seg: string[]; datos: Datos }): ReactNode {
+  const [a, b, c] = seg
+  switch (a) {
+    case undefined:
+      return <Inicio datos={datos} />
+    case 'plantilla':
+      return b === 'formacion' ? <Formacion datos={datos} /> : <Jugadores datos={datos} />
+    case 'jugador':
+      if (b === 'nuevo') return <EditarJugador datos={datos} />
+      if (c === 'editar') return <EditarJugador datos={datos} id={b} />
+      return <FichaJugador datos={datos} id={b} />
+    case 'partidos':
+      return b === 'liga' ? <Liga /> : <Partidos datos={datos} />
+    case 'partido':
+      if (b === 'nuevo') return <RegistroPartido datos={datos} />
+      if (c === 'editar') return <RegistroPartido datos={datos} id={b} />
+      return <DetallePartido datos={datos} id={b} />
+    case 'evoluciones':
+      return <Evoluciones datos={datos} />
+    case 'ajustes':
+      if (b === 'avanzado') return <Avanzado datos={datos} />
+      if (b === 'copias') return <Copias datos={datos} />
+      return <Ajustes datos={datos} />
+    default:
+      return <Inicio datos={datos} />
+  }
 }
 
 export default function App() {
-  const [diag, setDiag] = useState<Diagnostico | null>(null)
-  const [persistente, setPersistente] = useState<boolean | null | undefined>(undefined)
-  const [errorDB, setErrorDB] = useState<string | null>(null)
-  const instalada = esInstalada()
+  const [listo, setListo] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const ruta = useRuta()
+  const datos = useDatos()
+  const seg = ruta.split('/').filter(Boolean)
+  const activa = pestanaDe(seg)
+  const enAsistente = seg[0] === 'partido' && (seg[1] === 'nuevo' || seg[2] === 'editar')
 
   useEffect(() => {
-    registrarApertura().then(setDiag).catch((e) => setErrorDB(String(e)))
-    pedirAlmacenamientoPersistente().then(setPersistente).catch(() => setPersistente(null))
+    inicializar()
+      .then(() => setListo(true))
+      .catch((e) => setError(String(e)))
+    registrarApertura().catch(() => {})
+    pedirAlmacenamientoPersistente().catch(() => {})
   }, [])
 
+  if (error) return <main className="app"><p className="error-grave">No se pudo abrir la base de datos: {error}</p></main>
+  if (!listo || !datos) return <main className="app app--cargando"><img src={`${import.meta.env.BASE_URL}escudo.png`} alt="" className="cargando" /></main>
+
   return (
-    <main className="app">
-      <header className="cabecera">
-        <img src={`${import.meta.env.BASE_URL}escudo.png`} alt="Escudo del Juwilata United" className="cabecera__escudo" />
-        <div>
-          <h1>Juwilata United</h1>
-          <p className="cabecera__sub">Fase 0 · comprobación de instalación</p>
-        </div>
-      </header>
-
-      <section className="tarjeta">
-        <h2>Estado</h2>
-        <ul className="lista">
-          <Fila
-            estado={instalada ? 'ok' : 'aviso'}
-            titulo={instalada ? 'Instalada en la pantalla de inicio' : 'Abierta desde el navegador'}
-            detalle={instalada ? 'Perfecto: así Safari no borra los datos.' : 'Instálala siguiendo los pasos de abajo y ábrela desde el icono.'}
-          />
-          <Fila
-            estado={errorDB ? 'error' : diag ? 'ok' : 'aviso'}
-            titulo={errorDB ? 'Error al guardar datos' : diag ? 'Los datos se guardan' : 'Comprobando almacenamiento…'}
-            detalle={
-              errorDB
-                ? errorDB
-                : diag
-                  ? `Veces abierta: ${diag.aperturas} · primera: ${formatear(diag.primeraApertura)}`
-                  : ' '
-            }
-          />
-          <Fila
-            estado={persistente === true ? 'ok' : persistente === undefined ? 'aviso' : 'aviso'}
-            titulo={
-              persistente === true
-                ? 'Almacenamiento persistente concedido'
-                : persistente === undefined
-                  ? 'Comprobando almacenamiento persistente…'
-                  : 'Almacenamiento persistente no concedido'
-            }
-            detalle={
-              persistente === true
-                ? 'El navegador no borrará los datos por falta de espacio.'
-                : 'En iPhone se concede al usarla instalada. Las copias de seguridad serán la red de seguridad.'
-            }
-          />
-        </ul>
-        <p className="nota">Cierra la app del todo y vuelve a abrirla: si «Veces abierta» sube, los datos sobreviven.</p>
-      </section>
-
-      {!instalada && (
-        <section className="tarjeta">
-          <h2>Instalar en iPhone</h2>
-          <ol className="pasos">
-            <li>Abre esta página en <strong>Safari</strong>.</li>
-            <li>Pulsa el botón <strong>Compartir</strong> (el cuadrado con la flecha hacia arriba).</li>
-            <li>Elige <strong>Añadir a pantalla de inicio</strong> y confirma.</li>
-            <li>Abre la app desde el nuevo icono del escudo.</li>
-          </ol>
-        </section>
+    <>
+      <main className={`app ${enAsistente ? 'app--sin-barra' : ''}`}>
+        <Pantalla seg={seg} datos={datos} />
+      </main>
+      {!enAsistente && (
+        <nav className="barra">
+          {PESTANAS.map((p) => (
+            <button key={p.id} className={p.id === activa ? 'activa' : ''} onClick={() => ir(p.ruta)}>
+              <Icono nombre={p.icono} />
+              <span>{p.texto}</span>
+            </button>
+          ))}
+        </nav>
       )}
-
-      <footer className="pie">Versión 0.0.1 · los datos solo viven en este dispositivo</footer>
-    </main>
+      <DialogosRaiz />
+    </>
   )
 }
