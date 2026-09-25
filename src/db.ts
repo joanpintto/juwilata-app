@@ -91,6 +91,17 @@ export interface Programado {
   competicion: string
 }
 
+/** Resultado de un partido de liga entre otros dos equipos (solo el marcador). */
+export interface ResultadoLiga {
+  id: string
+  temporadaId: string
+  jornada: number
+  localId: string
+  visitanteId: string
+  golesLocal: number
+  golesVisitante: number
+}
+
 export interface Partido {
   id: string
   temporadaId: string
@@ -143,6 +154,7 @@ class JuwilataDB extends Dexie {
   deshacer!: Table<Deshacer, string>
   rivales!: Table<Rival, string>
   programados!: Table<Programado, string>
+  resultadosLiga!: Table<ResultadoLiga, string>
 
   constructor() {
     super('juwilata')
@@ -168,6 +180,8 @@ class JuwilataDB extends Dexie {
           j.atributosIniciales = atributosIniciales(rolPorId(cfg, j.rolInicial).pesos, cfg)
         })
       })
+    // v4: resultados de liga entre otros equipos.
+    this.version(4).stores({ resultadosLiga: 'id, temporadaId' })
   }
 }
 
@@ -268,14 +282,18 @@ export interface Exportacion {
   configuraciones: ConfigVersion[]
   rivales?: Rival[]
   programados?: Programado[]
+  resultadosLiga?: ResultadoLiga[]
 }
 
 export async function exportarDatos(): Promise<Exportacion> {
-  const [equipo, temporadas, jugadores, partidos, configuraciones, rivales, programados] = await Promise.all([
+  const [equipo, temporadas, jugadores, partidos, configuraciones, rivales, programados, resultadosLiga] = await Promise.all([
     db.equipo.get('equipo'), db.temporadas.toArray(), db.jugadores.toArray(), db.partidos.toArray(), db.configuraciones.toArray(),
-    db.rivales.toArray(), db.programados.toArray(),
+    db.rivales.toArray(), db.programados.toArray(), db.resultadosLiga.toArray(),
   ])
-  return { app: 'juwilata-united', formato: 1, exportado: new Date().toISOString(), equipo: equipo!, temporadas, jugadores, partidos, configuraciones, rivales, programados }
+  return {
+    app: 'juwilata-united', formato: 1, exportado: new Date().toISOString(), equipo: equipo!,
+    temporadas, jugadores, partidos, configuraciones, rivales, programados, resultadosLiga,
+  }
 }
 
 export function validarExportacion(x: unknown): Exportacion {
@@ -288,17 +306,19 @@ export function validarExportacion(x: unknown): Exportacion {
     d.jugadores.every((j) => typeof j.id === 'string' && typeof j.nombre === 'string' && Array.isArray(j.atributosIniciales)) &&
     d.partidos.every((p) => typeof p.id === 'string' && Array.isArray(p.actuaciones)) &&
     (d.rivales === undefined || Array.isArray(d.rivales)) &&
-    (d.programados === undefined || Array.isArray(d.programados))
+    (d.programados === undefined || Array.isArray(d.programados)) &&
+    (d.resultadosLiga === undefined || Array.isArray(d.resultadosLiga))
   if (!ok) throw new Error('El archivo no es una copia válida de Juwilata United.')
   return d
 }
 
 export async function importarDatos(d: Exportacion): Promise<void> {
-  const tablas = [db.equipo, db.temporadas, db.jugadores, db.partidos, db.configuraciones, db.deshacer, db.rivales, db.programados]
+  const tablas = [db.equipo, db.temporadas, db.jugadores, db.partidos, db.configuraciones, db.deshacer, db.rivales, db.programados, db.resultadosLiga]
   await db.transaction('rw', tablas, async () => {
     await Promise.all(tablas.map((t) => t.clear()))
     await db.rivales.bulkPut(d.rivales ?? [])
     await db.programados.bulkPut(d.programados ?? [])
+    await db.resultadosLiga.bulkPut(d.resultadosLiga ?? [])
     await db.equipo.put(d.equipo)
     await db.temporadas.bulkPut(d.temporadas)
     // Los atributos iniciales siempre salen de la fórmula (media 60,0), también en copias antiguas.

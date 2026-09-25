@@ -1,6 +1,6 @@
 import { useLiveQuery } from 'dexie-react-hooks'
 import { useEffect, useMemo, useState } from 'react'
-import { db, type ConfigVersion, type Equipo, type Jugador, type Partido, type Programado, type Rival, type Temporada } from './db'
+import { db, type ConfigVersion, type Equipo, type Jugador, type Partido, type Programado, type ResultadoLiga, type Rival, type Temporada } from './db'
 import { CONFIG_INICIAL, type Config } from './motor/config'
 import { reproducirTemporada, type Temporada as TemporadaCalculada } from './motor/temporada'
 
@@ -12,6 +12,7 @@ export interface Datos {
   configs: ConfigVersion[]
   rivales: Rival[]
   programados: Programado[]
+  resultadosLiga: ResultadoLiga[]
   config: Config
   configVersion: number
   calculo: TemporadaCalculada
@@ -21,18 +22,19 @@ export function useDatos(): Datos | undefined {
   const base = useLiveQuery(async () => {
     const equipo = await db.equipo.get('equipo')
     if (!equipo) return undefined
-    const [temporada, jugadores, partidos, configs, rivales, programados] = await Promise.all([
+    const [temporada, jugadores, partidos, configs, rivales, programados, resultadosLiga] = await Promise.all([
       db.temporadas.get(equipo.temporadaActivaId),
       db.jugadores.toArray(),
       db.partidos.where('temporadaId').equals(equipo.temporadaActivaId).toArray(),
       db.configuraciones.orderBy('version').toArray(),
       db.rivales.toArray(),
       db.programados.where('temporadaId').equals(equipo.temporadaActivaId).toArray(),
+      db.resultadosLiga.where('temporadaId').equals(equipo.temporadaActivaId).toArray(),
     ])
     if (!temporada || !configs.length) return undefined
     // Las configuraciones antiguas se completan con los valores nuevos que les falten.
     const completas = configs.map((c) => ({ ...c, datos: { ...CONFIG_INICIAL, ...c.datos } }))
-    return { equipo, temporada, jugadores, partidos, configs: completas, rivales, programados }
+    return { equipo, temporada, jugadores, partidos, configs: completas, rivales, programados, resultadosLiga }
   })
 
   return useMemo(() => {

@@ -1,13 +1,14 @@
 import { useState } from 'react'
-import { db, nuevoId, type Programado, type Rival } from '../db'
+import { db, nuevoId, type Programado, type ResultadoLiga, type Rival } from '../db'
 import { SUBPESTANAS_PARTIDOS, fechaCorta, ir, nombreRival, partidoDe, proximoPartido, type Datos } from '../datos'
 import { SelectorRival } from '../componentes/SelectorRival'
 import { rivalPorNombre } from '../componentes/rivales'
-import { Cabecera, Hoja, Icono, Subpestanas, Vacio } from '../componentes/ui'
+import { Cabecera, Contador, Hoja, Icono, Subpestanas, Vacio } from '../componentes/ui'
+import { NOSOTROS, clasificacion, partidosLiga } from '../motor/liga'
 import { avisar, confirmar } from '../componentes/dialogos'
 
-// Liga (Fase 1): calendario de nuestros partidos y equipos de la liga.
-// La clasificación y los resultados entre otros equipos llegan en la Fase 2.
+// Liga: clasificación, calendario de nuestros partidos, resultados entre otros
+// equipos y lista de equipos de la liga.
 
 interface Borrador {
   id: string | null
@@ -103,8 +104,78 @@ function FormProgramado({ inicial, rivales, programados, temporadaId, onCerrar }
   )
 }
 
+interface BorradorResultado {
+  id: string | null
+  jornada: string
+  localId: string
+  visitanteId: string
+  golesLocal: number
+  golesVisitante: number
+}
+
+function FormResultado({ inicial, rivales, temporadaId, onCerrar }: { inicial: BorradorResultado; rivales: Rival[]; temporadaId: string; onCerrar: () => void }) {
+  const [b, setB] = useState(inicial)
+  const guardar = async (otro: boolean) => {
+    const jornada = Number(b.jornada)
+    if (!Number.isInteger(jornada) || jornada < 1 || jornada > 99) return avisar('La jornada debe ser un número del 1 al 99.')
+    if (!b.localId || !b.visitanteId) return avisar('Elige los dos equipos.')
+    if (b.localId === b.visitanteId) return avisar('Un equipo no puede jugar contra sí mismo.')
+    const r: ResultadoLiga = { id: b.id ?? nuevoId(), temporadaId, jornada, localId: b.localId, visitanteId: b.visitanteId, golesLocal: b.golesLocal, golesVisitante: b.golesVisitante }
+    await db.resultadosLiga.put(r)
+    avisar('Resultado guardado')
+    if (otro) setB({ ...b, id: null, localId: '', visitanteId: '', golesLocal: 0, golesVisitante: 0 })
+    else onCerrar()
+  }
+  const selector = (valor: string, cambiar: (v: string) => void, otro: string) => (
+    <select className="select" value={valor} onChange={(e) => cambiar(e.target.value)}>
+      <option value="" disabled>Elige equipo…</option>
+      {rivales.filter((r) => r.id !== otro).map((r) => (
+        <option key={r.id} value={r.id}>{r.nombre}</option>
+      ))}
+    </select>
+  )
+  return (
+    <div className="formulario">
+      <label className="campo campo--corto">
+        <span>Jornada</span>
+        <input value={b.jornada} onChange={(e) => setB({ ...b, jornada: e.target.value.replace(/\D/g, '').slice(0, 2) })} inputMode="numeric" />
+      </label>
+      <div className="resultado-form">
+        <div className="campo">
+          <span>Local</span>
+          {selector(b.localId, (v) => setB({ ...b, localId: v }), b.visitanteId)}
+        </div>
+        <Contador valor={b.golesLocal} onChange={(v) => setB({ ...b, golesLocal: v })} max={50} />
+      </div>
+      <div className="resultado-form">
+        <div className="campo">
+          <span>Visitante</span>
+          {selector(b.visitanteId, (v) => setB({ ...b, visitanteId: v }), b.localId)}
+        </div>
+        <Contador valor={b.golesVisitante} onChange={(v) => setB({ ...b, golesVisitante: v })} max={50} />
+      </div>
+      <div className="dialogo__botones">
+        {!b.id && <button className="boton boton--sec" onClick={() => guardar(true)}>Guardar y otro</button>}
+        <button className="boton" onClick={() => guardar(false)}>Guardar</button>
+      </div>
+    </div>
+  )
+}
+
 export function Liga({ datos }: { datos: Datos }) {
-  const { programados, rivales, partidos, temporada } = datos
+  const { programados, rivales, partidos, temporada, resultadosLiga, equipo } = datos
+  const [formRes, setFormRes] = useState<BorradorResultado | null>(null)
+  const lista = partidosLiga(partidos, programados, resultadosLiga, rivales)
+  const tabla = clasificacion(lista, rivales, equipo.nombre)
+  const jornadasOtros = [...new Set(resultadosLiga.map((r) => r.jornada))].sort((a, b) => b - a)
+  const ultimaJornada = Math.max(0, ...lista.map((p) => p.jornada ?? 0))
+  const nombreEq = (id: string) => nombreRival(rivales, id, '?')
+
+  const borrarResultado = async () => {
+    if (!formRes?.id) return
+    await db.resultadosLiga.delete(formRes.id)
+    setFormRes(null)
+  }
   const [form, setForm] = useState<Borrador | null>(null)
   const [menu, setMenu] = useState<Programado | null>(null)
   const [rivalEdit, setRivalEdit] = useState<Rival | null>(null)
@@ -152,8 +223,8 @@ export function Liga({ datos }: { datos: Datos }) {
 
   const borrarRival = async () => {
     if (!rivalEdit) return
-    if (programados.some((g) => g.rivalId === rivalEdit.id)) {
-      avisar('Tiene partidos en el calendario: quítalos antes.')
+    if (programados.some((g) => g.rivalId === rivalEdit.id) || resultadosLiga.some((r) => r.localId === rivalEdit.id || r.visitanteId === rivalEdit.id)) {
+      avisar('Tiene partidos en el calendario o resultados: quítalos antes.')
       return
     }
     await db.rivales.delete(rivalEdit.id)
@@ -172,6 +243,45 @@ export function Liga({ datos }: { datos: Datos }) {
         }
       />
       <Subpestanas opciones={SUBPESTANAS_PARTIDOS} activa="liga" />
+
+      <section className="tarjeta">
+        <h2>Clasificación</h2>
+        {rivales.length === 0 ? (
+          <p className="nota">Añade los equipos de la liga (abajo) para ver la clasificación.</p>
+        ) : (
+          <div className="clasificacion">
+            <table>
+              <thead>
+                <tr>
+                  <th />
+                  <th className="izq">Equipo</th>
+                  <th>PJ</th>
+                  <th>V</th>
+                  <th>E</th>
+                  <th>D</th>
+                  <th>DG</th>
+                  <th>Pts</th>
+                </tr>
+              </thead>
+              <tbody>
+                {tabla.map((f, i) => (
+                  <tr key={f.id} className={f.id === NOSOTROS ? 'nosotros' : ''}>
+                    <td className="pos">{i + 1}</td>
+                    <td className="izq nombre">{f.nombre}</td>
+                    <td>{f.pj}</td>
+                    <td>{f.v}</td>
+                    <td>{f.e}</td>
+                    <td>{f.d}</td>
+                    <td>{f.gf - f.gc > 0 ? '+' : ''}{f.gf - f.gc}</td>
+                    <td className="pts">{f.pts}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+        <p className="nota">Cuentan los partidos con competición «Liga». 3 puntos por victoria y 1 por empate.</p>
+      </section>
 
       <section className="tarjeta">
         <h2>Calendario</h2>
@@ -212,6 +322,39 @@ export function Liga({ datos }: { datos: Datos }) {
       </section>
 
       <section className="tarjeta">
+        <div className="tarjeta__cab">
+          <h2>Otros resultados</h2>
+          <button
+            className="boton boton--peq boton--sec"
+            disabled={rivales.length < 2}
+            onClick={() => setFormRes({ id: null, jornada: String(Math.max(1, ultimaJornada)), localId: '', visitanteId: '', golesLocal: 0, golesVisitante: 0 })}
+          >
+            <Icono nombre="mas" tam={16} /> Añadir
+          </button>
+        </div>
+        {jornadasOtros.length === 0 ? (
+          <p className="nota">Apunta los resultados de los demás partidos de cada jornada para que la clasificación sea completa.</p>
+        ) : (
+          jornadasOtros.map((j) => (
+            <div key={j} className="jornada">
+              <span className="jornada__titulo">Jornada {j}</span>
+              {resultadosLiga.filter((r) => r.jornada === j).map((r) => (
+                <button
+                  key={r.id}
+                  className="resultado"
+                  onClick={() => setFormRes({ id: r.id, jornada: String(r.jornada), localId: r.localId, visitanteId: r.visitanteId, golesLocal: r.golesLocal, golesVisitante: r.golesVisitante })}
+                >
+                  <span className="resultado__eq">{nombreEq(r.localId)}</span>
+                  <strong>{r.golesLocal} - {r.golesVisitante}</strong>
+                  <span className="resultado__eq resultado__eq--der">{nombreEq(r.visitanteId)}</span>
+                </button>
+              ))}
+            </div>
+          ))
+        )}
+      </section>
+
+      <section className="tarjeta">
         <h2>Equipos de la liga</h2>
         <div className="fila-campos fila-campos--boton">
           <input className="input" value={nuevoRival} onChange={(e) => setNuevoRival(e.target.value)} placeholder="Añadir equipo…" onKeyDown={(e) => e.key === 'Enter' && anadirRival()} />
@@ -231,7 +374,6 @@ export function Liga({ datos }: { datos: Datos }) {
         )}
       </section>
 
-      <p className="nota centro">La clasificación y los resultados entre otros equipos llegan en la Fase 2.</p>
 
       <Hoja abierta={!!form} onCerrar={() => setForm(null)} titulo={form?.id ? 'Editar partido' : 'Programar partido'}>
         {form && <FormProgramado inicial={form} rivales={rivales} programados={programados} temporadaId={temporada.id} onCerrar={() => setForm(null)} />}
@@ -253,6 +395,15 @@ export function Liga({ datos }: { datos: Datos }) {
               <span>{menu.aplazado ? 'Vuelve a contar como pendiente.' : 'Mantiene su número de jornada. Cuando tenga nueva fecha, edítalo.'}</span>
             </button>
             <button className="hoja__opcion hoja__opcion--peligro" onClick={() => eliminar(menu)}>Quitar del calendario</button>
+          </>
+        )}
+      </Hoja>
+
+      <Hoja abierta={!!formRes} onCerrar={() => setFormRes(null)} titulo={formRes?.id ? 'Editar resultado' : 'Añadir resultado'}>
+        {formRes && (
+          <>
+            <FormResultado inicial={formRes} rivales={rivales} temporadaId={temporada.id} onCerrar={() => setFormRes(null)} />
+            {formRes.id && <button className="enlace enlace--peligro" onClick={borrarResultado}>Borrar este resultado</button>}
           </>
         )}
       </Hoja>
