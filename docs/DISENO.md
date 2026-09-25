@@ -338,7 +338,13 @@ Idea: **subir es lo normal y bajar cuesta mucho**. No hay techo: cualquier jugad
 - **Adelantado a la Fase 1:** equipos de la liga (rivales), calendario de nuestros partidos (jornada, rival, fecha y hora opcionales, local o visitante), botón de aplazar y «Registrar resultado» desde el calendario. En el registro de partido el rival se elige de la lista. Inicio muestra el próximo partido.
 
 ### Experiencia post-partido y notificaciones
-- **Secuencia animada al confirmar:** resultado → destacados → cambios de media → carta → MVP. Se salta tocando la pantalla y se puede desactivar.
+- **Secuencia animada al confirmar** (adelantada a la Fase 1), a pantalla completa:
+  1. **Resultado:** escudos, marcador en grande y «Victoria / Empate / Derrota» (confeti si se gana);
+  2. **Protagonistas:** mejor nota con su carta, goleadores, asistentes, portería a cero y tarjetas;
+  3. **Cambios de media:** cada jugador con su nota, barra animada y media antes → después;
+  4. **Cartas nuevas:** solo si alguien sube de rango, con su carta nueva;
+  5. **MVP:** la carta del MVP en grande con rayos dorados y los otros dos nominados a los lados.
+  Se avanza tocando la pantalla, «Saltar» va directo al partido y se puede desactivar en Ajustes. La pantalla del partido repite el marcador grande y el podio del MVP, con un botón «Ver resumen animado».
 - **Notificaciones** solo dentro de la app.
 
 ## 11. Logros (solo estéticos)

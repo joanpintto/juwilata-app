@@ -77,6 +77,20 @@ export function Ajustes({ datos }: { datos: Datos }) {
         {cambiado && <button className="boton" onClick={guardar}>Guardar</button>}
       </section>
 
+      <section className="tarjeta">
+        <label className="interruptor">
+          <div>
+            <strong>Secuencia al confirmar un partido</strong>
+            <span>Resultado, protagonistas, medias, cartas nuevas y MVP, a pantalla completa.</span>
+          </div>
+          <input
+            type="checkbox"
+            checked={equipo.secuenciaPostPartido !== false}
+            onChange={(e) => db.equipo.update('equipo', { secuenciaPostPartido: e.target.checked })}
+          />
+        </label>
+      </section>
+
       <section className="tarjeta menu">
         <button onClick={() => ir('/ajustes/copias')}>
           <div>

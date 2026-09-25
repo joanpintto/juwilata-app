@@ -4,13 +4,16 @@ import { ACCIONES } from '../motor/config'
 import { MiniCarta } from '../componentes/Carta'
 import { disenoDe } from '../componentes/disenos'
 import { Cabecera, Icono } from '../componentes/ui'
+import { MarcadorHero, PodioMvp } from '../componentes/Marcador'
+import { resumenPartido } from './resumenPartido'
 import { avisar, confirmar } from '../componentes/dialogos'
 import { BannerDeshacer } from './Partidos'
 
 export function DetallePartido({ datos, id }: { datos: Datos; id: string }) {
   const { calculo, equipo, config } = datos
   const r = calculo.partidos.find((x) => x.partido.id === id)
-  if (!r) return <Cabecera titulo="Partido no encontrado" atras="/partidos" />
+  const resumen = resumenPartido(datos, id)
+  if (!r || !resumen) return <Cabecera titulo="Partido no encontrado" atras="/partidos" />
   const p = r.partido
 
   const eliminar = async () => {
@@ -37,8 +40,8 @@ export function DetallePartido({ datos, id }: { datos: Datos; id: string }) {
   return (
     <>
       <Cabecera
-        titulo={`${p.local ? 'vs' : 'en'} ${p.rival}`}
-        sub={`${fechaLarga(p.fecha)} · ${p.competicion}`}
+        titulo={resumen.jornada ? `Jornada ${resumen.jornada}` : p.competicion}
+        sub={`${fechaLarga(p.fecha)}${resumen.jornada ? ` · ${p.competicion}` : ''}`}
         atras="/partidos"
         acciones={
           <button className="boton-icono" onClick={() => ir(`/partido/${p.id}/editar`)} aria-label="Editar partido">
@@ -48,11 +51,30 @@ export function DetallePartido({ datos, id }: { datos: Datos; id: string }) {
       />
       <BannerDeshacer />
 
-      <section className="tarjeta marcador">
-        <span>{p.local ? equipo.nombre : p.rival}</span>
-        <strong>{p.local ? `${p.golesFavor} - ${p.golesContra}` : `${p.golesContra} - ${p.golesFavor}`}</strong>
-        <span>{p.local ? p.rival : equipo.nombre}</span>
+      <section className="tarjeta tarjeta--hero">
+        <MarcadorHero resumen={resumen} equipo={equipo.nombre} />
+        {(resumen.goleadores.length > 0 || resumen.asistentes.length > 0) && (
+          <div className="hero__detalle">
+            {resumen.goleadores.length > 0 && (
+              <span>⚽ {resumen.goleadores.map((g) => `${nombreVisible(g.e.jugador)}${g.n > 1 ? ` ×${g.n}` : ''}`).join(', ')}</span>
+            )}
+            {resumen.asistentes.length > 0 && (
+              <span>🅰 {resumen.asistentes.map((g) => `${nombreVisible(g.e.jugador)}${g.n > 1 ? ` ×${g.n}` : ''}`).join(', ')}</span>
+            )}
+          </div>
+        )}
       </section>
+
+      {(resumen.mvp || resumen.nominados.length > 0) && (
+        <section className="tarjeta tarjeta--podio">
+          <h2>{resumen.mvp ? 'MVP de la jornada' : 'Nominados (sin MVP)'}</h2>
+          <PodioMvp resumen={resumen} config={config} compacto />
+        </section>
+      )}
+
+      <button className="boton boton--sec boton--ancho" onClick={() => ir(`/partido/${p.id}/resumen`)}>
+        <Icono nombre="estrella" tam={18} /> Ver resumen animado
+      </button>
 
       <section className="tarjeta">
         <h2>Actuaciones</h2>

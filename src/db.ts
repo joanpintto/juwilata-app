@@ -24,6 +24,7 @@ export interface Equipo {
   formacion: { esquema: string; slots: Record<string, string | null> }
   partidosDesdeExportacion: number
   ultimaExportacion: string | null
+  secuenciaPostPartido?: boolean // animación al confirmar (por defecto, sí)
 }
 
 export interface Temporada {

@@ -12,6 +12,7 @@ import { Partidos } from './pantallas/Partidos'
 import { Liga } from './pantallas/Liga'
 import { DetallePartido } from './pantallas/DetallePartido'
 import { RegistroPartido } from './pantallas/RegistroPartido'
+import { SecuenciaPartido } from './pantallas/SecuenciaPartido'
 import { Evoluciones } from './pantallas/Evoluciones'
 import { Ajustes } from './pantallas/Ajustes'
 import { Avanzado } from './pantallas/Avanzado'
@@ -58,6 +59,7 @@ function Pantalla({ seg, datos }: { seg: string[]; datos: Datos }): ReactNode {
     case 'partido':
       if (b === 'nuevo') return <RegistroPartido key={c ?? 'nuevo'} datos={datos} programadoId={c} />
       if (c === 'editar') return <RegistroPartido datos={datos} id={b} />
+      if (c === 'resumen') return <SecuenciaPartido datos={datos} id={b} recordarCopia={seg[3] === 'copia'} />
       return <DetallePartido datos={datos} id={b} />
     case 'evoluciones':
       return <Evoluciones datos={datos} />
@@ -77,7 +79,7 @@ export default function App() {
   const datos = useDatos()
   const seg = ruta.split('/').filter(Boolean)
   const activa = pestanaDe(seg)
-  const enAsistente = seg[0] === 'partido' && (seg[1] === 'nuevo' || seg[2] === 'editar')
+  const enAsistente = seg[0] === 'partido' && (seg[1] === 'nuevo' || seg[2] === 'editar' || seg[2] === 'resumen')
 
   useEffect(() => {
     inicializar()

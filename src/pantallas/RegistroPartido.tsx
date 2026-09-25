@@ -168,9 +168,15 @@ export function RegistroPartido({ datos, id, programadoId }: { datos: Datos; id?
         if (!original) await db.equipo.update('equipo', { partidosDesdeExportacion: equipo.partidosDesdeExportacion + 1 })
       })
       await copiaAutomatica(`${original ? 'Edición' : 'Partido'} vs ${final.rival} (${final.golesFavor}-${final.golesContra})`)
+      const tocaCopia = !original && equipo.partidosDesdeExportacion + 1 >= 4
+      if (!original && equipo.secuenciaPostPartido !== false) {
+        // La secuencia animada recuerda la copia manual al terminar.
+        ir(`/partido/${final.id}/resumen${tocaCopia ? '/copia' : ''}`, true)
+        return
+      }
       avisar(original ? 'Partido actualizado y temporada recalculada' : 'Partido confirmado')
       ir(`/partido/${final.id}`, true)
-      if (!original && equipo.partidosDesdeExportacion + 1 >= 4) {
+      if (tocaCopia) {
         const exportar = await confirmar({
           titulo: 'Toca copia manual',
           texto: `Llevas ${equipo.partidosDesdeExportacion + 1} partidos sin exportar una copia. Guárdala en Archivos o iCloud por si pierdes el móvil.`,
