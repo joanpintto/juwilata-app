@@ -250,7 +250,8 @@ Con los 32 MVPs, el jugador de 9 acaba en ~92,4: es el máximo alcanzable en una
 - **Centro:** la foto real.
 - **Abajo:** el nombre o apodo, y las 6 estadísticas en una fila.
 - **Esquina superior derecha:** el escudo.
-- Las cartas se generan en SVG con los datos reales, a partir de las 11 plantillas aprobadas.
+- Las cartas se generan en SVG con los datos reales, a partir de las 11 plantillas aprobadas (`npm run cartas` las prepara para la app en `public/cartas/`, sin la foto de ejemplo; los originales se guardan fuera del repositorio porque llevan la foto de un jugador real).
+- **Tendencia:** píldora verde «▲ n» con lo que subió la media en su último partido (redondeado; solo «▲» si fue menos de medio punto). Si bajó, píldora granate «▼ n».
 
 ### 7.3 Mini-carta (Formación, listas y banquillo)
 
@@ -463,8 +464,8 @@ Puntos que el diseño dejaba abiertos y que se han concretado al construir la Fa
 - **Formación:** 4 esquemas de F7 (1-3-2-1, 1-2-3-1, 1-3-1-2, 1-2-2-2). En la Fase 1 se cambia tocando (arrastrar queda pendiente).
 - **Registro:** botón «Usar la formación» para marcar titulares de un toque. Si solo juega un portero, sus goles encajados se rellenan con el marcador.
 - **Deshacer:** la última acción sobre partidos (registrar, editar o borrar) se puede deshacer.
+- **Tipografía:** Barlow Condensed se sirve desde la propia app (extraída de las plantillas de carta), así funciona sin conexión.
 - **Inicio → mejor defensa:** la mejor nota media de la temporada entre centrales y laterales.
 
 ### Pendiente de la Fase 1
 - **Recorte automático del fondo de la foto:** de momento la foto se encuadra a mano (arrastrar y acercar). Recortar el fondo en el propio móvil exige un modelo de segmentación que hay que empaquetar dentro de la app (sin servicios externos).
-- **Diseños de carta:** las 11 plantillas aprobadas no estaban en el proyecto; las cartas actuales (8 rangos + IF, POTM y TOTY) son una versión provisional en SVG con la forma y la distribución de §7.2, a sustituir por las aprobadas.

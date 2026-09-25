@@ -2,6 +2,7 @@ import { useEffect, useState, type ReactNode } from 'react'
 import { inicializar, pedirAlmacenamientoPersistente, registrarApertura } from './db'
 import { ir, useDatos, useRuta, type Datos } from './datos'
 import { DialogosRaiz, Icono } from './componentes/ui'
+import { precargarCartas } from './componentes/plantillas'
 import { Inicio } from './pantallas/Inicio'
 import { Jugadores } from './pantallas/Jugadores'
 import { Formacion } from './pantallas/Formacion'
@@ -79,6 +80,7 @@ export default function App() {
 
   useEffect(() => {
     inicializar()
+      .then(() => precargarCartas())
       .then(() => setListo(true))
       .catch((e) => setError(String(e)))
     registrarApertura().catch(() => {})

@@ -5,7 +5,7 @@ import { useEffect, useRef, useState } from 'react'
 // (El recorte automático del fondo queda pendiente: ver docs/DISENO.md §5.3.)
 
 const ANCHO = 360
-const ALTO = 434 // misma proporción que el hueco de la foto en la carta
+const ALTO = 450 // misma proporción que el hueco de la foto en la carta (388×485)
 
 export function FotoEditor({ archivo, onListo, onCancelar }: { archivo: File; onListo: (png: string) => void; onCancelar: () => void }) {
   const lienzo = useRef<HTMLCanvasElement>(null)

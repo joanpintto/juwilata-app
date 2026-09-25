@@ -1,3 +1,8 @@
+@font-face { font-family: 'Barlow Condensed'; font-weight: 600; font-style: normal; font-display: swap; src: url('/fuentes/barlow-condensed-600.woff2') format('woff2'); }
+@font-face { font-family: 'Barlow Condensed'; font-weight: 700; font-style: normal; font-display: swap; src: url('/fuentes/barlow-condensed-700.woff2') format('woff2'); }
+@font-face { font-family: 'Barlow Condensed'; font-weight: 800; font-style: normal; font-display: swap; src: url('/fuentes/barlow-condensed-800.woff2') format('woff2'); }
+@font-face { font-family: 'Barlow Condensed'; font-weight: 800; font-style: italic; font-display: swap; src: url('/fuentes/barlow-condensed-800-italic.woff2') format('woff2'); }
+
 :root {
   --fondo: #161617;
   --fondo-2: #1f1f21;
@@ -202,9 +207,10 @@ input[type='range'] { width: 100%; accent-color: var(--dorado); }
 
 /* ─── Cartas ───────────────────────────────────────────────────────── */
 
-.carta, .minicarta { display: block; overflow: visible; }
-.carta { filter: drop-shadow(0 10px 22px rgba(0, 0, 0, 0.45)); }
-.minicarta { filter: drop-shadow(0 3px 6px rgba(0, 0, 0, 0.4)); }
+.carta, .minicarta { display: block; flex-shrink: 0; }
+.carta svg, .minicarta svg { display: block; }
+.carta__hueco { aspect-ratio: 464 / 632; }
+.minicarta__hueco { aspect-ratio: 396 / 564; border-radius: 8px; background: var(--fondo-3); }
 .ficha-carta { width: 72%; max-width: 280px; margin: 4px auto 0; animation: aparecer 0.35s ease-out; }
 @keyframes aparecer { from { opacity: 0; transform: translateY(8px) scale(0.98); } }
 
@@ -474,4 +480,4 @@ input[type='range'] { width: 100%; accent-color: var(--dorado); }
 }
 
 .foto-editor { max-width: 340px; }
-.foto-editor__lienzo { width: 70%; margin: 0 auto; aspect-ratio: 360 / 434; border-radius: 12px; background: #0e0e0f; touch-action: none; display: block; }
+.foto-editor__lienzo { width: 70%; margin: 0 auto; aspect-ratio: 360 / 450; border-radius: 12px; background: #0e0e0f; touch-action: none; display: block; }

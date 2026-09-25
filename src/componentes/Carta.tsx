@@ -1,108 +1,150 @@
-import { useId } from 'react'
+import { useEffect, useId, useMemo, useState } from 'react'
 import type { Jugador } from '../db'
 import { mediaVisible } from '../motor/calculo'
 import { etiquetas, rolPorId, type Atributos, type Config } from '../motor/config'
-import { DISENOS, type Diseno } from './disenos'
 import { nombreVisible } from '../datos'
+import { DISENOS } from './disenos'
+import { cargarPlantilla, plantillaLista } from './plantillas'
 
-// Forma plana con corona arriba y punta abajo (viewBox 300×420).
-const FORMA = 'M16 58 Q16 44 30 44 L112 44 L128 20 L150 34 L172 20 L188 44 L270 44 Q284 44 284 58 L284 328 L150 408 L16 328 Z'
+// Las cartas son las 11 plantillas aprobadas (public/cartas/*.svg, generadas
+// con `npm run cartas`). Aquí solo se rellenan con los datos del jugador.
 
-const ESCUDO = `${import.meta.env.BASE_URL}escudo.png`
+const SVG_NS = 'http://www.w3.org/2000/svg'
 
-function Silueta({ color }: { color: string }) {
-  return (
-    <g fill={color} opacity="0.35">
-      <circle cx="165" cy="118" r="38" />
-      <path d="M95 250 Q98 172 165 166 Q232 172 235 250 Z" />
-    </g>
-  )
+function usePlantilla(archivo: string): Document | null {
+  const [, setVersion] = useState(0)
+  useEffect(() => {
+    if (!plantillaLista(archivo)) cargarPlantilla(archivo).then(() => setVersion((v) => v + 1)).catch(() => {})
+  }, [archivo])
+  return plantillaLista(archivo)
 }
 
-function Defs({ uid, d }: { uid: string; d: Diseno }) {
-  return (
-    <defs>
-      <linearGradient id={`${uid}f`} x1="0" y1="0" x2="0.35" y2="1">
-        <stop offset="0" stopColor={d.fondo[0]} />
-        <stop offset="1" stopColor={d.fondo[1]} />
-      </linearGradient>
-      <linearGradient id={`${uid}m`} x1="0" y1="0" x2="1" y2="1">
-        {d.marco.map((c, i) => (
-          <stop key={i} offset={d.marco.length === 1 ? 0 : i / (d.marco.length - 1)} stopColor={c} />
-        ))}
-      </linearGradient>
-      <linearGradient id={`${uid}v`} x1="0" y1="0" x2="0" y2="1">
-        <stop offset="0.55" stopColor="#fff" stopOpacity="1" />
-        <stop offset="1" stopColor="#fff" stopOpacity="0" />
-      </linearGradient>
-      <mask id={`${uid}k`}>
-        <rect x="0" y="0" width="300" height="270" fill={`url(#${uid}v)`} />
-      </mask>
-      <clipPath id={`${uid}c`}>
-        <path d={FORMA} />
-      </clipPath>
-      <radialGradient id={`${uid}b`}>
-        <stop offset="0" stopColor="#fff" stopOpacity="0.95" />
-        <stop offset="1" stopColor="#fff" stopOpacity="0" />
-      </radialGradient>
-      <linearGradient id={`${uid}r`} x1="0" y1="0" x2="1" y2="1">
-        <stop offset="0.3" stopColor="#fff" stopOpacity="0" />
-        <stop offset="0.5" stopColor="#fff" stopOpacity={d.mate ? 0.04 : 0.14} />
-        <stop offset="0.7" stopColor="#fff" stopOpacity="0" />
-      </linearGradient>
-    </defs>
-  )
+interface Relleno {
+  jugador: Jugador
+  media: number
+  atributos: Atributos
+  tendencia: number
+  config: Config
+  mini: boolean
 }
 
-function Fondo({ uid, d }: { uid: string; d: Diseno }) {
-  return (
-    <>
-      <path d={FORMA} fill={`url(#${uid}f)`} />
-      <g clipPath={`url(#${uid}c)`}>
-        {d.patron === 'rayas' &&
-          Array.from({ length: 14 }, (_, i) => (
-            <rect key={i} x={-100 + i * 36} y="-20" width="12" height="520" fill={d.suave} opacity="0.06" transform="rotate(25 150 210)" />
-          ))}
-        {d.patron === 'rombos' &&
-          Array.from({ length: 48 }, (_, i) => {
-            const x = (i % 8) * 42 + ((Math.floor(i / 8) % 2) * 21)
-            const y = Math.floor(i / 8) * 70 + 20
-            return <path key={i} d={`M${x} ${y} l14 22 l-14 22 l-14 -22 Z`} fill="none" stroke={d.suave} strokeOpacity="0.09" strokeWidth="1.2" />
-          })}
-        {d.patron === 'ondas' &&
-          Array.from({ length: 9 }, (_, i) => (
-            <path key={i} d={`M-10 ${60 + i * 42} Q75 ${30 + i * 42} 150 ${60 + i * 42} T310 ${60 + i * 42}`} fill="none" stroke={d.marco[i % d.marco.length]} strokeOpacity="0.14" strokeWidth="2" />
-          ))}
-        <rect x="0" y="0" width="300" height="420" fill={`url(#${uid}r)`} />
-      </g>
-    </>
-  )
+function crear(nombre: string, attrs: Record<string, string | number>): SVGElement {
+  const el = document.createElementNS(SVG_NS, nombre)
+  for (const [k, v] of Object.entries(attrs)) el.setAttribute(k, String(v))
+  return el
 }
 
-function Marco({ uid, d, grosor }: { uid: string; d: Diseno; grosor: number }) {
-  return (
-    <>
-      <path d={FORMA} fill="none" stroke={`url(#${uid}m)`} strokeWidth={d.mate ? grosor : grosor * 1.5} strokeLinejoin="round" />
-      <path d={FORMA} fill="none" stroke={d.marco[0]} strokeOpacity="0.35" strokeWidth="1" transform="translate(150 226) scale(0.94) translate(-150 -226)" />
-      {d.brillo && (
-        <g transform="translate(200 360) scale(0.8)">
-          <circle r="22" fill={`url(#${uid}b)`} opacity="0.55" />
-          <path d="M0 -16 L3 -3 L16 0 L3 3 L0 16 L-3 3 L-16 0 L-3 -3 Z" fill="#fff" opacity="0.9" />
-        </g>
-      )}
-    </>
-  )
+/** Tamaño de letra para que el nombre quepa en el ancho disponible. */
+function tamNombre(texto: string, max: number, ancho: number, espaciado: number): number {
+  const porLetra = ancho / Math.max(1, texto.length)
+  return Math.max(12, Math.min(max, (porLetra - espaciado) / 0.5))
 }
 
-function Foto({ uid, foto, d }: { uid: string; foto: string | null; d: Diseno }) {
+function construir(doc: Document, r: Relleno, uid: string): string {
+  const svg = doc.documentElement.cloneNode(true) as unknown as SVGSVGElement
+  const $ = (id: string) => svg.querySelector(`[id="${id}"]`)
+  const quitar = (...ids: string[]) => ids.forEach((id) => $(id)?.remove())
+  const texto = (id: string, t: string) => {
+    const el = $(id)
+    if (el) el.textContent = t
+    return el
+  }
+
+  const j = r.jugador
+  const nombre = nombreVisible(j).toUpperCase()
+  texto('media', String(mediaVisible(r.media)))
+  texto('sigla', rolPorId(r.config, j.rol).sigla)
+  texto('dorsal', `#${j.dorsal}`)
+
+  // Foto real (o silueta si aún no tiene).
+  const hueco = $('foto')
+  if (hueco) {
+    const [x, y, w, h] = ['data-x', 'data-y', 'data-w', 'data-h'].map((a) => Number(hueco.getAttribute(a)))
+    if (j.foto) {
+      hueco.appendChild(crear('image', { href: j.foto, x, y, width: w, height: h, preserveAspectRatio: 'xMidYMin slice' }))
+    } else {
+      const g = crear('g', { fill: '#000', 'fill-opacity': '0.2' })
+      const cx = x + w / 2
+      g.appendChild(crear('circle', { cx, cy: y + h * 0.3, r: w * 0.11 }))
+      g.appendChild(crear('path', { d: `M${cx - w * 0.27} ${y + h * 0.8} Q${cx - w * 0.26} ${y + h * 0.47} ${cx} ${y + h * 0.46} Q${cx + w * 0.26} ${y + h * 0.47} ${cx + w * 0.27} ${y + h * 0.8} Z` }))
+      hueco.appendChild(g)
+    }
+  }
+
+  if (r.mini) {
+    // §7.3: sin estadísticas, escudo, dorsal, tendencia ni marca de agua; media y rol más grandes.
+    quitar('stats', 'regla', 'rombo', 'marca_agua', 'escudo_uso', 'dorsal', 'separador', 'tendencia')
+    const media = $('media')
+    media?.setAttribute('font-size', '150')
+    media?.setAttribute('y', '198')
+    const sigla = $('sigla')
+    sigla?.setAttribute('font-size', '58')
+    sigla?.setAttribute('y', '256')
+    const n = texto('nombre', nombre)
+    n?.setAttribute('font-size', String(tamNombre(nombre, 66, 330, 1.5)))
+    n?.setAttribute('letter-spacing', '1.5')
+    n?.setAttribute('y', '478')
+    svg.setAttribute('viewBox', '34 30 396 564')
+  } else {
+    const n = texto('nombre', nombre)
+    n?.setAttribute('font-size', String(tamNombre(nombre, 31, 320, 2.5)))
+
+    const tend = $('tendencia')
+    const puntos = Math.round(Math.abs(r.tendencia))
+    if (tend && Math.abs(r.tendencia) >= 0.005) {
+      const sube = r.tendencia > 0
+      tend.querySelector('rect')?.setAttribute('fill', sube ? '#1e6b46' : '#8a2530')
+      const t = tend.querySelector('text')
+      if (t) {
+        t.textContent = `${sube ? '▲' : '▼'}${puntos ? ` ${puntos}` : ''}`
+        t.setAttribute('fill', sube ? '#eafff0' : '#ffe9ec')
+      }
+    } else {
+      tend?.remove()
+    }
+
+    const labels = etiquetas(j.posicion)
+    const stats = [...($('stats')?.querySelectorAll('text') ?? [])]
+    stats.forEach((t, i) => {
+      t.textContent = i % 2 === 0 ? labels[i / 2] : String(Math.round(r.atributos[(i - 1) / 2]))
+    })
+  }
+
+  // Los id se prefijan para que varias cartas en la misma pantalla no se pisen.
+  const ids = new Set<string>()
+  svg.querySelectorAll('[id]').forEach((el) => {
+    ids.add(el.id)
+    el.id = uid + el.id
+  })
+  svg.querySelectorAll('*').forEach((el) => {
+    for (const a of [...el.attributes]) {
+      if ((a.name === 'href' || a.name === 'xlink:href') && a.value.startsWith('#') && ids.has(a.value.slice(1))) {
+        el.setAttribute(a.name, `#${uid}${a.value.slice(1)}`)
+      } else if (a.value.includes('url(#')) {
+        el.setAttribute(a.name, a.value.replace(/url\(#([^)]+)\)/g, (m, id) => (ids.has(id) ? `url(#${uid}${id})` : m)))
+      }
+    }
+  })
+
+  svg.removeAttribute('height')
+  svg.setAttribute('width', '100%')
+  svg.setAttribute('aria-hidden', 'true')
+  return new XMLSerializer().serializeToString(svg)
+}
+
+function CartaBase({ diseno, ancho, clase, etiqueta, ...r }: Relleno & { diseno: string; ancho: number | string; clase: string; etiqueta: string }) {
+  const uid = 'c' + useId().replace(/[^a-zA-Z0-9]/g, '')
+  const archivo = (DISENOS[diseno] ?? DISENOS.bronce).archivo
+  const doc = usePlantilla(archivo)
+  const { jugador, media, atributos, tendencia, config, mini } = r
+  const html = useMemo(
+    () => (doc ? construir(doc, { jugador, media, atributos, tendencia, config, mini }, uid) : null),
+    [doc, jugador, media, atributos, tendencia, config, mini, uid],
+  )
   return (
-    <g mask={`url(#${uid}k)`} clipPath={`url(#${uid}c)`}>
-      {foto ? (
-        <image href={foto} x="78" y="52" width="176" height="212" preserveAspectRatio="xMidYMid slice" />
-      ) : (
-        <Silueta color={d.suave} />
-      )}
-    </g>
+    <div className={clase} style={{ width: ancho }} role="img" aria-label={etiqueta}>
+      {html ? <div dangerouslySetInnerHTML={{ __html: html }} /> : <div className={`${clase}__hueco`} />}
+    </div>
   )
 }
 
@@ -116,48 +158,19 @@ export interface CartaProps {
   ancho?: number | string
 }
 
-export function Carta({ jugador, media, atributos, tendencia, diseno, config, ancho = '100%' }: CartaProps) {
-  const uid = useId().replace(/:/g, '')
-  const d = DISENOS[diseno] ?? DISENOS.bronce
-  const rol = rolPorId(config, jugador.rol)
-  const labels = etiquetas(jugador.posicion)
-  const nombre = nombreVisible(jugador).toUpperCase()
-  const tamNombre = nombre.length > 14 ? 21 : nombre.length > 11 ? 24 : 27
-
+export function Carta(p: CartaProps) {
   return (
-    <svg viewBox="0 0 300 420" width={ancho} role="img" aria-label={`Carta de ${nombreVisible(jugador)}, media ${mediaVisible(media)}`} className="carta">
-      <Defs uid={uid} d={d} />
-      <Fondo uid={uid} d={d} />
-      {/* marca de agua */}
-      <image href={ESCUDO} x="95" y="120" width="110" height="170" opacity="0.06" clipPath={`url(#${uid}c)`} />
-      <Foto uid={uid} foto={jugador.foto} d={d} />
-      <Marco uid={uid} d={d} grosor={5} />
-
-      <g fontFamily="'Barlow Condensed', sans-serif" fill={d.texto} textAnchor="middle">
-        <text x="58" y="112" fontSize="62" fontWeight="700">{mediaVisible(media)}</text>
-        <text x="58" y="140" fontSize="23" fontWeight="600" fill={d.suave}>{rol.sigla}</text>
-        <line x1="38" x2="78" y1="152" y2="152" stroke={d.suave} strokeOpacity="0.5" />
-        <text x="58" y="176" fontSize="20" fontWeight="600">{jugador.dorsal}</text>
-        {tendencia > 0.005 && <text x="58" y="202" fontSize="18" fill="#5fae86">▲</text>}
-        {tendencia < -0.005 && <text x="58" y="202" fontSize="18" fill="#c85a63">▼</text>}
-
-        <image href={ESCUDO} x="236" y="56" width="32" height="49" />
-
-        <text x="150" y="286" fontSize={tamNombre} fontWeight="700" letterSpacing="0.5">{nombre}</text>
-        <line x1="44" x2="256" y1="296" y2="296" stroke={d.suave} strokeOpacity="0.45" />
-        {atributos.map((v, i) => {
-          const x = 52 + i * 39.2
-          return (
-            <g key={i}>
-              <text x={x} y="322" fontSize="21" fontWeight="700">{Math.round(v)}</text>
-              <text x={x} y="338" fontSize="12" fontWeight="600" fill={d.suave}>{labels[i]}</text>
-            </g>
-          )
-        })}
-      </g>
-    </svg>
+    <CartaBase
+      {...p}
+      mini={false}
+      ancho={p.ancho ?? '100%'}
+      clase="carta"
+      etiqueta={`Carta ${DISENOS[p.diseno]?.nombre ?? ''} de ${nombreVisible(p.jugador)}, media ${mediaVisible(p.media)}`}
+    />
   )
 }
+
+const SIN_ATRIBUTOS: Atributos = [0, 0, 0, 0, 0, 0]
 
 export interface MiniCartaProps {
   jugador: Jugador
@@ -167,25 +180,17 @@ export interface MiniCartaProps {
   ancho?: number
 }
 
-/** Miniatura real de la carta activa (§7.3): sin estadísticas, escudo, dorsal ni tendencia. */
-export function MiniCarta({ jugador, media, diseno, config, ancho = 70 }: MiniCartaProps) {
-  const uid = useId().replace(/:/g, '')
-  const d = DISENOS[diseno] ?? DISENOS.bronce
-  const rol = rolPorId(config, jugador.rol)
-  const nombre = nombreVisible(jugador).toUpperCase()
-  const tamNombre = nombre.length > 10 ? 36 : nombre.length > 7 ? 42 : 48
-
+/** Miniatura real de la carta activa (§7.3). */
+export function MiniCarta({ ancho = 70, ...p }: MiniCartaProps) {
   return (
-    <svg viewBox="0 0 300 420" width={ancho} role="img" aria-label={`${nombreVisible(jugador)}, ${mediaVisible(media)}`} className="minicarta">
-      <Defs uid={uid} d={d} />
-      <Fondo uid={uid} d={d} />
-      <Foto uid={uid} foto={jugador.foto} d={d} />
-      <Marco uid={uid} d={d} grosor={9} />
-      <g fontFamily="'Barlow Condensed', sans-serif" fill={d.texto} textAnchor="middle" fontWeight="700">
-        <text x="70" y="128" fontSize="88">{mediaVisible(media)}</text>
-        <text x="70" y="178" fontSize="46" fill={d.suave}>{rol.sigla}</text>
-        <text x="150" y="330" fontSize={tamNombre}>{nombre}</text>
-      </g>
-    </svg>
+    <CartaBase
+      {...p}
+      atributos={SIN_ATRIBUTOS}
+      tendencia={0}
+      mini
+      ancho={ancho}
+      clase="minicarta"
+      etiqueta={`${nombreVisible(p.jugador)}, ${mediaVisible(p.media)}`}
+    />
   )
 }
