@@ -1,4 +1,4 @@
-import type { Jugador, TipoEspecial } from '../db'
+import { SOLO_LECTURA, type Jugador, type TipoEspecial } from '../db'
 import { darEspecial } from '../componentes/especiales'
 import { fechaCorta, fmt1, fmt2, ir, nombreVisible, textoJornada, type Datos } from '../datos'
 import { claveTemporada, nombreMes, sugerenciaTOTY, sugerenciasIF, sugerenciasPOTM, yaTiene, type CandidatoTOTY } from '../motor/premios'
@@ -8,6 +8,7 @@ import { Cabecera, Icono, Vacio } from '../componentes/ui'
 import { avisar, confirmar } from '../componentes/dialogos'
 
 function BotonDar({ j, tipo, clave, fecha }: { j: Jugador; tipo: TipoEspecial; clave: string; fecha: string }) {
+  if (SOLO_LECTURA && !yaTiene(j, tipo, clave)) return null
   if (yaTiene(j, tipo, clave)) return <span className="dado"><Icono nombre="check" tam={16} /> {tipo} dada</span>
   return (
     <button
@@ -88,7 +89,7 @@ export function Premios({ datos }: { datos: Datos }) {
           (siete.every((c) => yaTiene(c.e.jugador, 'TOTY', toty.clave)) ? (
             <span className="dado centro"><Icono nombre="check" tam={16} /> TOTY entregado</span>
           ) : (
-            <button className="boton" onClick={darTOTY}>Dar TOTY a estos {siete.length}</button>
+            <button className="boton editable" onClick={darTOTY}>Dar TOTY a estos {siete.length}</button>
           ))}
       </section>
 

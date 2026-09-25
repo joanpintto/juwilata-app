@@ -928,3 +928,7 @@ input[type='range'] { width: 100%; accent-color: var(--dorado); }
   background: var(--fondo); border: 1px solid var(--borde); color: var(--texto-2);
 }
 .hoja__cerrar:active { transform: scale(0.94); }
+
+/* ─── Modo espectador (Fase 4) ─────────────────────────────────────── */
+
+.solo-lectura .editable { display: none !important; }

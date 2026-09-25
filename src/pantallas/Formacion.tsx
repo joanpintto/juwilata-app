@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, type MouseEvent as EventoRaton, type PointerEvent as EventoPuntero } from 'react'
-import { db, ESQUEMAS } from '../db'
+import { SOLO_LECTURA, db, ESQUEMAS } from '../db'
 import { SUBPESTANAS_PLANTILLA, fmt1, ir, type Datos } from '../datos'
 import { nombrePosicion } from '../motor/config'
 import { MiniCarta } from '../componentes/Carta'
@@ -101,7 +101,11 @@ export function Formacion({ datos }: { datos: Datos }) {
     setSel(null)
   }
 
-  const eventos = (origen: Origen | null, alTocar: () => void) => ({
+  const eventos = (origenReal: Origen | null, alTocarReal: () => void) => {
+    // Espectador: la formación se ve pero no se toca.
+    const origen = SOLO_LECTURA ? null : origenReal
+    const alTocar = SOLO_LECTURA ? () => {} : alTocarReal
+    return {
     onPointerDown: (e: EventoPuntero<HTMLElement>) => {
       if (!origen) return
       gesto.current = { x: e.clientX, y: e.clientY, origen, arrastrando: false }
@@ -134,7 +138,8 @@ export function Formacion({ datos }: { datos: Datos }) {
     onClick: (e: EventoRaton) => {
       if (e.detail === 0) alTocar()
     },
-  })
+  }
+  }
 
   const mini = (id: string, ancho: number) => {
     const e = calculo.jugadores[id]
@@ -147,14 +152,14 @@ export function Formacion({ datos }: { datos: Datos }) {
         titulo="Plantilla"
         sub={`${jugadores.length} jugadores · formación ${esquema}`}
         acciones={
-          <button className="boton boton--peq" onClick={() => ir('/jugador/nuevo')}>
+          <button className="boton boton--peq editable" onClick={() => ir('/jugador/nuevo')}>
             <Icono nombre="mas" tam={18} /> Añadir
           </button>
         }
       />
       <Subpestanas opciones={SUBPESTANAS_PLANTILLA} activa="formacion" />
 
-      <div className="segmentos segmentos--esquemas">
+      <div className="segmentos segmentos--esquemas editable">
         {Object.keys(ESQUEMAS).map((k) => (
           <button key={k} className={k === esquema ? 'activa' : ''} onClick={() => guardar(slots, k)}>
             {k}
@@ -166,7 +171,7 @@ export function Formacion({ datos }: { datos: Datos }) {
         <Vacio
           titulo="Sin jugadores"
           texto="Añade a tu plantilla, portero incluido, para montar la formación. Todos empiezan con carta de Bronce."
-          accion={<button className="boton" onClick={() => ir('/jugador/nuevo')}>Añadir el primero</button>}
+          accion={<button className="boton editable" onClick={() => ir('/jugador/nuevo')}>Añadir el primero</button>}
         />
       ) : (
         <>
@@ -195,7 +200,7 @@ export function Formacion({ datos }: { datos: Datos }) {
             })}
           </div>
 
-          <p className="nota centro">
+          <p className="nota centro editable">
             {sel ? (sel.tipo === 'slot' ? 'Toca otro hueco para intercambiar o un suplente para ponerlo.' : 'Toca un hueco del campo para colocarlo.') : 'Arrastra un jugador a otro hueco o al banquillo, o tócalo y después toca dónde va.'}
             {sel?.tipo === 'slot' && slots[sel.id] && (
               <>

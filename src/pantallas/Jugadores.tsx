@@ -27,7 +27,7 @@ export function Jugadores({ datos }: { datos: Datos }) {
         titulo="Plantilla"
         sub={`${jugadores.length} jugadores`}
         acciones={
-          <button className="boton boton--peq" onClick={() => ir('/jugador/nuevo')}>
+          <button className="boton boton--peq editable" onClick={() => ir('/jugador/nuevo')}>
             <Icono nombre="mas" tam={18} /> Añadir
           </button>
         }
@@ -38,7 +38,7 @@ export function Jugadores({ datos }: { datos: Datos }) {
         <Vacio
           titulo="Aún no hay jugadores"
           texto="Añade a tu plantilla, portero incluido. Todos empiezan con carta de Bronce."
-          accion={<button className="boton" onClick={() => ir('/jugador/nuevo')}>Añadir el primero</button>}
+          accion={<button className="boton editable" onClick={() => ir('/jugador/nuevo')}>Añadir el primero</button>}
         />
       )}
 
@@ -83,7 +83,7 @@ export function Jugadores({ datos }: { datos: Datos }) {
                   #{j.dorsal} {nombreVisible(j)}
                 </button>
                 <button
-                  className="enlace"
+                  className="enlace editable"
                   onClick={async () => {
                     await db.jugadores.update(j.id, { fueraEn: (j.fueraEn ?? []).filter((x) => x !== temporada.id) })
                     avisar(`${nombreVisible(j)} vuelve a la plantilla`)

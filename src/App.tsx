@@ -1,5 +1,7 @@
 import { useEffect, useState, type ReactNode } from 'react'
-import { db, inicializar, pedirAlmacenamientoPersistente, registrarApertura } from './db'
+import { SOLO_LECTURA, db, inicializar, pedirAlmacenamientoPersistente, registrarApertura, salirDeEspectador } from './db'
+import { cargarEspectador } from './compartir/espectador'
+import { vigilarCambios } from './compartir/publicar'
 import { ir, useDatos, useRuta, type Datos } from './datos'
 import { DialogosRaiz, Icono } from './componentes/ui'
 import { precargarCartas } from './componentes/plantillas'
@@ -18,6 +20,7 @@ import { Ajustes } from './pantallas/Ajustes'
 import { Avanzado } from './pantallas/Avanzado'
 import { Copias } from './pantallas/Copias'
 import { Premios } from './pantallas/Premios'
+import { AjustesEspectador } from './pantallas/Compartir'
 import { Notificaciones } from './pantallas/Notificaciones'
 
 const PESTANAS = [
@@ -46,8 +49,15 @@ function pestanaDe(seg: string[]): string {
   }
 }
 
+/** Rutas de edición que no existen en modo espectador. */
+function esEdicion(seg: string[]): boolean {
+  const [a, b, c] = seg
+  return (a === 'jugador' && (b === 'nuevo' || c === 'editar')) || (a === 'partido' && (b === 'nuevo' || c === 'editar')) || a === 'ajustes'
+}
+
 function Pantalla({ seg, datos }: { seg: string[]; datos: Datos }): ReactNode {
   const [a, b, c] = seg
+  if (SOLO_LECTURA && esEdicion(seg)) return a === 'ajustes' ? <AjustesEspectador datos={datos} /> : <Inicio datos={datos} />
   switch (a) {
     case undefined:
       return <Inicio datos={datos} />
@@ -89,6 +99,16 @@ export default function App() {
   const enAsistente = seg[0] === 'partido' && (seg[1] === 'nuevo' || seg[2] === 'editar' || seg[2] === 'resumen')
 
   useEffect(() => {
+    if (SOLO_LECTURA) {
+      // Espectador: se descarga la copia publicada por el administrador.
+      document.body.classList.add('solo-lectura')
+      if (window.location.hash.startsWith('#/ver/')) window.location.replace('#/')
+      Promise.all([cargarEspectador(), precargarCartas()])
+        .then(() => setListo(true))
+        .catch((e) => setError((e as Error).message))
+      return
+    }
+    vigilarCambios()
     inicializar()
       .then(() => precargarCartas())
       .then(() => setListo(true))
@@ -97,7 +117,20 @@ export default function App() {
     pedirAlmacenamientoPersistente().catch(() => {})
   }, [])
 
-  if (error) return <main className="app"><p className="error-grave">No se pudo abrir la base de datos: {error}</p></main>
+  if (error) {
+    return (
+      <main className="app app--cargando">
+        <img src={`${import.meta.env.BASE_URL}escudo.png`} alt="" className="cargando" />
+        <p className="error-grave centro">{SOLO_LECTURA ? error : `No se pudo abrir la base de datos: ${error}`}</p>
+        {SOLO_LECTURA && (
+          <div className="acciones-ficha">
+            <button className="boton" onClick={() => window.location.reload()}>Reintentar</button>
+            <button className="boton boton--sec" onClick={salirDeEspectador}>Salir</button>
+          </div>
+        )}
+      </main>
+    )
+  }
   if (!listo || !datos) return <main className="app app--cargando"><img src={`${import.meta.env.BASE_URL}escudo.png`} alt="" className="cargando" /></main>
 
   return (

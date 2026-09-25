@@ -4,6 +4,7 @@
 import type { Datos } from '../datos'
 import { nombreVisible } from '../datos'
 import { rango } from './calculo'
+import { SOLO_LECTURA } from '../db'
 import { NOMBRE_NIVEL } from './logros'
 import { nombreMes, sugerenciasIF, sugerenciasPOTM, yaTiene } from './premios'
 
@@ -54,6 +55,9 @@ export function generarNotificaciones(d: Datos): Notificacion[] {
       }
     }
   }
+
+  // Las sugerencias de premios y la copia manual solo tienen sentido para el administrador.
+  if (SOLO_LECTURA) return lista.sort((a, b) => b.fecha.localeCompare(a.fecha))
 
   for (const s of sugerenciasIF(d.calculo, d.config)) {
     if (s.jugador && !yaTiene(s.jugador, 'IF', s.clave)) {

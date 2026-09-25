@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { SPLITS, db, nuevoId, splitDe, splitsDe, type Programado, type ResultadoLiga, type Rival } from '../db'
+import { SOLO_LECTURA, SPLITS, db, nuevoId, splitDe, splitsDe, type Programado, type ResultadoLiga, type Rival } from '../db'
 import { SUBPESTANAS_PARTIDOS, fechaCorta, ir, nombreRival, partidoDe, proximoPartido, type Datos } from '../datos'
 import { SelectorRival } from '../componentes/SelectorRival'
 import { rivalPorNombre } from '../componentes/rivales'
@@ -257,7 +257,7 @@ export function Liga({ datos }: { datos: Datos }) {
         titulo="Partidos"
         sub="Liga"
         acciones={
-          <button className="boton boton--peq" onClick={() => setForm(borradorNuevo(programados))}>
+          <button className="boton boton--peq editable" onClick={() => setForm(borradorNuevo(programados))}>
             <Icono nombre="mas" tam={18} /> Programar
           </button>
         }
@@ -316,7 +316,7 @@ export function Liga({ datos }: { datos: Datos }) {
           <Vacio
             titulo="Sin partidos programados"
             texto="Programa todas las jornadas de la temporada. Al registrar un partido podrás elegirlo del calendario."
-            accion={<button className="boton" onClick={() => setForm(borradorNuevo(programados))}>Programar la jornada 1</button>}
+            accion={<button className="boton editable" onClick={() => setForm(borradorNuevo(programados))}>Programar la jornada 1</button>}
           />
         ) : (
           <ul className="calendario">
@@ -325,7 +325,7 @@ export function Liga({ datos }: { datos: Datos }) {
               const r = jugado ? (jugado.golesFavor > jugado.golesContra ? 'V' : jugado.golesFavor === jugado.golesContra ? 'E' : 'D') : null
               return (
                 <li key={g.id} className={g.id === proximo?.id ? 'calendario--proximo' : ''}>
-                  <button onClick={() => (jugado ? ir(`/partido/${jugado.id}`) : setMenu(g))}>
+                  <button onClick={() => (jugado ? ir(`/partido/${jugado.id}`) : !SOLO_LECTURA && setMenu(g))}>
                     <span className="calendario__j">J{g.jornada}</span>
                     <div className="calendario__texto">
                       <strong>{g.local ? 'vs' : 'en'} {nombreRival(datos.rivales, g.rivalId)}</strong>
@@ -352,7 +352,7 @@ export function Liga({ datos }: { datos: Datos }) {
         <div className="tarjeta__cab">
           <h2>Otros resultados</h2>
           <button
-            className="boton boton--peq boton--sec"
+            className="boton boton--peq boton--sec editable"
             disabled={rivales.length < 2}
             onClick={() => setFormRes({ id: null, jornada: String(Math.max(1, ultimaJornada)), localId: '', visitanteId: '', golesLocal: 0, golesVisitante: 0 })}
           >
@@ -369,7 +369,7 @@ export function Liga({ datos }: { datos: Datos }) {
                 <button
                   key={r.id}
                   className="resultado"
-                  onClick={() => setFormRes({ id: r.id, jornada: String(r.jornada), localId: r.localId, visitanteId: r.visitanteId, golesLocal: r.golesLocal, golesVisitante: r.golesVisitante })}
+                  onClick={() => !SOLO_LECTURA && setFormRes({ id: r.id, jornada: String(r.jornada), localId: r.localId, visitanteId: r.visitanteId, golesLocal: r.golesLocal, golesVisitante: r.golesVisitante })}
                 >
                   <span className="resultado__eq">{nombreEq(r.localId)}</span>
                   <strong>{r.golesLocal} - {r.golesVisitante}</strong>
@@ -383,12 +383,12 @@ export function Liga({ datos }: { datos: Datos }) {
 
       <section className="tarjeta">
         <h2>Equipos del split {split}</h2>
-        <div className="fila-campos fila-campos--boton">
+        <div className="fila-campos fila-campos--boton editable">
           <input className="input" value={nuevoRival} onChange={(e) => setNuevoRival(e.target.value)} placeholder="Añadir equipo…" onKeyDown={(e) => e.key === 'Enter' && anadirRival()} />
           <button className="boton boton--peq" onClick={anadirRival} disabled={!nuevoRival.trim()}>Añadir</button>
         </div>
         {rivales.length === 0 && rivalesOtro.length > 0 && (
-          <button className="boton boton--sec" onClick={copiarEquipos}>Copiar los {rivalesOtro.length} equipos del split {otroSplit}</button>
+          <button className="boton boton--sec editable" onClick={copiarEquipos}>Copiar los {rivalesOtro.length} equipos del split {otroSplit}</button>
         )}
         {rivales.length === 0 ? (
           <p className="nota">Añade aquí a todos los rivales de este split para elegirlos después sin escribir.</p>
@@ -397,7 +397,7 @@ export function Liga({ datos }: { datos: Datos }) {
             {rivales.map((r) => (
               <li key={r.id}>
                 <span>{r.nombre}</span>
-                <button className="enlace" onClick={() => { setRivalEdit(r); setNombreEdit(r.nombre) }}>Editar</button>
+                <button className="enlace editable" onClick={() => { setRivalEdit(r); setNombreEdit(r.nombre) }}>Editar</button>
               </li>
             ))}
           </ul>

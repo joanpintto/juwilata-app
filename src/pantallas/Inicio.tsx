@@ -3,6 +3,7 @@ import type { EstadoJugador } from '../motor/temporada'
 import { MiniCarta } from '../componentes/Carta'
 import { disenoDe } from '../componentes/disenos'
 import { Icono } from '../componentes/ui'
+import { SOLO_LECTURA } from '../db'
 import { Campana } from './Notificaciones'
 import { EscudoLogro, Vitrina } from '../componentes/Logros'
 import { NOMBRE_NIVEL, type EstadoLogro } from '../motor/logros'
@@ -84,14 +85,14 @@ export function Inicio({ datos }: { datos: Datos }) {
       </header>
 
       {!jugadores.length ? (
-        <section className="tarjeta bienvenida">
+        <section className="tarjeta bienvenida editable">
           <h2>¡Empieza la temporada!</h2>
           <ol className="pasos">
             <li>Revisa el nombre del equipo y la temporada en <strong>Ajustes</strong>.</li>
             <li>Añade a los jugadores en <strong>Plantilla</strong>, portero incluido.</li>
             <li>Después de cada partido, regístralo en <strong>Partidos</strong>.</li>
           </ol>
-          <button className="boton" onClick={() => ir('/jugador/nuevo')}>Añadir el primer jugador</button>
+          <button className="boton editable" onClick={() => ir('/jugador/nuevo')}>Añadir el primer jugador</button>
         </section>
       ) : proximo ? (
         <section className="tarjeta proximo">
@@ -100,10 +101,10 @@ export function Inicio({ datos }: { datos: Datos }) {
             <strong>{proximo.local ? 'vs' : 'en'} {nombreRival(rivales, proximo.rivalId)}</strong>
             <span>{proximo.fecha ? fechaLarga(proximo.fecha) : 'Sin fecha'}{proximo.hora ? ` · ${proximo.hora}` : ''}</span>
           </div>
-          <button className="boton boton--peq" onClick={() => ir(`/partido/nuevo/${proximo.id}`)}>Registrar</button>
+          <button className="boton boton--peq editable" onClick={() => ir(`/partido/nuevo/${proximo.id}`)}>Registrar</button>
         </section>
       ) : (
-        <button className="boton boton--grande" onClick={() => ir('/partido/nuevo')}>
+        <button className="boton boton--grande editable" onClick={() => ir('/partido/nuevo')}>
           <Icono nombre="mas" tam={20} /> Registrar partido
         </button>
       )}
@@ -133,7 +134,7 @@ export function Inicio({ datos }: { datos: Datos }) {
         </section>
       )}
 
-      {(ifPendiente || potmPendiente) && (
+      {(ifPendiente || potmPendiente) && !SOLO_LECTURA && (
         <section className="tarjeta">
           <div className="tarjeta__cab">
             <h2>Sugerencias</h2>

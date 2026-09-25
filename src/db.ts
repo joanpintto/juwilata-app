@@ -25,7 +25,19 @@ export interface Equipo {
   partidosDesdeExportacion: number
   ultimaExportacion: string | null
   secuenciaPostPartido?: boolean // animación al confirmar (por defecto, sí)
+  compartir?: Compartir // enlace para los compañeros (Fase 4); nunca se publica
+  publicadoEl?: string // (solo espectador) fecha de la copia que se está viendo
   splitActual?: number // split que se está jugando (por defecto, el 1)
+}
+
+/** Datos para publicar la copia que ven los compañeros. La clave solo está en este móvil. */
+export interface Compartir {
+  codigo: string // va en el enlace; permite leer
+  clave: string // permite escribir; nunca sale del móvil salvo al publicar
+  activo: boolean
+  ultimaPublicacion: string | null
+  fotos: Record<string, string> // jugadorId → huella de la foto ya publicada
+  error: string | null
 }
 
 export interface Temporada {
@@ -169,8 +181,8 @@ class JuwilataDB extends Dexie {
   resultadosLiga!: Table<ResultadoLiga, string>
   vistas!: Table<{ id: string }, string>
 
-  constructor() {
-    super('juwilata')
+  constructor(nombre: string) {
+    super(nombre)
     this.version(1).stores({ diagnostico: 'id' })
     this.version(2).stores({
       diagnostico: 'id',
@@ -210,7 +222,40 @@ class JuwilataDB extends Dexie {
   }
 }
 
-export const db = new JuwilataDB()
+// ─── Modo espectador (Fase 4) ─────────────────────────────────────────
+// Un compañero que abre el enlace compartido (#/ver/<código>) ve la app en solo
+// lectura, con los datos en una base aparte: nunca toca los del administrador.
+
+const CLAVE_ESPECTADOR = 'juwilata-espectador'
+
+function detectarEspectador(): string | null {
+  if (typeof window === 'undefined') return null
+  const m = window.location.hash.match(/^#\/ver\/([A-Za-z0-9_-]{16,})/)
+  try {
+    if (m) {
+      localStorage.setItem(CLAVE_ESPECTADOR, m[1])
+      return m[1]
+    }
+    return localStorage.getItem(CLAVE_ESPECTADOR)
+  } catch {
+    return m?.[1] ?? null
+  }
+}
+
+/** Código del equipo que se está viendo como espectador (null = app del administrador). */
+export const CODIGO_ESPECTADOR = detectarEspectador()
+export const SOLO_LECTURA = CODIGO_ESPECTADOR !== null
+
+export function salirDeEspectador() {
+  try {
+    localStorage.removeItem(CLAVE_ESPECTADOR)
+  } catch {
+    // sin almacenamiento: al recargar sin el enlace ya no se entra
+  }
+  window.location.replace(window.location.pathname)
+}
+
+export const db = new JuwilataDB(CODIGO_ESPECTADOR ? `juwilata-ver-${CODIGO_ESPECTADOR}` : 'juwilata')
 
 export const nuevoId = () =>
   typeof crypto !== 'undefined' && 'randomUUID' in crypto

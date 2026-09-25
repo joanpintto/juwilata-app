@@ -107,7 +107,7 @@ export function FichaJugador({ datos, id }: { datos: Datos; id: string }) {
             <select className="selector-temporada" value={tempVista} aria-label="Temporada" onChange={(x) => setTempElegida(x.target.value)} disabled={suyas.length < 2}>
               {suyas.map((t) => <option key={t.id} value={t.id}>{t.nombre}</option>)}
             </select>
-            <button className="boton-icono" onClick={() => setMenu(true)} aria-label="Más opciones">
+            <button className="boton-icono editable" onClick={() => setMenu(true)} aria-label="Más opciones">
               <Icono nombre="puntos" />
             </button>
           </>
@@ -129,7 +129,7 @@ export function FichaJugador({ datos, id }: { datos: Datos; id: string }) {
             ))}
           </div>
           {vista !== activo && (
-            <button className="boton boton--peq" onClick={() => usarComoActiva(vista)}>Usar como activa</button>
+            <button className="boton boton--peq editable" onClick={() => usarComoActiva(vista)}>Usar como activa</button>
           )}
         </div>
       )}
@@ -188,8 +188,8 @@ export function FichaJugador({ datos, id }: { datos: Datos; id: string }) {
 
       <div className="acciones-ficha">
         <button className="boton boton--sec" onClick={() => ir(`/evoluciones/comparador/${j.id}`)}>Comparar</button>
-        <button className="boton boton--sec" onClick={() => setHojaEspecial(true)}>Diseño especial</button>
-        <button className="boton boton--sec" onClick={() => ir(`/jugador/${j.id}/editar`)}>
+        <button className="boton boton--sec editable" onClick={() => setHojaEspecial(true)}>Diseño especial</button>
+        <button className="boton boton--sec editable" onClick={() => ir(`/jugador/${j.id}/editar`)}>
           <Icono nombre="editar" tam={16} /> Editar
         </button>
       </div>

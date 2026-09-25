@@ -1,5 +1,5 @@
 import { useLiveQuery } from 'dexie-react-hooks'
-import { db } from '../db'
+import { SOLO_LECTURA, db } from '../db'
 import { SUBPESTANAS_PARTIDOS, fechaCorta, ir, nombreVisible, textoJornada, type Datos } from '../datos'
 import { Cabecera, Icono, Subpestanas, Vacio } from '../componentes/ui'
 import { avisar, confirmar } from '../componentes/dialogos'
@@ -52,17 +52,17 @@ export function Partidos({ datos }: { datos: Datos }) {
         titulo="Partidos"
         sub={`${calculo.partidos.length} de ${equipo.partidosTemporada} · ${v}V ${e}E ${d}D`}
         acciones={
-          <button className="boton boton--peq" onClick={() => ir('/partido/nuevo')} disabled={!jugadores.length}>
+          <button className="boton boton--peq editable" onClick={() => ir('/partido/nuevo')} disabled={!jugadores.length}>
             <Icono nombre="mas" tam={18} /> Nuevo
           </button>
         }
       />
       <Subpestanas opciones={SUBPESTANAS_PARTIDOS} activa="mis" />
-      <BannerDeshacer />
+      {!SOLO_LECTURA && <BannerDeshacer />}
 
-      {!jugadores.length && <Vacio titulo="Primero, la plantilla" texto="Añade jugadores antes de registrar el primer partido." accion={<button className="boton" onClick={() => ir('/jugador/nuevo')}>Añadir jugador</button>} />}
+      {!jugadores.length && <Vacio titulo="Primero, la plantilla" texto="Añade jugadores antes de registrar el primer partido." accion={<button className="boton editable" onClick={() => ir('/jugador/nuevo')}>Añadir jugador</button>} />}
       {jugadores.length > 0 && !lista.length && (
-        <Vacio titulo="Sin partidos todavía" texto="Registra el primer partido de la temporada: resultado, convocatoria, minutos y acciones." accion={<button className="boton" onClick={() => ir('/partido/nuevo')}>Registrar partido</button>} />
+        <Vacio titulo="Sin partidos todavía" texto="Registra el primer partido de la temporada: resultado, convocatoria, minutos y acciones." accion={<button className="boton editable" onClick={() => ir('/partido/nuevo')}>Registrar partido</button>} />
       )}
 
       <ul className="lista-partidos">

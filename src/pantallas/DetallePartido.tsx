@@ -1,4 +1,4 @@
-import { db } from '../db'
+import { SOLO_LECTURA, db } from '../db'
 import { colorNota, conSigno, fechaLarga, fmt1, fmt2, ir, nombreVisible, type Datos } from '../datos'
 import { ACCIONES } from '../motor/config'
 import { MiniCarta } from '../componentes/Carta'
@@ -53,12 +53,12 @@ export function DetallePartido({ datos, id }: { datos: Datos; id: string }) {
         sub={`${fechaLarga(p.fecha)}${resumen.jornada ? ` · ${p.competicion}` : ''}`}
         atras="/partidos"
         acciones={
-          <button className="boton-icono" onClick={() => ir(`/partido/${p.id}/editar`)} aria-label="Editar partido">
+          <button className="boton-icono editable" onClick={() => ir(`/partido/${p.id}/editar`)} aria-label="Editar partido">
             <Icono nombre="editar" />
           </button>
         }
       />
-      <BannerDeshacer />
+      {!SOLO_LECTURA && <BannerDeshacer />}
 
       <section className="tarjeta tarjeta--hero">
         <MarcadorHero resumen={resumen} equipo={equipo.nombre} />
@@ -81,14 +81,14 @@ export function DetallePartido({ datos, id }: { datos: Datos; id: string }) {
         </section>
       )}
 
-      {sugerenciaIF && (
+      {sugerenciaIF && !SOLO_LECTURA && (
         <section className="tarjeta sugerencia">
           <MiniCarta jugador={sugerenciaIF.e.jugador} media={sugerenciaIF.e.media} diseno="IF" config={config} ancho={46} />
           <div className="sugerencia__texto">
             <strong>IF sugerida: {nombreVisible(sugerenciaIF.e.jugador)}</strong>
             <span>Mejor nota ponderada del partido ({fmt2(sugerenciaIF.np)})</span>
           </div>
-          {yaTiene(sugerenciaIF.e.jugador, 'IF', claveIF(p.id)) ? (
+          {SOLO_LECTURA ? null : yaTiene(sugerenciaIF.e.jugador, 'IF', claveIF(p.id)) ? (
             <span className="dado"><Icono nombre="check" tam={16} /> Dada</span>
           ) : (
             <button
@@ -144,7 +144,7 @@ export function DetallePartido({ datos, id }: { datos: Datos; id: string }) {
         )}
       </section>
 
-      <div className="acciones-ficha">
+      <div className="acciones-ficha editable">
         <button className="boton boton--sec" onClick={() => ir(`/partido/${p.id}/editar`)}>
           <Icono nombre="editar" tam={16} /> Editar
         </button>
