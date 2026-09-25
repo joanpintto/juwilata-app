@@ -15,7 +15,7 @@ Fuente de verdad de la app. Todo lo que aparece aquí está **cerrado**, salvo l
 
 - **PWA** que se instala desde el navegador en la pantalla de inicio, sin App Store.
 - **100% local y sin conexión**: sin cuenta ni servidor. Los datos se guardan en el móvil (IndexedDB).
-- Los datos no se sincronizan entre dispositivos. La sincronización con los compañeros queda para la Fase 4.
+- Los datos no se sincronizan entre dispositivos. Desde la Fase 4, el administrador puede compartir una copia de solo lectura con los compañeros (§18).
 - El dispositivo principal es un **iPhone**: hay que instalarla en la pantalla de inicio y pedir almacenamiento persistente para que Safari no borre los datos.
 
 ## 3. Identidad visual
@@ -449,7 +449,7 @@ La temporada aún no ha empezado, así que no hace falta cargar partidos anterio
   - Ajustes → Avanzado;
   - varias temporadas con historial;
   - pantalla adaptada a tablet y ordenador.
-- **Fase 4 (compartir con el equipo, futuro):** sincronización y servidor, por decidir.
+- **Fase 4 (compartir con el equipo):** ✅ construida (ver §18). Los compañeros solo ven; edita solo el administrador.
 
 ---
 
@@ -540,3 +540,16 @@ Puntos que el diseño dejaba abiertos y que se han concretado al construir la Fa
 - Desde 700 px de ancho: barra lateral estrecha con las 5 secciones y contenido centrado más ancho.
 - Desde 1100 px: menú lateral completo con el escudo y el nombre del equipo.
 - Hojas y diálogos centrados; galería de 3 o 4 columnas; el móvil sigue igual.
+
+---
+
+## 18. Fase 4: compartir con el equipo
+
+Decisiones del usuario: los compañeros **solo ven** (cartas, clasificación, logros, estadísticas); se comparte con un **enlace secreto** y una nube gratuita (**Supabase**); **con fotos**.
+
+- **Administrador:** Ajustes → Compartir con el equipo → «Crear enlace». La app publica una copia cada vez que cambian los datos (unos segundos después; si no hay conexión, lo reintenta). También «Publicar ahora» y «Dejar de compartir» (borra la copia; el enlace deja de funcionar).
+- **Compañeros:** abren el enlace (`…/#/ver/<código>`) en Safari y pueden añadirlo a la pantalla de inicio. Ven la app completa en **modo espectador**: sin botones de edición, con sus propios datos aparte (nunca tocan los del administrador) y se actualiza cada vez que la abren. En Ajustes pueden actualizar o salir.
+- **Qué se publica:** equipo, temporadas, jugadores, partidos, configuración, calendario, resultados y equipos de la liga. Las fotos van aparte y solo cuando cambian (en JPG si no tienen transparencia). No se publican las copias de seguridad ni la clave.
+- **Seguridad:** las tablas de Supabase están cerradas; solo se usan funciones que piden el **código** del enlace para leer (22 caracteres aleatorios) o la **clave** del administrador para escribir (32 caracteres, guardada solo en su móvil y cifrada en la nube). Cualquiera que tenga el enlace puede ver el equipo: se manda solo al grupo.
+- **Plan gratuito de Supabase:** sobra (500 MB y 5 GB de descarga al mes). Si nadie abre la app en una semana, Supabase pausa el proyecto; se reactiva desde su web.
+- Configuración: `.env` (dirección y clave pública) y `docs/supabase.sql` (se pega en Supabase → SQL Editor).
