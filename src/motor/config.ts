@@ -138,24 +138,24 @@ export const CONFIG_INICIAL: Config = {
 
   pesosNotaPonderada: { ultimo: 0.5, dosAnteriores: 0.3, temporada: 0.2 },
   // Calibrado para que, empezando en 60 y jugando 32 partidos con la misma nota,
-  // un 6 acabe en ~75 y un 9 en ~90 (sin MVPs).
+  // un 6,5 acabe en ~75 y un 9 en ~90 (sin MVPs). Con un 6 la media se mantiene.
   ritmo: [
-    { x: 5.5, y: 0 }, { x: 6.0, y: 0.4 }, { x: 6.5, y: 0.48 }, { x: 7.0, y: 0.57 }, { x: 7.5, y: 0.67 },
-    { x: 8.0, y: 0.8 }, { x: 8.5, y: 0.95 }, { x: 9.0, y: 1.14 },
+    { x: 6.0, y: 0 }, { x: 6.5, y: 0.4 }, { x: 7.0, y: 0.53 }, { x: 7.5, y: 0.65 },
+    { x: 8.0, y: 0.8 }, { x: 8.5, y: 0.98 }, { x: 9.0, y: 1.14 },
   ],
   multiplicadorMedia: [
     { x: 60, y: 1.4 }, { x: 65, y: 1.25 }, { x: 70, y: 1.1 }, { x: 75, y: 1.0 }, { x: 80, y: 0.8 },
     { x: 85, y: 0.55 }, { x: 90, y: 0.35 }, { x: 95, y: 0.2 }, { x: 99, y: 0.1 },
   ],
   umbralBajada: 5.5,
-  bajadaPorPunto: 0.2,
+  bajadaPorPunto: 0.45,
   nivelBajada: [
     { x: 60, y: 0.1 }, { x: 70, y: 0.3 }, { x: 80, y: 0.6 }, { x: 85, y: 0.85 }, { x: 90, y: 1.0 },
   ],
   minutosBase: 0.65,
   minutosPorMinuto: 0.02,
   topeSubida: 1.5,
-  topeBajada: 0.5,
+  topeBajada: 0.8,
   mediaMin: 60,
   mediaMax: 99,
 

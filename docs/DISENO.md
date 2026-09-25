@@ -155,7 +155,7 @@ Hay 9 roles de campo más el portero. Atributos: RIT, TIR, PAS, REG, DEF y FIS. 
 
 Idea: **subir es lo normal y bajar cuesta mucho**. No hay techo: cualquier jugador puede seguir subiendo, solo que cada vez más despacio. Las metas de abajo son una referencia de cómo debe comportarse la fórmula, no algo que se fuerce.
 
-**Metas (empezando en 60, 32 partidos con la misma nota, sin MVPs):** un 6 acaba en ~75 y un 9 en ~90. Entre medias, cada medio punto de nota suma ~2,5 de media final.
+**Metas (empezando en 60, 32 partidos con la misma nota, sin MVPs):** un 6,5 acaba en ~75 y un 9 en ~90 (ver tabla). Con un 6 la media se mantiene.
 
 1. **Nota ponderada** = 0,5 × último partido + 0,3 × media de los 2 anteriores + 0,2 × media de la temporada.
 
@@ -163,9 +163,9 @@ Idea: **subir es lo normal y bajar cuesta mucho**. No hay techo: cualquier jugad
 
    Ritmo, en puntos por partido (entre valores se interpola):
 
-| Nota | 5,5 | 6,0 | 6,5 | 7,0 | 7,5 | 8,0 | 8,5 | 9,0 |
-|---|---|---|---|---|---|---|---|---|
-| Ritmo | 0 | 0,40 | 0,48 | 0,57 | 0,67 | 0,80 | 0,95 | 1,14 |
+| Nota | 6,0 | 6,5 | 7,0 | 7,5 | 8,0 | 8,5 | 9,0 |
+|---|---|---|---|---|---|---|---|
+| Ritmo | 0 | 0,40 | 0,53 | 0,65 | 0,80 | 0,98 | 1,14 |
 
    Multiplicador según la media actual (cuanto más alta, más cuesta subir):
 
@@ -173,7 +173,7 @@ Idea: **subir es lo normal y bajar cuesta mucho**. No hay techo: cualquier jugad
 |---|---|---|---|---|---|---|---|---|---|
 | Multiplicador | ×1,40 | ×1,25 | ×1,10 | ×1,00 | ×0,80 | ×0,55 | ×0,35 | ×0,20 | ×0,10 |
 
-3. **Bajada (partido malo):** si la nota **del partido** es menor que 5,5, la media baja 0,2 por cada punto por debajo de 5,5, multiplicado por cuánto se nota la bajada según la media. **Tope: −0,5 por partido.** Un 5,5 o más nunca hace bajar.
+3. **Bajada (partido malo):** si la nota **del partido** es menor que 5,5, la media baja 0,45 por cada punto por debajo de 5,5, multiplicado por cuánto se nota la bajada según la media. **Tope: −0,8 por partido.** Un 5,5 o más nunca hace bajar (entre 5,5 y 6 la media se queda igual).
 
 | Media | 60 | 70 | 80 | 85 | 90 o más |
 |---|---|---|---|---|---|
@@ -187,25 +187,24 @@ Idea: **subir es lo normal y bajar cuesta mucho**. No hay techo: cualquier jugad
 
 | Nota | Partido 1 | Partido 4 | Partido 8 | Mitad (16) | Partido 24 | Final (32) |
 |---|---|---|---|---|---|---|
-| 6,0 | 60,6 | 62,2 | 64,3 | 68,2 | 71,7 | 75,1 |
-| 6,5 | 60,7 | 62,6 | 65,1 | 69,7 | 73,8 | 77,5 |
-| 7,0 | 60,8 | 63,1 | 66,0 | 71,3 | 76,0 | 80,0 |
-| 7,5 | 60,9 | 63,6 | 67,0 | 73,0 | 78,2 | 82,4 |
+| 6,5 | 60,6 | 62,2 | 64,3 | 68,2 | 71,7 | 75,1 |
+| 7,0 | 60,7 | 62,9 | 65,6 | 70,6 | 75,0 | 78,9 |
+| 7,5 | 60,9 | 63,5 | 66,8 | 72,6 | 77,8 | 82,0 |
 | 8,0 | 61,1 | 64,3 | 68,2 | 75,1 | 80,8 | 85,1 |
-| 8,5 | 61,3 | 65,1 | 69,6 | 77,5 | 83,4 | 87,5 |
+| 8,5 | 61,4 | 65,3 | 69,9 | 77,9 | 83,9 | 88,0 |
 | 9,0 | 61,5 | 65,9 | 71,2 | 80,1 | 86,0 | 90,0 |
 
 **Un partido completo según la media** (si el jugador viene jugando con esa nota):
 
 | Media | Nota 4 | Nota 5 | Nota 5,5 | Nota 6 | Nota 7,5 | Nota 9 |
 |---|---|---|---|---|---|---|
-| 62 | −0,04 | −0,01 | 0 | +0,54 | +0,90 | +1,50 |
-| 70 | −0,09 | −0,03 | 0 | +0,44 | +0,74 | +1,25 |
-| 78 | −0,16 | −0,05 | 0 | +0,35 | +0,59 | +1,00 |
-| 86 | −0,26 | −0,09 | 0 | +0,20 | +0,34 | +0,58 |
-| 92 | −0,30 | −0,10 | 0 | +0,12 | +0,19 | +0,33 |
+| 62 | −0,09 | −0,03 | 0 | 0 | +0,87 | +1,50 |
+| 70 | −0,20 | −0,07 | 0 | 0 | +0,72 | +1,25 |
+| 78 | −0,36 | −0,12 | 0 | 0 | +0,57 | +1,00 |
+| 86 | −0,59 | −0,20 | 0 | 0 | +0,33 | +0,58 |
+| 92 | −0,68 | −0,23 | 0 | 0 | +0,19 | +0,33 |
 
-Ejemplos: una media 86 con 3 partidos seguidos de 4,5 baja a 85,5; una media 62 con los mismos 3 partidos se queda en 61,9.
+**Tres partidos seguidos de 4,5:** media 62 → 61,8 · 70 → 69,6 · 78 → 77,3 · **86 → 84,8** · 92 → 90,6. Cuanto más alta la media, más se nota la bajada; con medias bajas cuesta mucho bajar.
 
 **Editable desde la app:** todas estas tablas y valores se pueden cambiar en Ajustes → Avanzado. Antes de aplicar un cambio se ve una simulación con los finales resultantes, y se elige entre recalcular toda la temporada o aplicarlo solo desde ahora. `npm run verificar` comprueba que se cumplen las metas.
 
