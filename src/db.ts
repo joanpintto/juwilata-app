@@ -66,6 +66,7 @@ export interface Jugador {
   secundarias: Posicion[]
   pierna: Pierna
   foto: string | null // PNG en data URL
+  fotoOriginal?: string | null // foto sin encuadrar ni recortar (solo en este móvil), para volver a editarla
   atributosIniciales: Atributos
   rolInicial: string
   temporadaId: string

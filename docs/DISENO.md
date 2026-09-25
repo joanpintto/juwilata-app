@@ -563,3 +563,5 @@ Decisiones del usuario: los compañeros **solo ven** (cartas, clasificación, lo
 - El modelo pesa unos **28 MB** y no va en la instalación inicial: se descarga la primera vez que se pulsa el botón (la app avisa) y queda guardado; a partir de ahí funciona sin conexión.
 - Se eligió el modelo multiclase frente al pequeño (250 KB) porque deja el borde limpio, sin halo de color alrededor del jugador.
 - Mientras se ve sin fondo, detrás aparece un damero para que se note la transparencia; en la carta el jugador queda directamente sobre el fondo de la carta.
+- La foto final se guarda a **720×900** (nítida en pantallas de iPhone). El borde se suaviza con código propio (no con filtros del navegador, que Safari no tiene).
+- Se guarda también una copia de la **foto original** (máx. 1600 px, solo en este móvil y en las copias de seguridad; no se comparte). "Encuadrar o quitar fondo" parte siempre de ella, así que volver a editar no pierde calidad.

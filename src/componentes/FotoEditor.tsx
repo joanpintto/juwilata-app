@@ -5,12 +5,27 @@ import { modeloDescargado, quitarFondo } from './recorte'
 // Todo ocurre en el propio móvil: la imagen nunca sale del dispositivo. Se guarda
 // como PNG (con transparencia si se quita el fondo).
 
-const ANCHO = 360
-const ALTO = 450 // misma proporción que el hueco de la foto en la carta (388×485)
+// Misma proporción que el hueco de la foto en la carta (388×485), con resolución
+// de sobra para que se vea nítida en pantallas de iPhone (×3).
+const ANCHO = 720
+const ALTO = 900
+const MAX_ORIGINAL = 1600
+
+/** Copia reducida de la foto original, para poder volver a encuadrarla sin perder calidad. */
+function copiaOriginal(img: HTMLImageElement, tipo: string): string {
+  const k = Math.min(1, MAX_ORIGINAL / Math.max(img.naturalWidth, img.naturalHeight))
+  const c = document.createElement('canvas')
+  c.width = Math.round(img.naturalWidth * k)
+  c.height = Math.round(img.naturalHeight * k)
+  const ctx = c.getContext('2d')!
+  ctx.imageSmoothingQuality = 'high'
+  ctx.drawImage(img, 0, 0, c.width, c.height)
+  return tipo === 'image/png' ? c.toDataURL('image/png') : c.toDataURL('image/jpeg', 0.9)
+}
 
 type Fuente = HTMLImageElement | HTMLCanvasElement
 
-export function FotoEditor({ origen, onListo, onCancelar }: { origen: File | string; onListo: (png: string) => void; onCancelar: () => void }) {
+export function FotoEditor({ origen, onListo, onCancelar }: { origen: File | string; onListo: (png: string, original: string) => void; onCancelar: () => void }) {
   const lienzo = useRef<HTMLCanvasElement>(null)
   const [img, setImg] = useState<HTMLImageElement | null>(null)
   const [recortada, setRecortada] = useState<HTMLCanvasElement | null>(null)
@@ -36,6 +51,7 @@ export function FotoEditor({ origen, onListo, onCancelar }: { origen: File | str
     if (!c || !fuente) return
     const ctx = c.getContext('2d')!
     ctx.clearRect(0, 0, ANCHO, ALTO)
+    ctx.imageSmoothingQuality = 'high'
     const base = Math.max(ANCHO / fuente.width, ALTO / fuente.height)
     const esc = base * zoom
     const w = fuente.width * esc
@@ -101,7 +117,7 @@ export function FotoEditor({ origen, onListo, onCancelar }: { origen: File | str
         {estado && !trabajando && <p className="nota baja">{estado}</p>}
         <div className="dialogo__botones">
           <button className="boton boton--sec" onClick={onCancelar}>Cancelar</button>
-          <button className="boton" disabled={!fuente || trabajando} onClick={() => lienzo.current && onListo(lienzo.current.toDataURL('image/png'))}>
+          <button className="boton" disabled={!fuente || trabajando} onClick={() => lienzo.current && img && onListo(lienzo.current.toDataURL('image/png'), typeof origen === 'string' ? origen : copiaOriginal(img, origen.type))}>
             Usar foto
           </button>
         </div>

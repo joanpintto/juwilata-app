@@ -28,6 +28,7 @@ export function EditarJugador({ datos, id }: { datos: Datos; id?: string }) {
   const [pierna, setPierna] = useState<Pierna>(existente?.pierna ?? 'derecha')
   const [secundarias, setSecundarias] = useState<Posicion[]>(existente?.secundarias ?? [])
   const [foto, setFoto] = useState<string | null>(existente?.foto ?? null)
+  const [fotoOriginal, setFotoOriginal] = useState<string | null>(existente?.fotoOriginal ?? null)
   const [archivo, setArchivo] = useState<File | string | null>(null)
   const [guardando, setGuardando] = useState(false)
 
@@ -84,7 +85,7 @@ export function EditarJugador({ datos, id }: { datos: Datos; id?: string }) {
     setGuardando(true)
     try {
       if (existente) {
-        const cambios: Partial<Jugador> = { nombre: nombre.trim(), apodo: apodo.trim(), dorsal: d, posicion, rol, secundarias, pierna, foto }
+        const cambios: Partial<Jugador> = { nombre: nombre.trim(), apodo: apodo.trim(), dorsal: d, posicion, rol, secundarias, pierna, foto, fotoOriginal }
         if (sinPartidos && rol !== existente.rol) {
           cambios.atributosIniciales = atributosIniciales(pesos, config)
           cambios.rolInicial = rol
@@ -94,7 +95,7 @@ export function EditarJugador({ datos, id }: { datos: Datos; id?: string }) {
         volver(`/jugador/${existente.id}`)
       } else {
         const nuevo: Jugador = {
-          id: nuevoId(), nombre: nombre.trim(), apodo: apodo.trim(), dorsal: d, posicion, rol, secundarias, pierna, foto,
+          id: nuevoId(), nombre: nombre.trim(), apodo: apodo.trim(), dorsal: d, posicion, rol, secundarias, pierna, foto, fotoOriginal,
           atributosIniciales: atributosIniciales(pesos, config), rolInicial: rol, temporadaId: temporada.id,
           creado: new Date().toISOString(), disenoActivo: null, especiales: [],
         }
@@ -132,8 +133,8 @@ export function EditarJugador({ datos, id }: { datos: Datos; id?: string }) {
         </label>
         {foto && (
           <div className="editor-carta__acciones-foto">
-            <button className="enlace" onClick={() => setArchivo(foto)}>✂️ Encuadrar o quitar fondo</button>
-            <button className="enlace" onClick={() => setFoto(null)}>Quitar foto</button>
+            <button className="enlace" onClick={() => setArchivo(fotoOriginal ?? foto)}>✂️ Encuadrar o quitar fondo</button>
+            <button className="enlace" onClick={() => { setFoto(null); setFotoOriginal(null) }}>Quitar foto</button>
           </div>
         )}
       </div>
@@ -213,8 +214,9 @@ export function EditarJugador({ datos, id }: { datos: Datos; id?: string }) {
         <FotoEditor
           origen={archivo}
           onCancelar={() => setArchivo(null)}
-          onListo={(png) => {
+          onListo={(png, original) => {
             setFoto(png)
+            setFotoOriginal(original)
             setArchivo(null)
           }}
         />

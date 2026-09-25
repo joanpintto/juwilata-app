@@ -48,7 +48,7 @@ export async function publicar(): Promise<string> {
     const temporadas = [...todo.temporadas].sort((a, b) => a.inicio.localeCompare(b.inicio))
     // Lo que ven los compañeros: sin la clave, sin fotos (van aparte) y en la temporada en curso.
     const equipo: Equipo = { ...todo.equipo, compartir: undefined, partidosDesdeExportacion: 0, temporadaActivaId: temporadas[temporadas.length - 1]?.id ?? todo.equipo.temporadaActivaId }
-    const jugadores = todo.jugadores.map((j) => ({ ...j, foto: null, fotoHuella: j.foto ? huella(j.foto) : null }))
+    const jugadores = todo.jugadores.map((j) => ({ ...j, foto: null, fotoOriginal: null, fotoHuella: j.foto ? huella(j.foto) : null }))
     const datos = { ...todo, equipo, jugadores }
 
     // 1) Los datos (la primera vez, esto crea el equipo en la nube y registra la clave).
