@@ -17,6 +17,7 @@ import { Evoluciones } from './pantallas/Evoluciones'
 import { Ajustes } from './pantallas/Ajustes'
 import { Avanzado } from './pantallas/Avanzado'
 import { Copias } from './pantallas/Copias'
+import { Premios } from './pantallas/Premios'
 
 const PESTANAS = [
   { id: 'inicio', texto: 'Inicio', ruta: '/', icono: 'inicio' },
@@ -35,6 +36,7 @@ function pestanaDe(seg: string[]): string {
     case 'partido':
       return 'partidos'
     case 'evoluciones':
+    case 'premios':
       return 'evoluciones'
     case 'ajustes':
       return 'ajustes'
@@ -61,6 +63,8 @@ function Pantalla({ seg, datos }: { seg: string[]; datos: Datos }): ReactNode {
       if (c === 'editar') return <RegistroPartido datos={datos} id={b} />
       if (c === 'resumen') return <SecuenciaPartido datos={datos} id={b} recordarCopia={seg[3] === 'copia'} />
       return <DetallePartido datos={datos} id={b} />
+    case 'premios':
+      return <Premios datos={datos} />
     case 'evoluciones':
       return <Evoluciones datos={datos} vista={b} id={c} />
     case 'ajustes':

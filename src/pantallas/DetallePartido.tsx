@@ -6,6 +6,8 @@ import { disenoDe } from '../componentes/disenos'
 import { Cabecera, Icono } from '../componentes/ui'
 import { MarcadorHero, PodioMvp } from '../componentes/Marcador'
 import { resumenPartido } from './resumenPartido'
+import { claveIF, yaTiene } from '../motor/premios'
+import { darEspecial } from '../componentes/especiales'
 import { avisar, confirmar } from '../componentes/dialogos'
 import { BannerDeshacer } from './Partidos'
 
@@ -31,6 +33,13 @@ export function DetallePartido({ datos, id }: { datos: Datos; id: string }) {
     avisar('Partido eliminado')
     ir('/partidos', true)
   }
+
+  // IF sugerida: mejor nota ponderada del partido, si llega al mínimo (§9).
+  const mejorNP = resumen.filas.reduce<{ e: (typeof resumen.filas)[number]['e']; np: number } | null>(
+    (m, f) => (!m || f.paso.notaPonderada > m.np ? { e: f.e, np: f.paso.notaPonderada } : m),
+    null,
+  )
+  const sugerenciaIF = mejorNP && mejorNP.np >= config.ifNotaMinima ? mejorNP : null
 
   const jugaron = p.actuaciones
     .filter((a) => r.notas[a.jugadorId] !== undefined && calculo.jugadores[a.jugadorId])
@@ -69,6 +78,29 @@ export function DetallePartido({ datos, id }: { datos: Datos; id: string }) {
         <section className="tarjeta tarjeta--podio">
           <h2>{resumen.mvp ? 'MVP de la jornada' : 'Nominados (sin MVP)'}</h2>
           <PodioMvp resumen={resumen} config={config} compacto />
+        </section>
+      )}
+
+      {sugerenciaIF && (
+        <section className="tarjeta sugerencia">
+          <MiniCarta jugador={sugerenciaIF.e.jugador} media={sugerenciaIF.e.media} diseno="IF" config={config} ancho={46} />
+          <div className="sugerencia__texto">
+            <strong>IF sugerida: {nombreVisible(sugerenciaIF.e.jugador)}</strong>
+            <span>Mejor nota ponderada del partido ({fmt2(sugerenciaIF.np)})</span>
+          </div>
+          {yaTiene(sugerenciaIF.e.jugador, 'IF', claveIF(p.id)) ? (
+            <span className="dado"><Icono nombre="check" tam={16} /> Dada</span>
+          ) : (
+            <button
+              className="boton boton--peq"
+              onClick={async () => {
+                await darEspecial(sugerenciaIF.e.jugador, 'IF', claveIF(p.id), p.fecha)
+                avisar(`IF para ${nombreVisible(sugerenciaIF.e.jugador)}`)
+              }}
+            >
+              Dar IF
+            </button>
+          )}
         </section>
       )}
 

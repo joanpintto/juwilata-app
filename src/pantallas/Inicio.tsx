@@ -5,6 +5,7 @@ import { disenoDe } from '../componentes/disenos'
 import { Icono } from '../componentes/ui'
 import { EscudoLogro, Vitrina } from '../componentes/Logros'
 import { NOMBRE_NIVEL, type EstadoLogro } from '../motor/logros'
+import { nombreMes, sugerenciasIF, sugerenciasPOTM, yaTiene } from '../motor/premios'
 import { Tendencia } from './Jugadores'
 
 interface Destacado {
@@ -40,6 +41,14 @@ export function Inicio({ datos }: { datos: Datos }) {
   const mediaEquipo = lista.length ? lista.reduce((s, x) => s + x.media, 0) / lista.length : null
   const ultimo = calculo.partidos[calculo.partidos.length - 1]
   const cambioEquipo = ultimo && lista.length ? lista.reduce((s, x) => s + (ultimo.cambios[x.jugador.id] ?? 0), 0) / lista.length : 0
+
+  // Sugerencias pendientes: IF del último partido y POTM de los meses sin entregar.
+  const ultimaIF = sugerenciasIF(calculo, config).pop()
+  const ifPendiente = ultimaIF?.jugador && !yaTiene(ultimaIF.jugador, 'IF', ultimaIF.clave) ? ultimaIF : null
+  const mesActual = new Date().toISOString().slice(0, 7)
+  const potmPendiente = sugerenciasPOTM(calculo, config, equipo.duracionPartido).find(
+    (m) => m.mes < mesActual && m.candidatos[0] && !yaTiene(m.candidatos[0].e.jugador, 'POTM', m.clave),
+  )
 
   const conPartidos = (x: EstadoJugador) => x.estadisticas.partidos > 0
   const puntPortero = (x: EstadoJugador) => {
@@ -119,6 +128,21 @@ export function Inicio({ datos }: { datos: Datos }) {
           <strong>
             {fmt1(mediaEquipo)} <Tendencia valor={cambioEquipo} />
           </strong>
+        </section>
+      )}
+
+      {(ifPendiente || potmPendiente) && (
+        <section className="tarjeta">
+          <div className="tarjeta__cab">
+            <h2>Sugerencias</h2>
+            <button className="enlace" onClick={() => ir('/premios')}>Ver premios</button>
+          </div>
+          {ifPendiente?.jugador && (
+            <p className="nota">⭐ IF para <strong>{nombreVisible(ifPendiente.jugador)}</strong> por el partido contra {ifPendiente.partido.rival}.</p>
+          )}
+          {potmPendiente && (
+            <p className="nota">🏅 POTM de {nombreMes(potmPendiente.mes).toLowerCase()} para <strong>{nombreVisible(potmPendiente.candidatos[0].e.jugador)}</strong>.</p>
+          )}
         </section>
       )}
 

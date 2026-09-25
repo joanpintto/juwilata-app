@@ -85,6 +85,13 @@ export interface Config {
   correctorUmbral: number
   correctorAjuste: number
 
+  // Sugerencias de cartas especiales (§9)
+  ifNotaMinima: number // nota ponderada mínima para sugerir IF
+  potmPesos: { notas: number; mvps: number; produccion: number }
+  potmMinutos: number // fracción de los minutos posibles del mes para no penalizar
+  totyPesos: { notas: number; evolucion: number; produccion: number; mvps: number }
+  totyPartidos: number // fracción de los partidos del equipo para no penalizar
+
   // Rangos (umbral inferior)
   rangos: { id: RangoId; nombre: string; desde: number }[]
 }
@@ -171,6 +178,12 @@ export const CONFIG_INICIAL: Config = {
   correctorCada: 5,
   correctorUmbral: 4.5,
   correctorAjuste: 0.4,
+
+  ifNotaMinima: 8.0,
+  potmPesos: { notas: 0.6, mvps: 0.5, produccion: 0.1 },
+  potmMinutos: 0.75,
+  totyPesos: { notas: 0.5, evolucion: 0.2, produccion: 0.2, mvps: 0.1 },
+  totyPartidos: 0.5,
 
   rangos: [
     { id: 'bronce', nombre: 'Bronce', desde: 60 },

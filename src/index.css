@@ -800,3 +800,26 @@ input[type='range'] { width: 100%; accent-color: var(--dorado); }
 .galeria button { transition: transform 0.12s; }
 .galeria button:active { transform: scale(0.97); }
 .subpestanas--4 button, .subpestanas button { white-space: nowrap; }
+
+/* ─── Premios ──────────────────────────────────────────────────────── */
+
+.dado { display: inline-flex; align-items: center; gap: 4px; font-size: 13px; font-weight: 600; color: var(--ok); white-space: nowrap; }
+.dado.centro { align-self: center; }
+.premio-grupo { display: flex; flex-direction: column; gap: 6px; padding-top: 4px; }
+.premio-grupo__titulo { font-size: 11.5px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; color: var(--texto-2); }
+.premio-fila { display: flex; align-items: center; gap: 10px; padding: 4px 0; }
+.premio-fila__texto { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.premio-fila strong { font-size: 14.5px; }
+.premio-fila span { font-size: 12px; color: var(--texto-2); }
+.premio-fila--primero strong { color: var(--dorado); }
+.toty {
+  display: flex; flex-direction: column; gap: 10px; padding: 14px 6px; border-radius: 14px;
+  background: repeating-linear-gradient(180deg, #1b2a20 0 12.5%, #1e2f23 12.5% 25%); border: 1px solid #2c3a30;
+}
+.toty__linea { display: flex; justify-content: center; gap: 14px; }
+.toty__linea button { display: flex; flex-direction: column; align-items: center; gap: 3px; }
+.toty__linea span { font-family: 'Barlow Condensed', sans-serif; font-size: 13px; color: var(--dorado); }
+.sugerencia { flex-direction: row; align-items: center; gap: 12px; border-color: rgba(204, 163, 124, 0.35); }
+.sugerencia__texto { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.sugerencia strong { font-size: 14.5px; }
+.sugerencia span { font-size: 12px; color: var(--texto-2); }

@@ -7,7 +7,7 @@ import { Carta, MiniCarta } from '../componentes/Carta'
 import { DISENOS, disenoDe } from '../componentes/disenos'
 import { GraficoBarrasH, GraficoGoles, GraficoLineas, type Serie } from '../componentes/GraficosEquipo'
 import { COLORES_SERIE } from '../componentes/colores'
-import { Cabecera, Subpestanas, Vacio } from '../componentes/ui'
+import { Cabecera, Icono, Subpestanas, Vacio } from '../componentes/ui'
 import { Tendencia } from './Jugadores'
 
 const SUBPESTANAS = [
@@ -273,7 +273,15 @@ export function Evoluciones({ datos, vista, id }: { datos: Datos; vista?: string
   const subtitulo = { clasificacion: 'Clasificación interna por media', comparador: 'Cara a cara', galeria: 'Cartas activas', graficos: 'La temporada en gráficos' }[activa]
   return (
     <>
-      <Cabecera titulo="Evoluciones" sub={subtitulo} />
+      <Cabecera
+        titulo="Evoluciones"
+        sub={subtitulo}
+        acciones={
+          <button className="boton boton--peq boton--sec" onClick={() => ir('/premios')}>
+            <Icono nombre="estrella" tam={16} /> Premios
+          </button>
+        }
+      />
       <Subpestanas opciones={SUBPESTANAS} activa={activa} />
       {activa === 'clasificacion' && <Ranking datos={datos} />}
       {activa === 'comparador' && <Comparador key={id} datos={datos} inicial={id} />}
