@@ -166,11 +166,23 @@ export function DialogosRaiz() {
 
 /** Hoja inferior genérica (menús y selectores). */
 export function Hoja({ abierta, onCerrar, titulo, children }: { abierta: boolean; onCerrar: () => void; titulo?: string; children: ReactNode }) {
+  // En el ordenador también se cierra con Escape.
+  useEffect(() => {
+    if (!abierta) return
+    const tecla = (e: KeyboardEvent) => e.key === 'Escape' && onCerrar()
+    window.addEventListener('keydown', tecla)
+    return () => window.removeEventListener('keydown', tecla)
+  }, [abierta, onCerrar])
   if (!abierta) return null
   return (
     <div className="velo velo--abajo" onClick={onCerrar}>
-      <div className="hoja" onClick={(e) => e.stopPropagation()}>
-        {titulo && <h2 className="hoja__titulo">{titulo}</h2>}
+      <div className="hoja" role="dialog" aria-modal="true" aria-label={titulo} onClick={(e) => e.stopPropagation()}>
+        <div className="hoja__cab">
+          {titulo ? <h2 className="hoja__titulo">{titulo}</h2> : <span />}
+          <button className="hoja__cerrar" onClick={onCerrar} aria-label="Cerrar">
+            <Icono nombre="cerrar" tam={20} />
+          </button>
+        </div>
         {children}
       </div>
     </div>
