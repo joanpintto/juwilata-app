@@ -1,5 +1,5 @@
 import type { Partido } from '../db'
-import type { Datos } from '../datos'
+import { textoJornada, type Datos } from '../datos'
 import { rango } from '../motor/calculo'
 import type { EstadoJugador, Paso } from '../motor/temporada'
 
@@ -11,7 +11,7 @@ export interface FilaResumen {
 
 export interface Resumen {
   partido: Partido
-  jornada: number | null
+  jornada: string | null // «Jornada 3» o «Split 2 · Jornada 3»
   resultado: 'V' | 'E' | 'D'
   filas: FilaResumen[] // ordenadas por nota
   mvp: FilaResumen | null
@@ -46,7 +46,10 @@ export function resumenPartido(datos: Datos, id: string): Resumen | null {
 
   return {
     partido: p,
-    jornada: programados.find((g) => g.id === p.programadoId)?.jornada ?? null,
+    jornada: (() => {
+      const g = programados.find((x) => x.id === p.programadoId)
+      return g ? textoJornada(g, programados, true) : null
+    })(),
     resultado: p.golesFavor > p.golesContra ? 'V' : p.golesFavor === p.golesContra ? 'E' : 'D',
     filas,
     mvp: filas.find((f) => f.paso.mvp) ?? null,

@@ -49,7 +49,7 @@ export function DetallePartido({ datos, id }: { datos: Datos; id: string }) {
   return (
     <>
       <Cabecera
-        titulo={resumen.jornada ? `Jornada ${resumen.jornada}` : p.competicion}
+        titulo={resumen.jornada ?? p.competicion}
         sub={`${fechaLarga(p.fecha)}${resumen.jornada ? ` · ${p.competicion}` : ''}`}
         atras="/partidos"
         acciones={

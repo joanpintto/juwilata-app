@@ -25,6 +25,7 @@ export interface Equipo {
   partidosDesdeExportacion: number
   ultimaExportacion: string | null
   secuenciaPostPartido?: boolean // animación al confirmar (por defecto, sí)
+  splitActual?: number // split que se está jugando (por defecto, el 1)
 }
 
 export interface Temporada {
@@ -76,7 +77,13 @@ export interface Rival {
   id: string
   nombre: string
   creado: string
+  splits?: number[] // splits de liga en los que juega (sin dato = solo el 1)
 }
+
+/** La liga se juega en 2 splits de 16 jornadas que funcionan como dos ligas distintas. */
+export const SPLITS = [1, 2] as const
+export const splitDe = (x: { split?: number | null }) => x.split ?? 1
+export const splitsDe = (r: Rival) => r.splits ?? [1]
 
 /** Partido propio del calendario (programado antes de jugarse). */
 export interface Programado {
@@ -89,6 +96,7 @@ export interface Programado {
   local: boolean
   aplazado: boolean
   competicion: string
+  split?: number // split de liga (sin dato = 1)
 }
 
 /** Resultado de un partido de liga entre otros dos equipos (solo el marcador). */
@@ -100,6 +108,7 @@ export interface ResultadoLiga {
   visitanteId: string
   golesLocal: number
   golesVisitante: number
+  split?: number
 }
 
 export interface Partido {
@@ -108,6 +117,7 @@ export interface Partido {
   rival: string
   rivalId?: string | null
   programadoId?: string | null // si viene del calendario (jugado = tiene partido)
+  split?: number | null // split de liga (solo en partidos de liga)
   fecha: string // AAAA-MM-DD
   competicion: string
   local: boolean

@@ -48,7 +48,7 @@ export function useDatos(): Datos | undefined {
     const calculo = reproducirTemporada(base.jugadores, base.partidos, mapa, ultima.datos, base.equipo.duracionPartido)
     const jugadores = [...base.jugadores].sort((a, b) => a.dorsal - b.dorsal)
     const rivales = [...base.rivales].sort((a, b) => a.nombre.localeCompare(b.nombre, 'es'))
-    const programados = [...base.programados].sort((a, b) => a.jornada - b.jornada)
+    const programados = [...base.programados].sort((a, b) => (a.split ?? 1) - (b.split ?? 1) || a.jornada - b.jornada)
     const liga = partidosLiga(base.partidos, programados, base.resultadosLiga, rivales)
     const logros = calcularLogros({
       jugadores, partidos: base.partidos, calculo, config: ultima.datos, equipo: base.equipo, programados, rivales, liga,
@@ -138,3 +138,14 @@ export const SUBPESTANAS_PARTIDOS = [
   { id: 'mis', texto: 'Mis partidos', ruta: '/partidos' },
   { id: 'liga', texto: 'Liga', ruta: '/partidos/liga' },
 ]
+
+/**
+ * Texto de una jornada del calendario. Con un solo split se ve «J3»; cuando hay
+ * calendario del segundo split, «S2·J3» (corto) o «Split 2 · Jornada 3» (largo).
+ */
+export function textoJornada(g: Programado, programados: Programado[], largo = false): string {
+  const variosSplits = programados.some((x) => (x.split ?? 1) !== 1)
+  const split = g.split ?? 1
+  if (largo) return variosSplits ? `Split ${split} · Jornada ${g.jornada}` : `Jornada ${g.jornada}`
+  return variosSplits ? `S${split}·J${g.jornada}` : `J${g.jornada}`
+}

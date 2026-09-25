@@ -1,4 +1,4 @@
-import { conSigno, fechaCorta, fechaLarga, fmt1, fmt2, ir, nombreRival, nombreVisible, proximoPartido, type Datos } from '../datos'
+import { conSigno, fechaCorta, fechaLarga, textoJornada, fmt1, fmt2, ir, nombreRival, nombreVisible, proximoPartido, type Datos } from '../datos'
 import type { EstadoJugador } from '../motor/temporada'
 import { MiniCarta } from '../componentes/Carta'
 import { disenoDe } from '../componentes/disenos'
@@ -95,7 +95,7 @@ export function Inicio({ datos }: { datos: Datos }) {
         </section>
       ) : proximo ? (
         <section className="tarjeta proximo">
-          <span className="proximo__j">J{proximo.jornada}</span>
+          <span className="proximo__j">{textoJornada(proximo, programados)}</span>
           <div className="proximo__texto">
             <strong>{proximo.local ? 'vs' : 'en'} {nombreRival(rivales, proximo.rivalId)}</strong>
             <span>{proximo.fecha ? fechaLarga(proximo.fecha) : 'Sin fecha'}{proximo.hora ? ` · ${proximo.hora}` : ''}</span>

@@ -333,7 +333,8 @@ Idea: **subir es lo normal y bajar cuesta mucho**. No hay techo: cualquier jugad
 ### Liga
 - **Partidos propios:** registro completo.
 - **Partidos entre otros equipos:** solo el resultado.
-- **Clasificación** automática (3 puntos por victoria, 1 por empate, 0 por derrota).
+- **Dos splits:** la liga se juega en 2 splits de 16 jornadas (el primero hasta febrero, el segundo hasta junio o julio) que funcionan como dos ligas distintas. Cada split tiene su propia clasificación, su calendario (J1 a J16), sus resultados y su lista de equipos (pueden cambiar de un split a otro; se pueden copiar los del otro split). **Las medias, estadísticas y premios de los jugadores siguen toda la temporada (32 partidos).**
+- **Clasificación** automática por split (3 puntos por victoria, 1 por empate, 0 por derrota).
 - **Calendario** manual. Un partido aplazado mantiene su número de jornada.
 - **Adelantado a la Fase 1:** equipos de la liga (rivales), calendario de nuestros partidos (jornada, rival, fecha y hora opcionales, local o visitante), botón de aplazar y «Registrar resultado» desde el calendario. En el registro de partido el rival se elige de la lista. Inicio muestra el próximo partido.
 
@@ -382,8 +383,8 @@ Idea: **subir es lo normal y bajar cuesta mucho**. No hay techo: cualquier jugad
 | Muralla | 3 porterías a cero seguidas |
 | Rodillo | 50 / 100 / 150 goles en una temporada |
 | Todos suman | 5 goleadores distintos en un mismo partido |
-| Líder | Estar 1º en la clasificación en cualquier jornada |
-| Campeones | Terminar la liga en 1ª posición |
+| Líder | Estar 1º en la clasificación en cualquier jornada (uno por split) |
+| Campeones | Terminar un split en 1ª posición (hasta dos por temporada) |
 | Temporada invicta | Los 32 partidos sin perder |
 
 - **La baja** de la convocatoria no cuenta para Falsas promesas.
@@ -484,6 +485,7 @@ Puntos que el diseño dejaba abiertos y que se han concretado al construir la Fa
 ## 16. Concreciones de la Fase 2
 
 ### Liga
+- En Partidos → Liga se elige el split (1 o 2); todo lo de la pantalla es de ese split y queda como split «en juego» para los partidos de liga nuevos. Las jornadas se ven como «J3» y, cuando hay calendario del segundo split, como «S2·J3».
 - La clasificación cuenta nuestros partidos con competición «Liga» y los resultados entre otros equipos, que se apuntan por jornada en Partidos → Liga → Otros resultados.
 - Desempate: puntos, diferencia de goles, goles a favor y nombre.
 
@@ -493,7 +495,7 @@ Puntos que el diseño dejaba abiertos y que se han concretado al construir la Fa
 - **Muro:** porterías a cero jugando de portero, central o lateral más de la mitad del partido.
 - **Falsas promesas:** 3 partidos seguidos como no convocado; la baja ni suma ni corta la racha. Repetible.
 - **En racha (individual):** cada 3 partidos seguidos con 7,5 o más cuenta una vez.
-- **Líder:** ir 1º tras cualquier jornada (o ahora mismo). **Campeones:** 1º cuando todos los partidos de liga del calendario están jugados. **Temporada invicta:** jugados todos los partidos de la temporada sin perder.
+- **Líder:** ir 1º tras cualquier jornada de un split (o ahora mismo); se puede ganar en cada split. **Campeones:** 1º de un split cuando todos sus partidos de liga del calendario están jugados; hasta dos por temporada. **Temporada invicta:** jugados todos los partidos de la temporada sin perder.
 - Escudos: marco bronce/plata/oro para los de niveles (con puntos de nivel), dorado champán con interior granate para los únicos, cinta con el hito (meta alcanzada, «×n» si se repite, o la fecha), gris con barra de progreso si están pendientes.
 - Se ven en la ficha del jugador (pestaña Logros) y en Inicio (vitrina del equipo y últimos logros).
 

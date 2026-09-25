@@ -1,6 +1,6 @@
 import { useLiveQuery } from 'dexie-react-hooks'
 import { db } from '../db'
-import { SUBPESTANAS_PARTIDOS, fechaCorta, ir, nombreVisible, type Datos } from '../datos'
+import { SUBPESTANAS_PARTIDOS, fechaCorta, ir, nombreVisible, textoJornada, type Datos } from '../datos'
 import { Cabecera, Icono, Subpestanas, Vacio } from '../componentes/ui'
 import { avisar, confirmar } from '../componentes/dialogos'
 
@@ -43,7 +43,7 @@ export function Partidos({ datos }: { datos: Datos }) {
   const d = calculo.partidos.length - v - e
   const jornadaDe = (id: string | null | undefined) => {
     const g = id ? programados.find((x) => x.id === id) : null
-    return g ? `J${g.jornada} · ` : ''
+    return g ? `${textoJornada(g, programados)} · ` : ''
   }
 
   return (

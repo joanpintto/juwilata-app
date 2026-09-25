@@ -1,10 +1,11 @@
 // Clasificación de la liga (§10): 3 puntos por victoria, 1 por empate, 0 por derrota.
 // Se calcula con nuestros partidos de liga y los resultados entre otros equipos.
-import type { Partido, Programado, ResultadoLiga, Rival } from '../db'
+import { splitDe, splitsDe, type Partido, type Programado, type ResultadoLiga, type Rival } from '../db'
 
 export const NOSOTROS = 'nosotros'
 
 export interface PartidoLiga {
+  split: number
   jornada: number | null
   localId: string
   visitanteId: string
@@ -30,6 +31,12 @@ export const esLiga = (competicion: string) => competicion.trim().toLocaleLowerC
 
 const normalizar = (s: string) => s.trim().toLocaleLowerCase('es').normalize('NFD').replace(/[̀-ͯ]/g, '')
 
+/** Split de uno de nuestros partidos: el de su jornada del calendario o el suyo propio. */
+export function splitDePartido(p: Partido, programados: Programado[]): number {
+  const prog = programados.find((g) => g.id === p.programadoId)
+  return prog ? splitDe(prog) : splitDe(p)
+}
+
 /** Todos los partidos de liga de la temporada: los nuestros y los de los demás. */
 export function partidosLiga(partidos: Partido[], programados: Programado[], resultados: ResultadoLiga[], rivales: Rival[]): PartidoLiga[] {
   const lista: PartidoLiga[] = []
@@ -37,8 +44,10 @@ export function partidosLiga(partidos: Partido[], programados: Programado[], res
   for (const p of ordenados) {
     if (!esLiga(p.competicion)) continue
     const rivalId = p.rivalId ?? rivales.find((r) => normalizar(r.nombre) === normalizar(p.rival))?.id ?? `nombre:${p.rival}`
+    const prog = programados.find((g) => g.id === p.programadoId)
     lista.push({
-      jornada: programados.find((g) => g.id === p.programadoId)?.jornada ?? null,
+      split: splitDePartido(p, programados),
+      jornada: prog?.jornada ?? null,
       localId: p.local ? NOSOTROS : rivalId,
       visitanteId: p.local ? rivalId : NOSOTROS,
       golesLocal: p.local ? p.golesFavor : p.golesContra,
@@ -47,12 +56,18 @@ export function partidosLiga(partidos: Partido[], programados: Programado[], res
     })
   }
   for (const r of resultados) {
-    lista.push({ jornada: r.jornada, localId: r.localId, visitanteId: r.visitanteId, golesLocal: r.golesLocal, golesVisitante: r.golesVisitante, nuestro: false })
+    lista.push({ split: splitDe(r), jornada: r.jornada, localId: r.localId, visitanteId: r.visitanteId, golesLocal: r.golesLocal, golesVisitante: r.golesVisitante, nuestro: false })
   }
   return lista
 }
 
-export function clasificacion(lista: PartidoLiga[], rivales: Rival[], nombreEquipo: string, hastaJornada?: number): FilaClasificacion[] {
+/** Equipos de la liga que juegan un split. */
+export const rivalesDelSplit = (rivales: Rival[], split: number) => rivales.filter((r) => splitsDe(r).includes(split))
+
+/** Clasificación de un split (cada split es una liga distinta). */
+export function clasificacion(lista: PartidoLiga[], rivales: Rival[], nombreEquipo: string, split: number, hastaJornada?: number): FilaClasificacion[] {
+  rivales = rivalesDelSplit(rivales, split)
+  lista = lista.filter((p) => p.split === split)
   const filas = new Map<string, FilaClasificacion>()
   const fila = (id: string) => {
     let f = filas.get(id)
@@ -91,8 +106,9 @@ export function clasificacion(lista: PartidoLiga[], rivales: Rival[], nombreEqui
     .sort((a, b) => b.pts - a.pts || (b.gf - b.gc) - (a.gf - a.gc) || b.gf - a.gf || a.nombre.localeCompare(b.nombre, 'es'))
 }
 
-/** Jornadas (con número) en las que hemos ido primeros tras jugar. */
-export function jornadasLider(lista: PartidoLiga[], rivales: Rival[], nombreEquipo: string): number[] {
-  const jornadas = [...new Set(lista.filter((p) => p.nuestro && p.jornada !== null).map((p) => p.jornada as number))].sort((a, b) => a - b)
-  return jornadas.filter((j) => clasificacion(lista, rivales, nombreEquipo, j)[0]?.id === NOSOTROS)
+/** Jornadas (con número) de un split en las que hemos ido primeros tras jugar. */
+export function jornadasLider(lista: PartidoLiga[], rivales: Rival[], nombreEquipo: string, split: number): number[] {
+  const nuestros = lista.filter((p) => p.split === split && p.nuestro && p.jornada !== null)
+  const jornadas = [...new Set(nuestros.map((p) => p.jornada as number))].sort((a, b) => a - b)
+  return jornadas.filter((j) => clasificacion(lista, rivales, nombreEquipo, split, j)[0]?.id === NOSOTROS)
 }

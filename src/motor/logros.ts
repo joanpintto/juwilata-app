@@ -1,9 +1,9 @@
 // Logros (§11). Solo estéticos. Se calculan a partir de la temporada reproducida,
 // así que al editar un partido antiguo se revisan en cascada.
-import type { Equipo, Jugador, Partido, Programado, Rival } from '../db'
+import { SPLITS, splitDe, type Equipo, type Jugador, type Partido, type Programado, type Rival } from '../db'
 import type { Config, Posicion } from './config'
 import type { Temporada } from './temporada'
-import { NOSOTROS, clasificacion, esLiga, jornadasLider, type PartidoLiga } from './liga'
+import { NOSOTROS, clasificacion, esLiga, jornadasLider, rivalesDelSplit, splitDePartido, type PartidoLiga } from './liga'
 
 export type IconoLogro =
   | 'balon' | 'pase' | 'guante' | 'estrella' | 'diez' | 'fuego' | 'flecha' | 'corona' | 'calendario'
@@ -74,8 +74,8 @@ export const LOGROS: LogroDef[] = [
   { id: 'eq-muralla', nombre: 'Muralla', descripcion: '3 porterías a cero seguidas.', icono: 'muro', categoria: 'Equipo', ambito: 'equipo', repetible: true },
   { id: 'eq-rodillo', nombre: 'Rodillo', descripcion: 'Goles en una temporada: 50, 100 y 150.', icono: 'balon', categoria: 'Equipo', ambito: 'equipo', niveles: [50, 100, 150], unidad: plural('gol', 'goles') },
   { id: 'eq-todos-suman', nombre: 'Todos suman', descripcion: '5 goleadores distintos en un mismo partido.', icono: 'estrella', categoria: 'Equipo', ambito: 'equipo', repetible: true },
-  { id: 'eq-lider', nombre: 'Líder', descripcion: 'Ir 1º en la clasificación en cualquier jornada.', icono: 'corona', categoria: 'Equipo', ambito: 'equipo' },
-  { id: 'eq-campeones', nombre: 'Campeones', descripcion: 'Terminar la liga en 1ª posición.', icono: 'trofeo', categoria: 'Equipo', ambito: 'equipo' },
+  { id: 'eq-lider', nombre: 'Líder', descripcion: 'Ir 1º en la clasificación en cualquier jornada (una vez por split).', icono: 'corona', categoria: 'Equipo', ambito: 'equipo', repetible: true },
+  { id: 'eq-campeones', nombre: 'Campeones', descripcion: 'Terminar un split de liga en 1ª posición.', icono: 'trofeo', categoria: 'Equipo', ambito: 'equipo', repetible: true },
   { id: 'eq-invicta', nombre: 'Temporada invicta', descripcion: 'Toda la temporada sin perder.', icono: 'escudo', categoria: 'Equipo', ambito: 'equipo' },
 ]
 
@@ -294,17 +294,23 @@ export function calcularLogros(d: EntradaLogros): ResultadoLogros {
     if (goleadores >= 5) reg.conseguir('eq-todos-suman', f, p.id)
   }
   const ultimo = partidos[partidos.length - 1]
-  const lider = jornadasLider(d.liga, d.rivales, d.equipo.nombre)
-  const tablaActual = clasificacion(d.liga, d.rivales, d.equipo.nombre)
-  const nuestra = tablaActual.find((f) => f.id === NOSOTROS)
-  if (lider.length || (tablaActual[0]?.id === NOSOTROS && (nuestra?.pj ?? 0) > 0 && d.rivales.length > 0)) {
-    const jornada = lider[0]
-    const p = partidos.find((x) => d.programados.find((g) => g.id === x.programadoId)?.jornada === jornada) ?? ultimo
-    reg.conseguir('eq-lider', p?.fecha ?? '', p?.id ?? null)
+  // Líder y Campeones se pueden ganar en cada split (cada split es una liga distinta).
+  for (const split of SPLITS) {
+    const delSplit = (g: Programado) => splitDe(g) === split
+    const partidosSplit = partidos.filter((p) => esLiga(p.competicion) && splitDePartido(p, d.programados) === split)
+    const ultimoSplit = partidosSplit[partidosSplit.length - 1]
+    const lider = jornadasLider(d.liga, d.rivales, d.equipo.nombre, split)
+    const tabla = clasificacion(d.liga, d.rivales, d.equipo.nombre, split)
+    const nuestra = tabla.find((f) => f.id === NOSOTROS)
+    const hayRivales = rivalesDelSplit(d.rivales, split).length > 0
+    if (lider.length || (tabla[0]?.id === NOSOTROS && (nuestra?.pj ?? 0) > 0 && hayRivales)) {
+      const p = partidosSplit.find((x) => d.programados.find((g) => g.id === x.programadoId)?.jornada === lider[0]) ?? ultimoSplit
+      reg.conseguir('eq-lider', p?.fecha ?? '', p?.id ?? null)
+    }
+    const deLiga = d.programados.filter((g) => esLiga(g.competicion) && delSplit(g))
+    const terminada = deLiga.length > 0 && deLiga.every((g) => partidos.some((p) => p.programadoId === g.id))
+    if (terminada && tabla[0]?.id === NOSOTROS && ultimoSplit) reg.conseguir('eq-campeones', ultimoSplit.fecha, ultimoSplit.id)
   }
-  const deLiga = d.programados.filter((g) => esLiga(g.competicion))
-  const ligaTerminada = deLiga.length > 0 && deLiga.every((g) => partidos.some((p) => p.programadoId === g.id))
-  if (ligaTerminada && tablaActual[0]?.id === NOSOTROS && ultimo) reg.conseguir('eq-campeones', ultimo.fecha, ultimo.id)
   if (partidos.length >= d.equipo.partidosTemporada && partidos.every((p) => p.golesFavor >= p.golesContra) && ultimo) {
     reg.conseguir('eq-invicta', ultimo.fecha, ultimo.id)
   }

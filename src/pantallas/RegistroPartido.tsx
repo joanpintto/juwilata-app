@@ -1,8 +1,9 @@
 import { useState, type ReactNode } from 'react'
-import { copiaAutomatica, db, nuevoId, type Actuacion, type EstadoConvocatoria, type Partido, type Programado } from '../db'
+import { SPLITS, copiaAutomatica, db, nuevoId, splitDe, type Actuacion, type EstadoConvocatoria, type Partido, type Programado } from '../db'
 import { colorNota, conSigno, fechaCorta, fmt1, fmt2, hoy, ir, nombreRival, nombreVisible, partidoDe, type Datos } from '../datos'
 import { SelectorRival } from '../componentes/SelectorRival'
 import { rivalPorNombre } from '../componentes/rivales'
+import { esLiga, rivalesDelSplit } from '../motor/liga'
 import { calcularNota, mediaVisible, rango } from '../motor/calculo'
 import { ACCIONES, ACCIONES_RAPIDAS, rolPorId, type AccionId } from '../motor/config'
 import { reproducirTemporada } from '../motor/temporada'
@@ -60,8 +61,13 @@ export function RegistroPartido({ datos, id, programadoId }: { datos: Datos; id?
       fecha: g?.fecha ?? hoy(),
       competicion: g?.competicion ?? 'Liga',
       local: g?.local ?? true,
+      split: g ? splitDe(g) : (equipo.splitActual ?? 1),
     }
   }
+  const esDeLiga = esLiga(p.competicion)
+  const splitPartido = p.split ?? 1
+  // En liga, el rival se elige entre los equipos del split (los demás siguen disponibles escribiendo).
+  const rivalesLista = esDeLiga && rivalesDelSplit(rivales, splitPartido).length ? rivalesDelSplit(rivales, splitPartido) : rivales
   // Partidos del calendario que se pueden registrar (sin jugar), más el propio al editar.
   const pendientes = programados.filter((g) => !partidoDe(g, partidos) || g.id === original?.programadoId)
 
@@ -149,10 +155,13 @@ export function RegistroPartido({ datos, id, programadoId }: { datos: Datos; id?
   const guardar = async () => {
     setGuardando(true)
     try {
-      const rival = p.rivalId ? rivales.find((r) => r.id === p.rivalId) : await rivalPorNombre(p.rival)
+      const prog = programados.find((g) => g.id === p.programadoId)
+      const split = esLiga(p.competicion) ? (prog ? splitDe(prog) : (p.split ?? 1)) : null
+      const rival = p.rivalId ? rivales.find((r) => r.id === p.rivalId) : await rivalPorNombre(p.rival, split ?? undefined)
       const final: Partido = {
         ...p,
         rivalId: rival?.id ?? null,
+        split,
         rival: rival?.nombre ?? p.rival.trim(),
         nominados: candidatos,
         mvpId: mvpValido,
@@ -254,7 +263,7 @@ export function RegistroPartido({ datos, id, programadoId }: { datos: Datos; id?
                 <option value="">Ninguno (amistoso u otro)</option>
                 {pendientes.map((g) => (
                   <option key={g.id} value={g.id}>
-                    J{g.jornada} · {g.local ? 'vs' : 'en'} {nombreRival(rivales, g.rivalId)}{g.fecha ? ` · ${fechaCorta(g.fecha)}` : ''}{g.aplazado ? ' (aplazado)' : ''}
+                    S{splitDe(g)} · J{g.jornada} · {g.local ? 'vs' : 'en'} {nombreRival(rivales, g.rivalId)}{g.fecha ? ` · ${fechaCorta(g.fecha)}` : ''}{g.aplazado ? ' (aplazado)' : ''}
                   </option>
                 ))}
               </select>
@@ -264,7 +273,7 @@ export function RegistroPartido({ datos, id, programadoId }: { datos: Datos; id?
             <span>Rival</span>
             <SelectorRival
               key={claveRival}
-              rivales={rivales}
+              rivales={rivalesLista}
               rivalId={p.rivalId ?? null}
               nombre={p.rival}
               onChange={(v) => setP({ ...p, rivalId: v.rivalId, rival: v.nombre })}
@@ -283,6 +292,18 @@ export function RegistroPartido({ datos, id, programadoId }: { datos: Datos; id?
               <option value="Amistoso" />
             </datalist>
           </label>
+          {esDeLiga && !p.programadoId && (
+            <div className="campo">
+              <span>Split de liga</span>
+              <div className="segmentos">
+                {SPLITS.map((n) => (
+                  <button key={n} type="button" className={splitPartido === n ? 'activa' : ''} onClick={() => setP({ ...p, split: n })}>
+                    Split {n}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
           <div className="campo">
             <span>Campo</span>
             <div className="segmentos">

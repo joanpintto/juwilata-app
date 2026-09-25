@@ -1,6 +1,6 @@
 import type { Jugador, TipoEspecial } from '../db'
 import { darEspecial } from '../componentes/especiales'
-import { fechaCorta, fmt1, fmt2, ir, nombreVisible, type Datos } from '../datos'
+import { fechaCorta, fmt1, fmt2, ir, nombreVisible, textoJornada, type Datos } from '../datos'
 import { claveTemporada, nombreMes, sugerenciaTOTY, sugerenciasIF, sugerenciasPOTM, yaTiene, type CandidatoTOTY } from '../motor/premios'
 import { MiniCarta } from '../componentes/Carta'
 import { disenoDe } from '../componentes/disenos'
@@ -56,7 +56,10 @@ export function Premios({ datos }: { datos: Datos }) {
     )
   }
 
-  const jornada = (id: string | null | undefined) => programados.find((g) => g.id === id)?.jornada
+  const jornada = (id: string | null | undefined) => {
+    const g = programados.find((x) => x.id === id)
+    return g ? textoJornada(g, programados) : null
+  }
 
   return (
     <>
@@ -121,7 +124,7 @@ export function Premios({ datos }: { datos: Datos }) {
               <div className="premio-fila__texto">
                 <strong>{nombreVisible(s.jugador!)}</strong>
                 <span>
-                  {j ? `J${j} · ` : ''}{s.partido.local ? 'vs' : 'en'} {s.partido.rival} {s.partido.golesFavor}-{s.partido.golesContra} · {fechaCorta(s.partido.fecha)} · {fmt2(s.notaPonderada)}
+                  {j ? `${j} · ` : ''}{s.partido.local ? 'vs' : 'en'} {s.partido.rival} {s.partido.golesFavor}-{s.partido.golesContra} · {fechaCorta(s.partido.fecha)} · {fmt2(s.notaPonderada)}
                 </span>
               </div>
               <BotonDar j={s.jugador!} tipo="IF" clave={s.clave} fecha={s.partido.fecha} />

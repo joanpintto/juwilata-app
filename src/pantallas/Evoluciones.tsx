@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { conSigno, fechaCorta, fmt1, fmt2, ir, nombreVisible, type Datos } from '../datos'
+import { conSigno, fechaCorta, fmt1, fmt2, ir, nombreVisible, textoJornada, type Datos } from '../datos'
 import { mediaVisible, rango } from '../motor/calculo'
 import { POSICIONES, etiquetas, rolPorId, type Posicion } from '../motor/config'
 import type { EstadoJugador } from '../motor/temporada'
@@ -200,8 +200,8 @@ function Graficos({ datos }: { datos: Datos }) {
 
   const ids = partidos.map((p) => p.id)
   const etiquetas = partidos.map((p) => {
-    const j = programados.find((g) => g.id === p.programadoId)?.jornada
-    return j ? `J${j}` : fechaCorta(p.fecha)
+    const g = programados.find((x) => x.id === p.programadoId)
+    return g ? textoJornada(g, programados) : fechaCorta(p.fecha)
   })
   const porJugador = new Map(jugadores.map((e) => [e.jugador.id, mediaTras(e, ids)]))
   const mediaEquipo = ids.map((_, k) => {

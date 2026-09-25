@@ -176,7 +176,7 @@ export function SecuenciaPartido({ datos, id, recordarCopia }: { datos: Datos; i
           <>
             {r.resultado === 'V' && <Confeti />}
             <p className="secuencia__antetitulo">
-              {r.jornada ? `Jornada ${r.jornada} · ` : ''}{p.competicion}
+              {r.jornada ? `${r.jornada} · ` : ''}{p.competicion}
             </p>
             <p className="secuencia__fecha">{fechaLarga(p.fecha)}</p>
             <MarcadorHero resumen={r} equipo={datos.equipo.nombre} animar />

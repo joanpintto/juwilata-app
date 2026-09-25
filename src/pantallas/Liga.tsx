@@ -1,10 +1,10 @@
 import { useState } from 'react'
-import { db, nuevoId, type Programado, type ResultadoLiga, type Rival } from '../db'
+import { SPLITS, db, nuevoId, splitDe, splitsDe, type Programado, type ResultadoLiga, type Rival } from '../db'
 import { SUBPESTANAS_PARTIDOS, fechaCorta, ir, nombreRival, partidoDe, proximoPartido, type Datos } from '../datos'
 import { SelectorRival } from '../componentes/SelectorRival'
 import { rivalPorNombre } from '../componentes/rivales'
 import { Cabecera, Contador, Hoja, Icono, Subpestanas, Vacio } from '../componentes/ui'
-import { NOSOTROS, clasificacion, partidosLiga } from '../motor/liga'
+import { NOSOTROS, clasificacion, partidosLiga, rivalesDelSplit } from '../motor/liga'
 import { avisar, confirmar } from '../componentes/dialogos'
 
 // Liga: clasificación, calendario de nuestros partidos, resultados entre otros
@@ -35,11 +35,12 @@ function borradorNuevo(programados: Programado[]): Borrador {
   }
 }
 
-function FormProgramado({ inicial, rivales, programados, temporadaId, onCerrar }: {
+function FormProgramado({ inicial, rivales, programados, temporadaId, split, onCerrar }: {
   inicial: Borrador
   rivales: Rival[]
-  programados: Programado[]
+  programados: Programado[] // solo los del split
   temporadaId: string
+  split: number
   onCerrar: () => void
 }) {
   const [b, setB] = useState(inicial)
@@ -49,11 +50,11 @@ function FormProgramado({ inicial, rivales, programados, temporadaId, onCerrar }
     const jornada = Number(b.jornada)
     if (!Number.isInteger(jornada) || jornada < 1 || jornada > 99) return avisar('La jornada debe ser un número del 1 al 99.')
     if (!b.rivalId && !b.rivalNombre.trim()) return avisar('Elige o escribe el rival.')
-    if (programados.some((p) => p.jornada === jornada && p.id !== b.id)) return avisar(`Ya hay un partido en la jornada ${jornada}.`)
-    const rivalId = b.rivalId ?? (await rivalPorNombre(b.rivalNombre)).id
+    if (programados.some((p) => p.jornada === jornada && p.id !== b.id)) return avisar(`Ya hay un partido en la jornada ${jornada} de este split.`)
+    const rivalId = b.rivalId ?? (await rivalPorNombre(b.rivalNombre, split)).id
     const prog: Programado = {
       id: b.id ?? nuevoId(), temporadaId, jornada, rivalId, fecha: b.fecha || null, hora: b.hora || null,
-      local: b.local, competicion: b.competicion.trim() || 'Liga',
+      local: b.local, competicion: b.competicion.trim() || 'Liga', split,
       aplazado: b.id ? (programados.find((p) => p.id === b.id)?.aplazado ?? false) : false,
     }
     await db.programados.put(prog)
@@ -113,14 +114,14 @@ interface BorradorResultado {
   golesVisitante: number
 }
 
-function FormResultado({ inicial, rivales, temporadaId, onCerrar }: { inicial: BorradorResultado; rivales: Rival[]; temporadaId: string; onCerrar: () => void }) {
+function FormResultado({ inicial, rivales, temporadaId, split, onCerrar }: { inicial: BorradorResultado; rivales: Rival[]; temporadaId: string; split: number; onCerrar: () => void }) {
   const [b, setB] = useState(inicial)
   const guardar = async (otro: boolean) => {
     const jornada = Number(b.jornada)
     if (!Number.isInteger(jornada) || jornada < 1 || jornada > 99) return avisar('La jornada debe ser un número del 1 al 99.')
     if (!b.localId || !b.visitanteId) return avisar('Elige los dos equipos.')
     if (b.localId === b.visitanteId) return avisar('Un equipo no puede jugar contra sí mismo.')
-    const r: ResultadoLiga = { id: b.id ?? nuevoId(), temporadaId, jornada, localId: b.localId, visitanteId: b.visitanteId, golesLocal: b.golesLocal, golesVisitante: b.golesVisitante }
+    const r: ResultadoLiga = { id: b.id ?? nuevoId(), temporadaId, jornada, localId: b.localId, visitanteId: b.visitanteId, golesLocal: b.golesLocal, golesVisitante: b.golesVisitante, split }
     await db.resultadosLiga.put(r)
     avisar('Resultado guardado')
     if (otro) setB({ ...b, id: null, localId: '', visitanteId: '', golesLocal: 0, golesVisitante: 0 })
@@ -163,13 +164,24 @@ function FormResultado({ inicial, rivales, temporadaId, onCerrar }: { inicial: B
 }
 
 export function Liga({ datos }: { datos: Datos }) {
-  const { programados, rivales, partidos, temporada, resultadosLiga, equipo } = datos
+  const { partidos, temporada, equipo } = datos
+  // Cada split es una liga distinta: todo lo de esta pantalla se filtra por el elegido.
+  const [split, setSplitLocal] = useState(equipo.splitActual ?? 1)
+  const setSplit = (n: number) => {
+    setSplitLocal(n)
+    db.equipo.update('equipo', { splitActual: n })
+  }
+  const programados = datos.programados.filter((g) => splitDe(g) === split)
+  const resultadosLiga = datos.resultadosLiga.filter((r) => splitDe(r) === split)
+  const rivales = rivalesDelSplit(datos.rivales, split)
   const [formRes, setFormRes] = useState<BorradorResultado | null>(null)
-  const lista = partidosLiga(partidos, programados, resultadosLiga, rivales)
-  const tabla = clasificacion(lista, rivales, equipo.nombre)
+  const lista = partidosLiga(partidos, datos.programados, datos.resultadosLiga, datos.rivales)
+  const tabla = clasificacion(lista, datos.rivales, equipo.nombre, split)
   const jornadasOtros = [...new Set(resultadosLiga.map((r) => r.jornada))].sort((a, b) => b - a)
-  const ultimaJornada = Math.max(0, ...lista.map((p) => p.jornada ?? 0))
-  const nombreEq = (id: string) => nombreRival(rivales, id, '?')
+  const ultimaJornada = Math.max(0, ...lista.filter((p) => p.split === split).map((p) => p.jornada ?? 0))
+  const otroSplit = split === 1 ? 2 : 1
+  const rivalesOtro = rivalesDelSplit(datos.rivales, otroSplit)
+  const nombreEq = (id: string) => nombreRival(datos.rivales, id, '?')
 
   const borrarResultado = async () => {
     if (!formRes?.id) return
@@ -181,12 +193,12 @@ export function Liga({ datos }: { datos: Datos }) {
   const [rivalEdit, setRivalEdit] = useState<Rival | null>(null)
   const [nombreEdit, setNombreEdit] = useState('')
   const [nuevoRival, setNuevoRival] = useState('')
-  const proximo = proximoPartido(programados, partidos)
+  const proximo = proximoPartido(datos.programados, partidos)
 
   const editar = (g: Programado) => {
     setMenu(null)
     setForm({
-      id: g.id, jornada: String(g.jornada), rivalId: g.rivalId, rivalNombre: nombreRival(rivales, g.rivalId, ''),
+      id: g.id, jornada: String(g.jornada), rivalId: g.rivalId, rivalNombre: nombreRival(datos.rivales, g.rivalId, ''),
       fecha: g.fecha ?? '', hora: g.hora ?? '', local: g.local, competicion: g.competicion,
     })
   }
@@ -203,9 +215,14 @@ export function Liga({ datos }: { datos: Datos }) {
     if (ok) await db.programados.delete(g.id)
   }
 
+  const copiarEquipos = async () => {
+    await Promise.all(rivalesOtro.map((r) => db.rivales.update(r.id, { splits: [...new Set([...splitsDe(r), split])].sort() })))
+    avisar(`${rivalesOtro.length} equipos copiados al split ${split}`)
+  }
+
   const anadirRival = async () => {
     if (!nuevoRival.trim()) return
-    const r = await rivalPorNombre(nuevoRival)
+    const r = await rivalPorNombre(nuevoRival, split)
     setNuevoRival('')
     avisar(`${r.nombre} en la liga`)
   }
@@ -224,10 +241,13 @@ export function Liga({ datos }: { datos: Datos }) {
   const borrarRival = async () => {
     if (!rivalEdit) return
     if (programados.some((g) => g.rivalId === rivalEdit.id) || resultadosLiga.some((r) => r.localId === rivalEdit.id || r.visitanteId === rivalEdit.id)) {
-      avisar('Tiene partidos en el calendario o resultados: quítalos antes.')
+      avisar('Tiene partidos en el calendario o resultados de este split: quítalos antes.')
       return
     }
-    await db.rivales.delete(rivalEdit.id)
+    const otros = splitsDe(rivalEdit).filter((x) => x !== split)
+    // Si juega otro split, solo se quita de este; si no, se borra.
+    if (otros.length) await db.rivales.update(rivalEdit.id, { splits: otros })
+    else await db.rivales.delete(rivalEdit.id)
     setRivalEdit(null)
   }
 
@@ -243,11 +263,18 @@ export function Liga({ datos }: { datos: Datos }) {
         }
       />
       <Subpestanas opciones={SUBPESTANAS_PARTIDOS} activa="liga" />
+      <div className="segmentos segmentos--split">
+        {SPLITS.map((n) => (
+          <button key={n} className={split === n ? 'activa' : ''} onClick={() => setSplit(n)}>
+            Split {n}
+          </button>
+        ))}
+      </div>
 
       <section className="tarjeta">
-        <h2>Clasificación</h2>
+        <h2>Clasificación · split {split}</h2>
         {rivales.length === 0 ? (
-          <p className="nota">Añade los equipos de la liga (abajo) para ver la clasificación.</p>
+          <p className="nota">Añade los equipos de este split (abajo) para ver la clasificación.</p>
         ) : (
           <div className="clasificacion">
             <table>
@@ -301,7 +328,7 @@ export function Liga({ datos }: { datos: Datos }) {
                   <button onClick={() => (jugado ? ir(`/partido/${jugado.id}`) : setMenu(g))}>
                     <span className="calendario__j">J{g.jornada}</span>
                     <div className="calendario__texto">
-                      <strong>{g.local ? 'vs' : 'en'} {nombreRival(rivales, g.rivalId)}</strong>
+                      <strong>{g.local ? 'vs' : 'en'} {nombreRival(datos.rivales, g.rivalId)}</strong>
                       <span>
                         {g.fecha ? fechaCorta(g.fecha) : 'Sin fecha'}{g.hora ? ` · ${g.hora}` : ''}{g.competicion !== 'Liga' ? ` · ${g.competicion}` : ''}
                       </span>
@@ -355,13 +382,16 @@ export function Liga({ datos }: { datos: Datos }) {
       </section>
 
       <section className="tarjeta">
-        <h2>Equipos de la liga</h2>
+        <h2>Equipos del split {split}</h2>
         <div className="fila-campos fila-campos--boton">
           <input className="input" value={nuevoRival} onChange={(e) => setNuevoRival(e.target.value)} placeholder="Añadir equipo…" onKeyDown={(e) => e.key === 'Enter' && anadirRival()} />
           <button className="boton boton--peq" onClick={anadirRival} disabled={!nuevoRival.trim()}>Añadir</button>
         </div>
+        {rivales.length === 0 && rivalesOtro.length > 0 && (
+          <button className="boton boton--sec" onClick={copiarEquipos}>Copiar los {rivalesOtro.length} equipos del split {otroSplit}</button>
+        )}
         {rivales.length === 0 ? (
-          <p className="nota">Añade aquí a todos los rivales para elegirlos después sin escribir.</p>
+          <p className="nota">Añade aquí a todos los rivales de este split para elegirlos después sin escribir.</p>
         ) : (
           <ul className="lista-simple">
             {rivales.map((r) => (
@@ -376,10 +406,10 @@ export function Liga({ datos }: { datos: Datos }) {
 
 
       <Hoja abierta={!!form} onCerrar={() => setForm(null)} titulo={form?.id ? 'Editar partido' : 'Programar partido'}>
-        {form && <FormProgramado inicial={form} rivales={rivales} programados={programados} temporadaId={temporada.id} onCerrar={() => setForm(null)} />}
+        {form && <FormProgramado inicial={form} rivales={rivales} programados={programados} temporadaId={temporada.id} split={split} onCerrar={() => setForm(null)} />}
       </Hoja>
 
-      <Hoja abierta={!!menu} onCerrar={() => setMenu(null)} titulo={menu ? `Jornada ${menu.jornada} · ${nombreRival(rivales, menu.rivalId)}` : ''}>
+      <Hoja abierta={!!menu} onCerrar={() => setMenu(null)} titulo={menu ? `Jornada ${menu.jornada} · ${nombreRival(datos.rivales, menu.rivalId)}` : ''}>
         {menu && (
           <>
             <button className="hoja__opcion" onClick={() => ir(`/partido/nuevo/${menu.id}`)}>
@@ -402,7 +432,7 @@ export function Liga({ datos }: { datos: Datos }) {
       <Hoja abierta={!!formRes} onCerrar={() => setFormRes(null)} titulo={formRes?.id ? 'Editar resultado' : 'Añadir resultado'}>
         {formRes && (
           <>
-            <FormResultado inicial={formRes} rivales={rivales} temporadaId={temporada.id} onCerrar={() => setFormRes(null)} />
+            <FormResultado inicial={formRes} rivales={rivales} temporadaId={temporada.id} split={split} onCerrar={() => setFormRes(null)} />
             {formRes.id && <button className="enlace enlace--peligro" onClick={borrarResultado}>Borrar este resultado</button>}
           </>
         )}
@@ -411,7 +441,9 @@ export function Liga({ datos }: { datos: Datos }) {
       <Hoja abierta={!!rivalEdit} onCerrar={() => setRivalEdit(null)} titulo="Editar equipo">
         <input className="input" value={nombreEdit} onChange={(e) => setNombreEdit(e.target.value)} />
         <div className="dialogo__botones">
-          <button className="boton boton--sec boton--texto-peligro" onClick={borrarRival}>Borrar</button>
+          <button className="boton boton--sec boton--texto-peligro" onClick={borrarRival}>
+            {rivalEdit && splitsDe(rivalEdit).length > 1 ? `Quitar del split ${split}` : 'Borrar'}
+          </button>
           <button className="boton" onClick={guardarRival}>Guardar</button>
         </div>
       </Hoja>
