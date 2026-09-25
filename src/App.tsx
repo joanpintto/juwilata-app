@@ -62,7 +62,7 @@ function Pantalla({ seg, datos }: { seg: string[]; datos: Datos }): ReactNode {
       if (c === 'resumen') return <SecuenciaPartido datos={datos} id={b} recordarCopia={seg[3] === 'copia'} />
       return <DetallePartido datos={datos} id={b} />
     case 'evoluciones':
-      return <Evoluciones datos={datos} />
+      return <Evoluciones datos={datos} vista={b} id={c} />
     case 'ajustes':
       if (b === 'avanzado') return <Avanzado datos={datos} />
       if (b === 'copias') return <Copias datos={datos} />
