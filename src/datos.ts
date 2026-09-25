@@ -1,15 +1,17 @@
 import { useLiveQuery } from 'dexie-react-hooks'
 import { useEffect, useMemo, useState } from 'react'
-import { db, type ConfigVersion, type Equipo, type Jugador, type Partido, type Programado, type ResultadoLiga, type Rival, type Temporada } from './db'
+import { db, enPlantilla, ordenarTemporadas, type ConfigVersion, type Equipo, type Jugador, type Partido, type Programado, type ResultadoLiga, type Rival, type Temporada } from './db'
 import { CONFIG_INICIAL, type Config } from './motor/config'
-import { reproducirTemporada, type Temporada as TemporadaCalculada } from './motor/temporada'
+import { reproducirTemporada, type Inicio, type Temporada as TemporadaCalculada } from './motor/temporada'
 import { partidosLiga, type PartidoLiga } from './motor/liga'
-import { calcularLogros, type ResultadoLogros } from './motor/logros'
+import { calcularLogros, type ResultadoLogros, type TemporadaLogros } from './motor/logros'
 
 export interface Datos {
   equipo: Equipo
-  temporada: Temporada
-  jugadores: Jugador[]
+  temporada: Temporada // la que se está viendo
+  temporadas: Temporada[] // todas, de la más antigua a la más reciente
+  jugadores: Jugador[] // plantilla de la temporada que se está viendo
+  todosJugadores: Jugador[]
   partidos: Partido[]
   configs: ConfigVersion[]
   rivales: Rival[]
@@ -18,6 +20,7 @@ export interface Datos {
   config: Config
   configVersion: number
   calculo: TemporadaCalculada
+  calculos: Map<string, TemporadaCalculada> // hasta la temporada que se está viendo
   liga: PartidoLiga[]
   logros: ResultadoLogros
 }
@@ -26,34 +29,70 @@ export function useDatos(): Datos | undefined {
   const base = useLiveQuery(async () => {
     const equipo = await db.equipo.get('equipo')
     if (!equipo) return undefined
-    const [temporada, jugadores, partidos, configs, rivales, programados, resultadosLiga] = await Promise.all([
-      db.temporadas.get(equipo.temporadaActivaId),
+    const [temporadas, jugadores, partidos, configs, rivales, programados, resultadosLiga] = await Promise.all([
+      db.temporadas.toArray(),
       db.jugadores.toArray(),
-      db.partidos.where('temporadaId').equals(equipo.temporadaActivaId).toArray(),
+      db.partidos.toArray(),
       db.configuraciones.orderBy('version').toArray(),
       db.rivales.toArray(),
-      db.programados.where('temporadaId').equals(equipo.temporadaActivaId).toArray(),
-      db.resultadosLiga.where('temporadaId').equals(equipo.temporadaActivaId).toArray(),
+      db.programados.toArray(),
+      db.resultadosLiga.toArray(),
     ])
+    const temporada = temporadas.find((t) => t.id === equipo.temporadaActivaId)
     if (!temporada || !configs.length) return undefined
     // Las configuraciones antiguas se completan con los valores nuevos que les falten.
     const completas = configs.map((c) => ({ ...c, datos: { ...CONFIG_INICIAL, ...c.datos } }))
-    return { equipo, temporada, jugadores, partidos, configs: completas, rivales, programados, resultadosLiga }
+    return { equipo, temporada, temporadas, jugadores, partidos, configs: completas, rivales, programados, resultadosLiga }
   })
 
   return useMemo(() => {
     if (!base) return undefined
     const ultima = base.configs[base.configs.length - 1]
+    const cfg = ultima.datos
     const mapa = new Map(base.configs.map((c) => [c.version, c.datos]))
-    const calculo = reproducirTemporada(base.jugadores, base.partidos, mapa, ultima.datos, base.equipo.duracionPartido)
-    const jugadores = [...base.jugadores].sort((a, b) => a.dorsal - b.dorsal)
-    const rivales = [...base.rivales].sort((a, b) => a.nombre.localeCompare(b.nombre, 'es'))
-    const programados = [...base.programados].sort((a, b) => (a.split ?? 1) - (b.split ?? 1) || a.jornada - b.jornada)
-    const liga = partidosLiga(base.partidos, programados, base.resultadosLiga, rivales)
-    const logros = calcularLogros({
-      jugadores, partidos: base.partidos, calculo, config: ultima.datos, equipo: base.equipo, programados, rivales, liga,
-    })
-    return { ...base, jugadores, rivales, programados, config: ultima.datos, configVersion: ultima.version, calculo, liga, logros }
+    const orden = ordenarTemporadas(base.temporadas)
+    const hasta = orden.findIndex((t) => t.id === base.temporada.id)
+    const deTemporada = <T extends { temporadaId?: string }>(xs: T[], id: string) => xs.filter((x) => x.temporadaId === id)
+    const porNombre = (a: Rival, b: Rival) => a.nombre.localeCompare(b.nombre, 'es')
+    const porJornada = (a: Programado, b: Programado) => (a.split ?? 1) - (b.split ?? 1) || a.jornada - b.jornada
+
+    // Se reproducen las temporadas en orden: cada jugador empieza donde acabó la anterior.
+    const calculos = new Map<string, TemporadaCalculada>()
+    const ultimos: Record<string, Inicio> = {}
+    const paraLogros: TemporadaLogros[] = []
+    for (const t of orden.slice(0, hasta + 1)) {
+      const plantilla = base.jugadores.filter((j) => enPlantilla(j, t.id, orden))
+      const inicios = Object.fromEntries(plantilla.filter((j) => ultimos[j.id]).map((j) => [j.id, ultimos[j.id]]))
+      const calc = reproducirTemporada(plantilla, deTemporada(base.partidos, t.id), mapa, cfg, base.equipo.duracionPartido, inicios)
+      calculos.set(t.id, calc)
+      for (const e of Object.values(calc.jugadores)) ultimos[e.jugador.id] = { atributos: e.atributos, rangos: e.rangosAlcanzados }
+      const rivales = deTemporada(base.rivales, t.id).sort(porNombre)
+      const programados = deTemporada(base.programados, t.id).sort(porJornada)
+      paraLogros.push({
+        temporadaId: t.id, calculo: calc, programados, rivales,
+        liga: partidosLiga(deTemporada(base.partidos, t.id), programados, deTemporada(base.resultadosLiga, t.id), rivales),
+      })
+    }
+
+    const actual = paraLogros[paraLogros.length - 1]
+    const jugadores = base.jugadores.filter((j) => enPlantilla(j, base.temporada.id, orden)).sort((a, b) => a.dorsal - b.dorsal)
+    const logros = calcularLogros({ jugadores: base.jugadores, temporadas: paraLogros, config: cfg, equipo: base.equipo })
+    return {
+      ...base,
+      temporadas: orden,
+      jugadores,
+      todosJugadores: base.jugadores,
+      partidos: deTemporada(base.partidos, base.temporada.id),
+      rivales: actual.rivales,
+      programados: actual.programados,
+      resultadosLiga: deTemporada(base.resultadosLiga, base.temporada.id),
+      config: cfg,
+      configVersion: ultima.version,
+      calculo: actual.calculo,
+      calculos,
+      liga: actual.liga,
+      logros,
+    }
   }, [base])
 }
 

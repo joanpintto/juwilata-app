@@ -487,6 +487,15 @@ function Casa({ b, set }: Editar) {
                 )}
               </div>
             </div>
+            {e.tipo === 'total' && (
+              <label className="interruptor">
+                <div>
+                  <strong>Se reinicia cada temporada</strong>
+                  <span>Si no, cuenta toda la carrera del jugador.</span>
+                </div>
+                <input type="checkbox" checked={e.porTemporada !== false} onChange={(x) => setEditando({ ...e, porTemporada: x.target.checked })} />
+              </label>
+            )}
             <div className="campo">
               <span>Icono</span>
               <div className="iconos-logro">

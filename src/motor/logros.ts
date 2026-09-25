@@ -1,6 +1,6 @@
 // Logros (§11). Solo estéticos. Se calculan a partir de la temporada reproducida,
 // así que al editar un partido antiguo se revisan en cascada.
-import { SPLITS, splitDe, type Actuacion, type Equipo, type Jugador, type Partido, type Programado, type Rival } from '../db'
+import { SPLITS, splitDe, type Actuacion, type Equipo, type Jugador, type Programado, type Rival } from '../db'
 import { MEDIDAS_CASA, type Config, type LogroCasa, type Posicion } from './config'
 import type { Paso, Temporada } from './temporada'
 import { NOSOTROS, clasificacion, esLiga, jornadasLider, rivalesDelSplit, splitDePartido, type PartidoLiga } from './liga'
@@ -132,6 +132,12 @@ class Registro {
     this.defs = defs
   }
 
+  /** Empieza de cero un logro de temporada (lo ya conseguido sigue en el historial). */
+  reiniciar(id: string) {
+    this.valores.set(id, 0)
+    this.niveles.delete(id)
+  }
+
   /** Marca un logro único o repetible. */
   conseguir(id: string, fecha: string, partidoId: string | null) {
     const v = (this.veces.get(id) ?? 0) + 1
@@ -217,93 +223,114 @@ function evaluarCasa(c: LogroCasa, a: Actuacion, paso: Paso | undefined, st: { t
   }
 }
 
-export interface EntradaLogros {
-  jugadores: Jugador[]
-  partidos: Partido[] // de la temporada, cualquier orden
+/** Lo que hace falta de cada temporada, de la más antigua a la que se está viendo. */
+export interface TemporadaLogros {
+  temporadaId: string
   calculo: Temporada
-  config: Config
-  equipo: Equipo
   programados: Programado[]
   rivales: Rival[]
   liga: PartidoLiga[]
 }
 
+export interface EntradaLogros {
+  jugadores: Jugador[] // todos (también los que ya no están)
+  temporadas: TemporadaLogros[]
+  config: Config
+  equipo: Equipo
+}
+
+// Logros que se reinician cada temporada (los demás son de carrera).
+const DE_TEMPORADA = ['veterano', 'juego-limpio']
+
 export function calcularLogros(d: EntradaLogros): ResultadoLogros {
-  const partidos = d.calculo.partidos.map((r) => r.partido) // ya en orden cronológico
   const dur = d.equipo.duracionPartido
   const umbral = (id: string) => d.config.rangos.find((r) => r.id === id)?.desde ?? 999
   const jugadores: Record<string, EstadoLogro[]> = {}
   const todos: Desbloqueo[] = []
   const casa = d.config.logrosCasa ?? []
   const defs = [...LOGROS, ...defsCasa(d.config)]
+  const reiniciables = [...DE_TEMPORADA, ...casa.filter((c) => c.tipo === 'total' && c.porTemporada !== false).map((c) => c.id)]
 
   for (const j of d.jugadores) {
     const reg = new Registro(j.id, defs)
     const estadoCasa = new Map<string, { total: number; racha: number }>(casa.map((c) => [c.id, { total: 0, racha: 0 }]))
-    const e = d.calculo.jugadores[j.id]
-    const pasos = new Map(e?.historial.map((h) => [h.partidoId, h]) ?? [])
-    let goles = 0, asist = 0, ceros = 0, mvps = 0, jugados = 0
-    let rachaNota = 0, sinTarjeta = 0
+    // De carrera: se acumulan entre temporadas.
+    let goles = 0, asist = 0, ceros = 0, mvps = 0
+    let rachaNota = 0
 
-    for (const p of partidos) {
-      const a = p.actuaciones.find((x) => x.jugadorId === j.id)
-      if (!a) continue // aún no estaba en el equipo
-      const f = p.fecha
-      // Logros de la casa (reglas de la configuración).
-      for (const c of casa) evaluarCasa(c, a, pasos.get(p.id), estadoCasa.get(c.id)!, reg, f, p.id)
+    for (const t of d.temporadas) {
+      // Lo de temporada empieza de cero.
+      let jugados = 0, sinTarjeta = 0
+      for (const id of reiniciables) reg.reiniciar(id)
+      for (const c of casa) {
+        const st = estadoCasa.get(c.id)!
+        st.racha = 0
+        if (c.tipo === 'total' && c.porTemporada !== false) st.total = 0
+      }
+      const partidos = t.calculo.partidos.map((r) => r.partido)
+      const e = t.calculo.jugadores[j.id]
+      const pasos = new Map(e?.historial.map((h) => [h.partidoId, h]) ?? [])
 
-      const paso = pasos.get(p.id)
-      if (!paso) continue // no jugó minutos
-      const n = (id: keyof typeof a.acciones) => a.acciones[id] ?? 0
-      const pos: Posicion = a.posicion
-      jugados++
-      reg.valor('veterano', jugados, f, p.id)
+      for (const p of partidos) {
+        const a = p.actuaciones.find((x) => x.jugadorId === j.id)
+        if (!a) continue // aún no estaba en el equipo
+        const f = p.fecha
+        // Logros de la casa (reglas de la configuración).
+        for (const c of casa) evaluarCasa(c, a, pasos.get(p.id), estadoCasa.get(c.id)!, reg, f, p.id)
 
-      const g = n('gol')
-      if (g > 0) {
-        goles += g
-        if (goles === g) reg.conseguir('primer-gol', f, p.id)
-        if (g === 2) reg.conseguir('doblete', f, p.id)
-        if (g >= 3) reg.conseguir('hat-trick', f, p.id)
-        if (pos === 'POR') reg.conseguir('portero-goleador', f, p.id)
-        if (pos === 'LAT' || pos === 'DFC') reg.conseguir('gol-defensa', f, p.id)
-        reg.valor('goleador', goles, f, p.id)
-      }
-      const as = n('asistencia')
-      if (as > 0) {
-        asist += as
-        if (asist === as) reg.conseguir('primera-asistencia', f, p.id)
-        if (as >= 2) reg.conseguir('doble-asistencia', f, p.id)
-        reg.valor('asistente', asist, f, p.id)
-      }
-      if ((pos === 'POR' || pos === 'DFC' || pos === 'LAT') && p.golesContra === 0 && a.minutos > dur / 2) {
-        ceros++
-        reg.valor('muro', ceros, f, p.id)
-      }
-      for (let k = 0; k < n('penaltiParado'); k++) reg.conseguir('penalti-parado', f, p.id)
-      if (n('parada') + n('paradaDificil') >= 6) reg.conseguir('noche-paradas', f, p.id)
+        const paso = pasos.get(p.id)
+        if (!paso) continue // no jugó minutos
+        const n = (id: keyof typeof a.acciones) => a.acciones[id] ?? 0
+        const pos: Posicion = a.posicion
+        jugados++
+        reg.valor('veterano', jugados, f, p.id)
 
-      if (paso.mvp) {
-        mvps++
-        if (mvps === 1) reg.conseguir('primer-mvp', f, p.id)
-        if (a.estado === 'suplente') reg.conseguir('banquillo-mvp', f, p.id)
-        reg.valor('coleccionista', mvps, f, p.id)
-      }
-      if (paso.nota >= 10) reg.conseguir('partido-10', f, p.id)
-      rachaNota = paso.nota >= 7.5 ? rachaNota + 1 : 0
-      if (rachaNota === 3) {
-        reg.conseguir('en-racha', f, p.id)
-        rachaNota = 0
-      }
-      sinTarjeta = n('amarilla') || n('roja') ? 0 : sinTarjeta + 1
-      reg.valor('juego-limpio', sinTarjeta, f, p.id)
+        const g = n('gol')
+        if (g > 0) {
+          goles += g
+          if (goles === g) reg.conseguir('primer-gol', f, p.id)
+          if (g === 2) reg.conseguir('doblete', f, p.id)
+          if (g >= 3) reg.conseguir('hat-trick', f, p.id)
+          if (pos === 'POR') reg.conseguir('portero-goleador', f, p.id)
+          if (pos === 'LAT' || pos === 'DFC') reg.conseguir('gol-defensa', f, p.id)
+          reg.valor('goleador', goles, f, p.id)
+        }
+        const as = n('asistencia')
+        if (as > 0) {
+          asist += as
+          if (asist === as) reg.conseguir('primera-asistencia', f, p.id)
+          if (as >= 2) reg.conseguir('doble-asistencia', f, p.id)
+          reg.valor('asistente', asist, f, p.id)
+        }
+        if ((pos === 'POR' || pos === 'DFC' || pos === 'LAT') && p.golesContra === 0 && a.minutos > dur / 2) {
+          ceros++
+          reg.valor('muro', ceros, f, p.id)
+        }
+        for (let k = 0; k < n('penaltiParado'); k++) reg.conseguir('penalti-parado', f, p.id)
+        if (n('parada') + n('paradaDificil') >= 6) reg.conseguir('noche-paradas', f, p.id)
 
-      const m = paso.mediaDespues
-      if (m >= umbral('plata') && !reg.niveles.get('primera-plata')) reg.conseguir('primera-plata', f, p.id)
-      if (m >= umbral('oro') && !reg.niveles.get('primer-oro')) reg.conseguir('primer-oro', f, p.id)
-      if (m >= umbral('elite') && !reg.niveles.get('elite')) reg.conseguir('elite', f, p.id)
-      if (m >= umbral('leyenda') && !reg.niveles.get('leyenda')) reg.conseguir('leyenda', f, p.id)
-      if (e && m - e.mediaInicial >= 10 && !reg.niveles.get('salto')) reg.conseguir('salto', f, p.id)
+        if (paso.mvp) {
+          mvps++
+          if (mvps === 1) reg.conseguir('primer-mvp', f, p.id)
+          if (a.estado === 'suplente') reg.conseguir('banquillo-mvp', f, p.id)
+          reg.valor('coleccionista', mvps, f, p.id)
+        }
+        if (paso.nota >= 10) reg.conseguir('partido-10', f, p.id)
+        rachaNota = paso.nota >= 7.5 ? rachaNota + 1 : 0
+        if (rachaNota === 3) {
+          reg.conseguir('en-racha', f, p.id)
+          rachaNota = 0
+        }
+        sinTarjeta = n('amarilla') || n('roja') ? 0 : sinTarjeta + 1
+        reg.valor('juego-limpio', sinTarjeta, f, p.id)
+
+        const m = paso.mediaDespues
+        if (m >= umbral('plata') && !reg.niveles.get('primera-plata')) reg.conseguir('primera-plata', f, p.id)
+        if (m >= umbral('oro') && !reg.niveles.get('primer-oro')) reg.conseguir('primer-oro', f, p.id)
+        if (m >= umbral('elite') && !reg.niveles.get('elite')) reg.conseguir('elite', f, p.id)
+        if (m >= umbral('leyenda') && !reg.niveles.get('leyenda')) reg.conseguir('leyenda', f, p.id)
+        if (e && m - e.mediaInicial >= 10 && !reg.niveles.get('salto')) reg.conseguir('salto', f, p.id)
+      }
     }
 
     // Cartas especiales (las da el administrador a mano).
@@ -317,47 +344,51 @@ export function calcularLogros(d: EntradaLogros): ResultadoLogros {
     todos.push(...reg.desbloqueos)
   }
 
-  // ─── Equipo ───
+  // ─── Equipo (cada temporada empieza de cero, salvo lo ya conseguido) ───
   const reg = new Registro(null, defs)
-  let victorias = 0, invicto = 0, ceros = 0, goles = 0
-  for (const p of partidos) {
-    const f = p.fecha
-    const dif = p.golesFavor - p.golesContra
-    victorias = dif > 0 ? victorias + 1 : 0
-    invicto = dif >= 0 ? invicto + 1 : 0
-    reg.valor('eq-racha', victorias, f, p.id)
-    reg.valor('eq-invictos', invicto, f, p.id)
-    if (dif >= 5) reg.conseguir('eq-goleada', f, p.id)
-    ceros = p.golesContra === 0 ? ceros + 1 : 0
-    if (ceros === 3) {
-      reg.conseguir('eq-muralla', f, p.id)
-      ceros = 0
+  for (const t of d.temporadas) {
+    const partidos = t.calculo.partidos.map((r) => r.partido)
+    for (const id of ['eq-racha', 'eq-invictos', 'eq-rodillo']) reg.reiniciar(id)
+    let victorias = 0, invicto = 0, ceros = 0, goles = 0
+    for (const p of partidos) {
+      const f = p.fecha
+      const dif = p.golesFavor - p.golesContra
+      victorias = dif > 0 ? victorias + 1 : 0
+      invicto = dif >= 0 ? invicto + 1 : 0
+      reg.valor('eq-racha', victorias, f, p.id)
+      reg.valor('eq-invictos', invicto, f, p.id)
+      if (dif >= 5) reg.conseguir('eq-goleada', f, p.id)
+      ceros = p.golesContra === 0 ? ceros + 1 : 0
+      if (ceros === 3) {
+        reg.conseguir('eq-muralla', f, p.id)
+        ceros = 0
+      }
+      goles += p.golesFavor
+      reg.valor('eq-rodillo', goles, f, p.id)
+      const goleadores = p.actuaciones.filter((a) => (a.acciones.gol ?? 0) > 0).length
+      if (goleadores >= 5) reg.conseguir('eq-todos-suman', f, p.id)
     }
-    goles += p.golesFavor
-    reg.valor('eq-rodillo', goles, f, p.id)
-    const goleadores = p.actuaciones.filter((a) => (a.acciones.gol ?? 0) > 0).length
-    if (goleadores >= 5) reg.conseguir('eq-todos-suman', f, p.id)
-  }
-  const ultimo = partidos[partidos.length - 1]
-  // Líder y Campeones se pueden ganar en cada split (cada split es una liga distinta).
-  for (const split of SPLITS) {
-    const delSplit = (g: Programado) => splitDe(g) === split
-    const partidosSplit = partidos.filter((p) => esLiga(p.competicion) && splitDePartido(p, d.programados) === split)
-    const ultimoSplit = partidosSplit[partidosSplit.length - 1]
-    const lider = jornadasLider(d.liga, d.rivales, d.equipo.nombre, split)
-    const tabla = clasificacion(d.liga, d.rivales, d.equipo.nombre, split)
-    const nuestra = tabla.find((f) => f.id === NOSOTROS)
-    const hayRivales = rivalesDelSplit(d.rivales, split).length > 0
-    if (lider.length || (tabla[0]?.id === NOSOTROS && (nuestra?.pj ?? 0) > 0 && hayRivales)) {
-      const p = partidosSplit.find((x) => d.programados.find((g) => g.id === x.programadoId)?.jornada === lider[0]) ?? ultimoSplit
-      reg.conseguir('eq-lider', p?.fecha ?? '', p?.id ?? null)
+    const ultimo = partidos[partidos.length - 1]
+    // Líder y Campeones se pueden ganar en cada split (cada split es una liga distinta).
+    for (const split of SPLITS) {
+      const delSplit = (g: Programado) => splitDe(g) === split
+      const partidosSplit = partidos.filter((p) => esLiga(p.competicion) && splitDePartido(p, t.programados) === split)
+      const ultimoSplit = partidosSplit[partidosSplit.length - 1]
+      const lider = jornadasLider(t.liga, t.rivales, d.equipo.nombre, split)
+      const tabla = clasificacion(t.liga, t.rivales, d.equipo.nombre, split)
+      const nuestra = tabla.find((f) => f.id === NOSOTROS)
+      const hayRivales = rivalesDelSplit(t.rivales, split).length > 0
+      if (lider.length || (tabla[0]?.id === NOSOTROS && (nuestra?.pj ?? 0) > 0 && hayRivales)) {
+        const p = partidosSplit.find((x) => t.programados.find((g) => g.id === x.programadoId)?.jornada === lider[0]) ?? ultimoSplit
+        reg.conseguir('eq-lider', p?.fecha ?? '', p?.id ?? null)
+      }
+      const deLiga = t.programados.filter((g) => esLiga(g.competicion) && delSplit(g))
+      const terminada = deLiga.length > 0 && deLiga.every((g) => partidos.some((p) => p.programadoId === g.id))
+      if (terminada && tabla[0]?.id === NOSOTROS && ultimoSplit) reg.conseguir('eq-campeones', ultimoSplit.fecha, ultimoSplit.id)
     }
-    const deLiga = d.programados.filter((g) => esLiga(g.competicion) && delSplit(g))
-    const terminada = deLiga.length > 0 && deLiga.every((g) => partidos.some((p) => p.programadoId === g.id))
-    if (terminada && tabla[0]?.id === NOSOTROS && ultimoSplit) reg.conseguir('eq-campeones', ultimoSplit.fecha, ultimoSplit.id)
-  }
-  if (partidos.length >= d.equipo.partidosTemporada && partidos.every((p) => p.golesFavor >= p.golesContra) && ultimo) {
-    reg.conseguir('eq-invicta', ultimo.fecha, ultimo.id)
+    if (partidos.length >= d.equipo.partidosTemporada && partidos.every((p) => p.golesFavor >= p.golesContra) && ultimo) {
+      reg.conseguir('eq-invicta', ultimo.fecha, ultimo.id)
+    }
   }
   todos.push(...reg.desbloqueos)
 

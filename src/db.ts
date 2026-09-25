@@ -60,6 +60,7 @@ export interface Jugador {
   creado: string
   disenoActivo: string | null // null = el del rango actual
   especiales: Especial[]
+  fueraEn?: string[] // temporadas (posteriores a su alta) en las que no está en la plantilla
 }
 
 export type EstadoConvocatoria = 'titular' | 'suplente' | 'no_convocado' | 'baja'
@@ -78,6 +79,7 @@ export interface Rival {
   nombre: string
   creado: string
   splits?: number[] // splits de liga en los que juega (sin dato = solo el 1)
+  temporadaId?: string // cada temporada tiene su propia lista de equipos
 }
 
 /** La liga se juega en 2 splits de 16 jornadas que funcionan como dos ligas distintas. */
@@ -195,6 +197,16 @@ class JuwilataDB extends Dexie {
     this.version(4).stores({ resultadosLiga: 'id, temporadaId' })
     // v5: notificaciones ya vistas (las notificaciones se calculan; aquí solo se marca lo leído).
     this.version(5).stores({ vistas: 'id' })
+    // v6: cada temporada tiene su lista de equipos de la liga.
+    this.version(6)
+      .stores({ rivales: 'id, temporadaId' })
+      .upgrade(async (tx) => {
+        const eq = await tx.table<Equipo, string>('equipo').get('equipo')
+        if (!eq) return
+        await tx.table<Rival, string>('rivales').toCollection().modify((r) => {
+          r.temporadaId ??= eq.temporadaActivaId
+        })
+      })
   }
 }
 
@@ -329,7 +341,8 @@ export async function importarDatos(d: Exportacion): Promise<void> {
   const tablas = [db.equipo, db.temporadas, db.jugadores, db.partidos, db.configuraciones, db.deshacer, db.rivales, db.programados, db.resultadosLiga]
   await db.transaction('rw', tablas, async () => {
     await Promise.all(tablas.map((t) => t.clear()))
-    await db.rivales.bulkPut(d.rivales ?? [])
+    // Copias anteriores a las temporadas múltiples: los equipos son de la temporada activa.
+    await db.rivales.bulkPut((d.rivales ?? []).map((r) => ({ ...r, temporadaId: r.temporadaId ?? d.equipo.temporadaActivaId })))
     await db.programados.bulkPut(d.programados ?? [])
     await db.resultadosLiga.bulkPut(d.resultadosLiga ?? [])
     await db.equipo.put(d.equipo)
@@ -356,4 +369,19 @@ export async function copiaAutomatica(motivo: string): Promise<void> {
 export function nombreArchivoCopia(fecha = new Date()): string {
   const iso = new Date(fecha.getTime() - fecha.getTimezoneOffset() * 60000).toISOString().slice(0, 10)
   return `backup_equipo_${iso}.json`
+}
+
+// ─── Temporadas ────────────────────────────────────────────────────────
+
+/** Temporadas de la más antigua a la más reciente. */
+export function ordenarTemporadas(ts: Temporada[]): Temporada[] {
+  return [...ts].sort((a, b) => a.inicio.localeCompare(b.inicio) || a.nombre.localeCompare(b.nombre))
+}
+
+/** ¿Está el jugador en la plantilla de esa temporada? */
+export function enPlantilla(j: Jugador, temporadaId: string, orden: Temporada[]): boolean {
+  const i = orden.findIndex((t) => t.id === temporadaId)
+  const alta = orden.findIndex((t) => t.id === j.temporadaId)
+  if (i < 0) return false
+  return (alta < 0 || alta <= i) && !(j.fueraEn ?? []).includes(temporadaId)
 }

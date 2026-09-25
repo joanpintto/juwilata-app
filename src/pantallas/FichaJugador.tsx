@@ -14,8 +14,15 @@ const PIERNA = { derecha: 'Diestro', izquierda: 'Zurdo', ambas: 'Ambidiestro' }
 type Pestana = 'atributos' | 'evolucion' | 'historial' | 'logros'
 
 export function FichaJugador({ datos, id }: { datos: Datos; id: string }) {
-  const { config, calculo, temporada } = datos
-  const e = calculo.jugadores[id]
+  const { config, calculos, temporada, temporadas } = datos
+  // Temporadas en las que estuvo en la plantilla (de las calculadas).
+  const suyas = temporadas.filter((t) => calculos.get(t.id)?.jugadores[id])
+  const [tempElegida, setTempElegida] = useState<string | null>(null)
+  const tempVista = tempElegida && suyas.some((t) => t.id === tempElegida)
+    ? tempElegida
+    : suyas.some((t) => t.id === temporada.id) ? temporada.id : suyas[suyas.length - 1]?.id
+  const e = tempVista ? calculos.get(tempVista)!.jugadores[id] : undefined
+  const carrera = suyas.map((t) => calculos.get(t.id)!.jugadores[id].estadisticas)
   const [pestana, setPestana] = useState<Pestana>('atributos')
   const [menu, setMenu] = useState(false)
   const [hojaEspecial, setHojaEspecial] = useState(false)
@@ -97,8 +104,8 @@ export function FichaJugador({ datos, id }: { datos: Datos; id: string }) {
         atras={true}
         acciones={
           <>
-            <select className="selector-temporada" value={temporada.id} aria-label="Temporada" onChange={() => {}}>
-              <option value={temporada.id}>{temporada.nombre}</option>
+            <select className="selector-temporada" value={tempVista} aria-label="Temporada" onChange={(x) => setTempElegida(x.target.value)} disabled={suyas.length < 2}>
+              {suyas.map((t) => <option key={t.id} value={t.id}>{t.nombre}</option>)}
             </select>
             <button className="boton-icono" onClick={() => setMenu(true)} aria-label="Más opciones">
               <Icono nombre="puntos" />
@@ -152,6 +159,17 @@ export function FichaJugador({ datos, id }: { datos: Datos; id: string }) {
           </div>
         ))}
       </section>
+
+      {carrera.length > 1 && (
+        <p className="nota centro">
+          En su carrera ({carrera.length} temporadas): {carrera.reduce((a, x) => a + x.partidos, 0)} partidos ·{' '}
+          {carrera.reduce((a, x) => a + x.goles, 0)} goles · {carrera.reduce((a, x) => a + x.asistencias, 0)} asistencias ·{' '}
+          {carrera.reduce((a, x) => a + x.mvps, 0)} MVPs
+        </p>
+      )}
+      {tempVista !== temporada.id && (
+        <p className="nota centro">Viendo su temporada {suyas.find((t) => t.id === tempVista)?.nombre}.</p>
+      )}
 
       <section className="tarjeta">
         <h2>Forma</h2>

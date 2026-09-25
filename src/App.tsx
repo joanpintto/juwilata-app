@@ -1,5 +1,5 @@
 import { useEffect, useState, type ReactNode } from 'react'
-import { inicializar, pedirAlmacenamientoPersistente, registrarApertura } from './db'
+import { db, inicializar, pedirAlmacenamientoPersistente, registrarApertura } from './db'
 import { ir, useDatos, useRuta, type Datos } from './datos'
 import { DialogosRaiz, Icono } from './componentes/ui'
 import { precargarCartas } from './componentes/plantillas'
@@ -103,6 +103,17 @@ export default function App() {
   return (
     <>
       <main className={`app ${enAsistente ? 'app--sin-barra' : ''}`}>
+        {datos.temporada.id !== datos.temporadas[datos.temporadas.length - 1].id && !enAsistente && (
+          <div className="banner banner--temporada">
+            <span>Estás viendo la temporada {datos.temporada.nombre}.</span>
+            <button
+              className="enlace"
+              onClick={() => db.equipo.update('equipo', { temporadaActivaId: datos.temporadas[datos.temporadas.length - 1].id })}
+            >
+              Volver a la actual
+            </button>
+          </div>
+        )}
         <Pantalla seg={seg} datos={datos} />
       </main>
       {!enAsistente && (

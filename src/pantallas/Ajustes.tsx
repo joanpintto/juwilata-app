@@ -3,6 +3,7 @@ import { useLiveQuery } from 'dexie-react-hooks'
 import { db } from '../db'
 import { ir, type Datos } from '../datos'
 import { Cabecera, Icono } from '../componentes/ui'
+import { SeccionTemporadas } from './Temporadas'
 import { avisar } from '../componentes/dialogos'
 
 function esInstalada(): boolean {
@@ -11,10 +12,9 @@ function esInstalada(): boolean {
 }
 
 export function Ajustes({ datos }: { datos: Datos }) {
-  const { equipo, temporada } = datos
+  const { equipo } = datos
   const [nombre, setNombre] = useState(equipo.nombre)
   const [fundado, setFundado] = useState(String(equipo.fundado))
-  const [nombreTemporada, setNombreTemporada] = useState(temporada.nombre)
   const [partidos, setPartidos] = useState(String(equipo.partidosTemporada))
   const [duracion, setDuracion] = useState(String(equipo.duracionPartido))
   const [persistente, setPersistente] = useState<boolean | null>(null)
@@ -26,7 +26,7 @@ export function Ajustes({ datos }: { datos: Datos }) {
   }, [])
 
   const cambiado =
-    nombre !== equipo.nombre || fundado !== String(equipo.fundado) || nombreTemporada !== temporada.nombre ||
+    nombre !== equipo.nombre || fundado !== String(equipo.fundado) ||
     partidos !== String(equipo.partidosTemporada) || duracion !== String(equipo.duracionPartido)
 
   const guardar = async () => {
@@ -34,13 +34,9 @@ export function Ajustes({ datos }: { datos: Datos }) {
     const pt = Number(partidos)
     const du = Number(duracion)
     if (!nombre.trim()) return avisar('Falta el nombre del equipo.')
-    if (!nombreTemporada.trim()) return avisar('Falta el nombre de la temporada.')
     if (!Number.isInteger(pt) || pt < 1 || pt > 80) return avisar('Partidos por temporada: entre 1 y 80.')
     if (!Number.isInteger(du) || du < 10 || du > 120) return avisar('Duración del partido: entre 10 y 120 minutos.')
-    await db.transaction('rw', db.equipo, db.temporadas, async () => {
-      await db.equipo.update('equipo', { nombre: nombre.trim(), fundado: Number.isInteger(f) ? f : equipo.fundado, partidosTemporada: pt, duracionPartido: du })
-      await db.temporadas.update(temporada.id, { nombre: nombreTemporada.trim() })
-    })
+    await db.equipo.update('equipo', { nombre: nombre.trim(), fundado: Number.isInteger(f) ? f : equipo.fundado, partidosTemporada: pt, duracionPartido: du })
     avisar('Configuración guardada')
   }
 
@@ -60,10 +56,6 @@ export function Ajustes({ datos }: { datos: Datos }) {
             <input value={fundado} onChange={(e) => setFundado(e.target.value.replace(/\D/g, '').slice(0, 4))} inputMode="numeric" />
           </label>
         </div>
-        <label className="campo">
-          <span>Temporada</span>
-          <input value={nombreTemporada} onChange={(e) => setNombreTemporada(e.target.value)} />
-        </label>
         <div className="fila-campos">
           <label className="campo">
             <span>Partidos por temporada</span>
@@ -76,6 +68,8 @@ export function Ajustes({ datos }: { datos: Datos }) {
         </div>
         {cambiado && <button className="boton" onClick={guardar}>Guardar</button>}
       </section>
+
+      <SeccionTemporadas datos={datos} />
 
       <section className="tarjeta">
         <label className="interruptor">

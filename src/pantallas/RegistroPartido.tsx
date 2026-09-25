@@ -157,7 +157,7 @@ export function RegistroPartido({ datos, id, programadoId }: { datos: Datos; id?
     try {
       const prog = programados.find((g) => g.id === p.programadoId)
       const split = esLiga(p.competicion) ? (prog ? splitDe(prog) : (p.split ?? 1)) : null
-      const rival = p.rivalId ? rivales.find((r) => r.id === p.rivalId) : await rivalPorNombre(p.rival, split ?? undefined)
+      const rival = p.rivalId ? rivales.find((r) => r.id === p.rivalId) : await rivalPorNombre(p.rival, p.temporadaId, split ?? undefined)
       const final: Partido = {
         ...p,
         rivalId: rival?.id ?? null,

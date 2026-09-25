@@ -51,7 +51,7 @@ function FormProgramado({ inicial, rivales, programados, temporadaId, split, onC
     if (!Number.isInteger(jornada) || jornada < 1 || jornada > 99) return avisar('La jornada debe ser un número del 1 al 99.')
     if (!b.rivalId && !b.rivalNombre.trim()) return avisar('Elige o escribe el rival.')
     if (programados.some((p) => p.jornada === jornada && p.id !== b.id)) return avisar(`Ya hay un partido en la jornada ${jornada} de este split.`)
-    const rivalId = b.rivalId ?? (await rivalPorNombre(b.rivalNombre, split)).id
+    const rivalId = b.rivalId ?? (await rivalPorNombre(b.rivalNombre, temporadaId, split)).id
     const prog: Programado = {
       id: b.id ?? nuevoId(), temporadaId, jornada, rivalId, fecha: b.fecha || null, hora: b.hora || null,
       local: b.local, competicion: b.competicion.trim() || 'Liga', split,
@@ -222,7 +222,7 @@ export function Liga({ datos }: { datos: Datos }) {
 
   const anadirRival = async () => {
     if (!nuevoRival.trim()) return
-    const r = await rivalPorNombre(nuevoRival, split)
+    const r = await rivalPorNombre(nuevoRival, temporada.id, split)
     setNuevoRival('')
     avisar(`${r.nombre} en la liga`)
   }

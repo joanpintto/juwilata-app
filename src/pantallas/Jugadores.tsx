@@ -1,4 +1,6 @@
+import { db } from '../db'
 import { SUBPESTANAS_PLANTILLA, ir, nombreVisible, type Datos } from '../datos'
+import { avisar } from '../componentes/dialogos'
 import { mediaVisible } from '../motor/calculo'
 import { POSICIONES, rolPorId } from '../motor/config'
 import { MiniCarta } from '../componentes/Carta'
@@ -12,7 +14,12 @@ export function Tendencia({ valor }: { valor: number }) {
 }
 
 export function Jugadores({ datos }: { datos: Datos }) {
-  const { jugadores, calculo, config } = datos
+  const { jugadores, calculo, config, todosJugadores, temporada, temporadas } = datos
+  const posActual = temporadas.findIndex((t) => t.id === temporada.id)
+  // Jugadores que estuvieron antes pero no están en la plantilla de esta temporada.
+  const exjugadores = todosJugadores.filter(
+    (j) => !jugadores.some((x) => x.id === j.id) && temporadas.findIndex((t) => t.id === j.temporadaId) <= posActual,
+  )
 
   return (
     <>
@@ -66,6 +73,29 @@ export function Jugadores({ datos }: { datos: Datos }) {
           </section>
         )
       })}
+      {exjugadores.length > 0 && (
+        <section className="grupo">
+          <h2 className="grupo__titulo">Ya no están en el equipo</h2>
+          <ul className="lista-simple tarjeta">
+            {exjugadores.map((j) => (
+              <li key={j.id}>
+                <button className="enlace-fila" onClick={() => ir(`/jugador/${j.id}`)}>
+                  #{j.dorsal} {nombreVisible(j)}
+                </button>
+                <button
+                  className="enlace"
+                  onClick={async () => {
+                    await db.jugadores.update(j.id, { fueraEn: (j.fueraEn ?? []).filter((x) => x !== temporada.id) })
+                    avisar(`${nombreVisible(j)} vuelve a la plantilla`)
+                  }}
+                >
+                  Reincorporar
+                </button>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
     </>
   )
 }

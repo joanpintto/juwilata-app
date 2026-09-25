@@ -116,6 +116,7 @@ export interface LogroCasa {
   tipo: 'total' | 'racha' | 'partido'
   medida: MedidaCasa
   metas: number[] // 1 o 3 valores
+  porTemporada?: boolean // solo «total»: se reinicia cada temporada (por defecto, sí)
 }
 
 export const MEDIDAS_CASA: { id: MedidaCasa; nombre: string; singular: string; plural: string; tipos: LogroCasa['tipo'][] }[] = [
@@ -132,7 +133,7 @@ export const LOGROS_CASA_INICIALES: LogroCasa[] = [
   { id: 'falsas-promesas', nombre: 'Falsas promesas', descripcion: '3 partidos seguidos sin ser convocado (las bajas no cuentan).', icono: 'fantasma', tipo: 'racha', medida: 'no_convocado', metas: [3] },
   { id: 'pata-de-palo', nombre: 'Pata de palo', descripcion: 'Falla 5 ocasiones claras en una temporada.', icono: 'palo', tipo: 'total', medida: 'ocasionFallada', metas: [5] },
   { id: 'soldado-edy', nombre: 'Soldado de Edy', descripcion: 'Titularidades: 5, 10 y 15.', icono: 'soldado', tipo: 'total', medida: 'titular', metas: [5, 10, 15] },
-  { id: 'debut-gala', nombre: 'Debut de gala', descripcion: 'Tu primera titularidad.', icono: 'debut', tipo: 'total', medida: 'titular', metas: [1] },
+  { id: 'debut-gala', nombre: 'Debut de gala', descripcion: 'Tu primera titularidad.', icono: 'debut', tipo: 'total', medida: 'titular', metas: [1], porTemporada: false },
   { id: 'endrick', nombre: 'Endrick', descripcion: 'Suplencias: 5, 10 y 15.', icono: 'banco', tipo: 'total', medida: 'suplente', metas: [5, 10, 15] },
 ]
 

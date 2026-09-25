@@ -77,28 +77,37 @@ const statsVacias = (): Estadisticas => ({
   mvps: 0, amarillas: 0, rojas: 0, paradas: 0, porteriasCero: 0, golesEncajados: 0,
 })
 
+/** Punto de partida de un jugador que viene de la temporada anterior. */
+export interface Inicio {
+  atributos: Atributos
+  rangos: string[] // diseños de rango ya desbloqueados
+}
+
 export function reproducirTemporada(
   jugadores: Jugador[],
   partidos: Partido[],
   configs: Map<number, Config>,
   cfgActual: Config,
   duracion: number,
+  inicios: Record<string, Inicio> = {}, // jugadores que vienen de la temporada anterior
 ): Temporada {
   const estados: Record<string, EstadoJugador> = {}
   for (const j of jugadores) {
-    const pesos = rolPorId(cfgActual, j.rolInicial).pesos
-    const m = media(j.atributosIniciales, pesos)
+    const previo = inicios[j.id]
+    const attrs = previo?.atributos ?? j.atributosIniciales
+    const pesos = rolPorId(cfgActual, previo ? j.rol : j.rolInicial).pesos
+    const m = media(attrs, pesos)
     estados[j.id] = {
       jugador: j,
-      atributos: [...j.atributosIniciales] as Atributos,
+      atributos: [...attrs] as Atributos,
       media: m,
       mediaInicial: m,
-      atributosIniciales: [...j.atributosIniciales] as Atributos,
+      atributosIniciales: [...attrs] as Atributos,
       historial: [],
       notas: [],
       tendencia: 0,
       estadisticas: statsVacias(),
-      rangosAlcanzados: [rango(cfgActual, m).id],
+      rangosAlcanzados: [...new Set([...(previo?.rangos ?? []), rango(cfgActual, m).id])],
     }
   }
 
