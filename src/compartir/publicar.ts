@@ -51,22 +51,30 @@ export async function publicar(): Promise<string> {
     const jugadores = todo.jugadores.map((j) => ({ ...j, foto: null, fotoHuella: j.foto ? huella(j.foto) : null }))
     const datos = { ...todo, equipo, jugadores }
 
-    // 1) Fotos que han cambiado (y quitar las que ya no están).
+    // 1) Los datos (la primera vez, esto crea el equipo en la nube y registra la clave).
+    let cuando = await rpc<string>('publicar_equipo', { p_codigo: c.codigo, p_clave: c.clave, p_datos: datos })
+
+    // 2) Fotos que han cambiado (y quitar las que ya no están).
     const publicadas = { ...c.fotos }
+    let cambiaronFotos = false
     for (const j of todo.jugadores) {
       const h = j.foto ? huella(j.foto) : null
       if (!h || publicadas[j.id] === h) continue
       await rpc('publicar_foto', { p_codigo: c.codigo, p_clave: c.clave, p_jugador: j.id, p_hash: h, p_dato: await comprimir(j.foto!) })
       publicadas[j.id] = h
+      cambiaronFotos = true
     }
     const conFoto = todo.jugadores.filter((j) => j.foto).map((j) => j.id)
     if (Object.keys(publicadas).some((id) => !conFoto.includes(id))) {
       await rpc('quitar_fotos', { p_codigo: c.codigo, p_clave: c.clave, p_mantener: conFoto })
       for (const id of Object.keys(publicadas)) if (!conFoto.includes(id)) delete publicadas[id]
+      cambiaronFotos = true
     }
 
-    // 2) Los datos.
-    const cuando = await rpc<string>('publicar_equipo', { p_codigo: c.codigo, p_clave: c.clave, p_datos: datos })
+    // 3) Si cambiaron fotos, se vuelve a marcar la copia como nueva para que los
+    //    compañeros las descarguen al abrir.
+    if (cambiaronFotos) cuando = await rpc<string>('publicar_equipo', { p_codigo: c.codigo, p_clave: c.clave, p_datos: datos })
+
     await guardarEstado({ ultimaPublicacion: cuando ?? new Date().toISOString(), fotos: publicadas, error: null })
     return cuando
   } catch (e) {
