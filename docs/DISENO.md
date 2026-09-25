@@ -565,3 +565,5 @@ Decisiones del usuario: los compañeros **solo ven** (cartas, clasificación, lo
 - Mientras se ve sin fondo, detrás aparece un damero para que se note la transparencia; en la carta el jugador queda directamente sobre el fondo de la carta.
 - La foto final se guarda a **720×900** (nítida en pantallas de iPhone). El borde se suaviza con código propio (no con filtros del navegador, que Safari no tiene).
 - Se guarda también una copia de la **foto original** (máx. 1600 px, solo en este móvil y en las copias de seguridad; no se comparte). "Encuadrar o quitar fondo" parte siempre de ella, así que volver a editar no pierde calidad.
+- Tras quitar el fondo aparece la barra **Ajustar recorte** (de "quita más fondo" a "conserva más"), para cuando el fondo se parece a la ropa (p. ej. fondo granate) y el recorte se come parte de la camiseta. Se ajusta al momento, sin volver a pasar el modelo.
+- Cada pantalla se abre desde arriba y la página ocupa al menos toda la altura: en iPhone, al pasar de una pantalla larga ya bajada a una corta, la barra de abajo se quedaba "subida".

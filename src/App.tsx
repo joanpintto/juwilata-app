@@ -98,6 +98,12 @@ export default function App() {
   const activa = pestanaDe(seg)
   const enAsistente = seg[0] === 'partido' && (seg[1] === 'nuevo' || seg[2] === 'editar' || seg[2] === 'resumen')
 
+  // Cada pantalla empieza arriba. Si no, en el iPhone al pasar de una pantalla larga
+  // (bajada) a una corta se queda el desplazamiento y la barra de abajo se "sube".
+  useEffect(() => {
+    window.scrollTo(0, 0)
+  }, [ruta])
+
   useEffect(() => {
     if (SOLO_LECTURA) {
       // Espectador: se descarga la copia publicada por el administrador.

@@ -51,6 +51,9 @@ code { font-size: 12px; color: var(--dorado); }
   display: flex;
   flex-direction: column;
   gap: 14px;
+  /* Nunca más corta que la pantalla (evita que la barra fija se desplace en iPhone). */
+  min-height: 100vh;
+  min-height: 100dvh;
 }
 .app--sin-barra { padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 96px); }
 .app--cargando { min-height: 100vh; align-items: center; justify-content: center; }
@@ -512,6 +515,8 @@ input[type='range'] { width: 100%; accent-color: var(--dorado); }
 .foto-editor__trabajando { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; padding: 14px; text-align: center; font-size: 0.85rem; line-height: 1.35; background: rgb(14 14 15 / 0.82); }
 .cargando-punto { width: 26px; height: 26px; border-radius: 50%; border: 3px solid rgb(204 163 124 / 0.25); border-top-color: var(--dorado); animation: girar-punto 0.8s linear infinite; }
 @keyframes girar-punto { to { transform: rotate(360deg); } }
+.foto-editor__holgura { display: flex; flex-direction: column; gap: 4px; font-size: 0.85rem; color: var(--texto-2); }
+.foto-editor__extremos { display: flex; justify-content: space-between; font-size: 0.75rem; color: var(--texto-3); }
 .editor-carta__acciones-foto { display: flex; gap: 18px; justify-content: center; flex-wrap: wrap; }
 
 /* ─── Calendario ───────────────────────────────────────────────────── */

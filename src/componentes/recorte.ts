@@ -56,11 +56,15 @@ function suavizar(v: Float32Array, w: number, h: number, r: number): Float32Arra
   return out
 }
 
-/**
- * Devuelve la imagen con el fondo transparente. La máscara del modelo se suaviza
- * un poco para que el borde no quede dentado.
- */
-export async function quitarFondo(imagen: HTMLImageElement): Promise<HTMLCanvasElement> {
+/** Resultado del modelo para una foto: se calcula una vez y luego se puede ajustar el recorte al momento. */
+export interface Segmentacion {
+  base: HTMLCanvasElement
+  persona: Float32Array // 0–1: seguridad de que cada punto es la persona
+  mw: number
+  mh: number
+}
+
+export async function segmentar(imagen: HTMLImageElement): Promise<Segmentacion> {
   const seg = await segmentador()
   // Tamaño de trabajo: de sobra para la carta y asumible en el móvil.
   const escala = Math.min(1, 1600 / Math.max(imagen.naturalWidth, imagen.naturalHeight))
@@ -79,12 +83,22 @@ export async function quitarFondo(imagen: HTMLImageElement): Promise<HTMLCanvasE
   const mh = fondo.height
   const valores = fondo.getAsFloat32Array()
   const persona = new Float32Array(mw * mh)
-  for (let i = 0; i < mw * mh; i++) {
-    // Curva suave: por debajo de 0,35 transparente, por encima de 0,7 opaco.
-    persona[i] = Math.min(1, Math.max(0, (1 - valores[i] - 0.35) / 0.35))
-  }
+  for (let i = 0; i < mw * mh; i++) persona[i] = 1 - valores[i]
   r.close()
-  const suave = suavizar(persona, mw, mh, Math.max(1, Math.round(Math.max(mw, mh) / 700)))
+  return { base, persona, mw, mh }
+}
+
+/**
+ * Devuelve la foto con el fondo transparente. `holgura` va de 0 (recorte ajustado:
+ * quita más fondo) a 1 (recorte suelto: conserva más, útil si el fondo se parece a
+ * la ropa). El borde se suaviza para que no quede dentado.
+ */
+export function aplicarRecorte(s: Segmentacion, holgura: number): HTMLCanvasElement {
+  const { base, persona, mw, mh } = s
+  const umbral = 0.55 - holgura * 0.5 // de 0,55 (ajustado) a 0,05 (suelto)
+  const mapa = new Float32Array(mw * mh)
+  for (let i = 0; i < mw * mh; i++) mapa[i] = Math.min(1, Math.max(0, (persona[i] - umbral) / 0.3))
+  const suave = suavizar(mapa, mw, mh, Math.max(1, Math.round(Math.max(mw, mh) / 700)))
   const alfa = new Uint8ClampedArray(mw * mh * 4)
   for (let i = 0; i < mw * mh; i++) alfa[i * 4 + 3] = Math.round(suave[i] * 255)
 
@@ -94,13 +108,13 @@ export async function quitarFondo(imagen: HTMLImageElement): Promise<HTMLCanvasE
   mascara.getContext('2d')!.putImageData(new ImageData(alfa, mw, mh), 0, 0)
 
   const salida = document.createElement('canvas')
-  salida.width = w
-  salida.height = h
+  salida.width = base.width
+  salida.height = base.height
   const ctx = salida.getContext('2d')!
   ctx.drawImage(base, 0, 0)
   ctx.globalCompositeOperation = 'destination-in'
   ctx.imageSmoothingEnabled = true
   ctx.imageSmoothingQuality = 'high'
-  ctx.drawImage(mascara, 0, 0, w, h)
+  ctx.drawImage(mascara, 0, 0, base.width, base.height)
   return salida
 }

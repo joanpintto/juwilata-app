@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { modeloDescargado, quitarFondo } from './recorte'
+import { aplicarRecorte, modeloDescargado, segmentar, type Segmentacion } from './recorte'
 
 // Encuadre de la foto del jugador, con recorte automático del fondo opcional.
 // Todo ocurre en el propio móvil: la imagen nunca sale del dispositivo. Se guarda
@@ -28,6 +28,8 @@ type Fuente = HTMLImageElement | HTMLCanvasElement
 export function FotoEditor({ origen, onListo, onCancelar }: { origen: File | string; onListo: (png: string, original: string) => void; onCancelar: () => void }) {
   const lienzo = useRef<HTMLCanvasElement>(null)
   const [img, setImg] = useState<HTMLImageElement | null>(null)
+  const [segmentacion, setSegmentacion] = useState<Segmentacion | null>(null)
+  const [holgura, setHolgura] = useState(0.6)
   const [recortada, setRecortada] = useState<HTMLCanvasElement | null>(null)
   const [sinFondo, setSinFondo] = useState(false)
   const [estado, setEstado] = useState<string | null>(null)
@@ -68,8 +70,9 @@ export function FotoEditor({ origen, onListo, onCancelar }: { origen: File | str
     if (!img) return
     try {
       setEstado((await modeloDescargado()) ? 'Quitando el fondo…' : 'Preparando el recorte… La primera vez descarga unos 28 MB; después funciona sin conexión.')
-      const c = await quitarFondo(img)
-      setRecortada(c)
+      const s = await segmentar(img)
+      setSegmentacion(s)
+      setRecortada(aplicarRecorte(s, holgura))
       setSinFondo(true)
       setEstado(null)
     } catch {
@@ -110,10 +113,28 @@ export function FotoEditor({ origen, onListo, onCancelar }: { origen: File | str
           />
           {trabajando && <div className="foto-editor__trabajando"><span className="cargando-punto" />{estado}</div>}
         </div>
-        <input type="range" min="1" max="3" step="0.01" value={zoom} onChange={(e) => setZoom(Number(e.target.value))} aria-label="Acercar" />
+        <label className="foto-editor__holgura">
+          <span>Acercar</span>
+          <input type="range" min="1" max="3" step="0.01" value={zoom} onChange={(e) => setZoom(Number(e.target.value))} aria-label="Acercar" />
+        </label>
         <button className={`boton boton--sec ${sinFondo ? 'boton--marcado' : ''}`} disabled={!img || trabajando} onClick={alternarFondo}>
           {sinFondo ? 'Volver a poner el fondo' : '✂️ Quitar fondo'}
         </button>
+        {sinFondo && segmentacion && (
+          <label className="foto-editor__holgura">
+            <span>Ajustar recorte</span>
+            <input
+              type="range" min="0" max="1" step="0.05" value={holgura}
+              onChange={(e) => {
+                const v = Number(e.target.value)
+                setHolgura(v)
+                setRecortada(aplicarRecorte(segmentacion, v))
+              }}
+              aria-label="Ajustar recorte"
+            />
+            <span className="foto-editor__extremos"><span>Quita más fondo</span><span>Conserva más</span></span>
+          </label>
+        )}
         {estado && !trabajando && <p className="nota baja">{estado}</p>}
         <div className="dialogo__botones">
           <button className="boton boton--sec" onClick={onCancelar}>Cancelar</button>
