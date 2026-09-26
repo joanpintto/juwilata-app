@@ -232,6 +232,15 @@ input[type='range'] { width: 100%; accent-color: var(--dorado); }
 .carta__hueco { aspect-ratio: 464 / 632; }
 .minicarta__hueco { aspect-ratio: 396 / 564; border-radius: 8px; background: var(--fondo-3); }
 .ficha-carta { width: 72%; max-width: 280px; margin: 4px auto 0; animation: aparecer 0.35s ease-out; }
+
+/* Carta 3D de la ficha: se inclina al arrastrar (el desplazamiento vertical de la página sigue funcionando). */
+.carta3d { position: relative; perspective: 900px; touch-action: pan-y; cursor: grab; -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
+.carta3d:active { cursor: grabbing; }
+.carta3d__interior { position: relative; z-index: 1; transform-origin: 50% 50%; }
+.carta3d__sombra {
+  position: absolute; left: 14%; right: 14%; bottom: 1%; height: 9%; border-radius: 50%;
+  background: radial-gradient(closest-side, rgba(0, 0, 0, 0.75), transparent); filter: blur(6px); opacity: 0.45;
+}
 @keyframes aparecer { from { opacity: 0; transform: translateY(8px) scale(0.98); } }
 
 .editor-carta { display: flex; flex-direction: column; align-items: center; gap: 10px; }

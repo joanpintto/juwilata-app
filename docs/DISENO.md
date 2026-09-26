@@ -309,10 +309,11 @@ Idea: **subir es lo normal y bajar cuesta mucho**. No hay techo: cualquier jugad
 
 ### Plantilla → Formación
 - Campo de F7 con las mini-cartas colocadas por posición, y el banquillo debajo.
-- Se arrastra o se toca para cambiar jugadores.
+- Se arrastra para cambiar jugadores de sitio o mandarlos al banquillo; al tocar un jugador se abre su ficha (decidido por el usuario).
 - Encima del banquillo, la media de los titulares.
 
 ### Ficha de jugador
+- **Carta 3D:** la carta grande de la ficha (también la del míster) se inclina al arrastrarla con el dedo, hasta 28° para que siempre se vea el frente, con un brillo que se mueve según la inclinación; al soltarla vuelve sola. Arrastrar hacia arriba o abajo sigue desplazando la página.
 - **Arriba:** selector de temporada y menú "⋯", que incluye Eliminar con confirmación.
 - **Carta activa grande** y, debajo, las miniaturas de los diseños desbloqueados. Botón "Usar como activa".
 - Nombre, rol completo, dorsal, pierna buena y posiciones secundarias.
@@ -475,7 +476,7 @@ Puntos que el diseño dejaba abiertos y que se han concretado al construir la Fa
 - **Ajustes → Avanzado:** «solo desde ahora» se consigue guardando la configuración con número de versión; cada partido recuerda con qué versión se calculó.
 
 ### Pantallas y datos
-- **Formación:** 4 esquemas de F7 (1-3-2-1, 1-2-3-1, 1-3-1-2, 1-2-2-2). Los jugadores se arrastran entre huecos y banquillo, o se tocan dos seguidos para cambiarlos.
+- **Formación:** 4 esquemas de F7 (1-3-2-1, 1-2-3-1, 1-3-1-2, 1-2-2-2). Los jugadores se arrastran entre huecos y banquillo; tocarlos abre su ficha.
 - **Registro:** botón «Usar la formación» para marcar titulares de un toque. Las acciones rápidas (⚽ 🅰 🟨) se suman tocando el icono y se restan con el botón «−» que aparece al lado. Si solo juega un portero, sus goles encajados se rellenan con el marcador.
 - **Deshacer:** la última acción sobre partidos (registrar, editar o borrar) se puede deshacer.
 - **Tipografía:** Barlow Condensed se sirve desde la propia app (extraída de las plantillas de carta), así funciona sin conexión.

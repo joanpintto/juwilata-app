@@ -78,6 +78,23 @@ function construir(doc: Document, r: Relleno, uid: string): string {
   // y, si la carta aparece con animación, el escudo se queda borroso o estirado.
   $('escudo_uso')?.removeAttribute('filter')
 
+  if (!r.mini) {
+    // Capa de brillo para la carta 3D (la mueve Carta3D; quieta es invisible).
+    const fondo = $('fondo')
+    const defs = svg.querySelector('defs')
+    if (fondo?.parentNode && defs) {
+      const grad = crear('radialGradient', { id: 'brillo3d', cx: '50%', cy: '50%', r: '65%' })
+      grad.appendChild(crear('stop', { offset: '0', 'stop-color': '#fff', 'stop-opacity': '0.85' }))
+      grad.appendChild(crear('stop', { offset: '0.45', 'stop-color': '#fff', 'stop-opacity': '0.18' }))
+      grad.appendChild(crear('stop', { offset: '1', 'stop-color': '#fff', 'stop-opacity': '0' }))
+      defs.appendChild(grad)
+      fondo.parentNode.appendChild(crear('rect', {
+        id: 'brillo3d_capa', width: 384, height: 552, fill: 'url(#brillo3d)', 'clip-path': 'url(#card)',
+        opacity: 0, style: 'mix-blend-mode: overlay; pointer-events: none',
+      }))
+    }
+  }
+
   if (r.mini) {
     // §7.3: sin estadísticas, escudo, dorsal, tendencia ni marca de agua; media y rol más grandes.
     quitar('stats', 'regla', 'rombo', 'marca_agua', 'escudo_uso', 'dorsal', 'separador', 'tendencia')

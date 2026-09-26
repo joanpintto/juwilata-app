@@ -8,6 +8,7 @@ import { CartaMister, MiniCartaMister } from '../componentes/Carta'
 import { DISENOS_MISTER, disenoMister, disenosMisterDesbloqueados } from '../componentes/disenos'
 import { GraficoEvolucion, Radar } from '../componentes/Graficos'
 import { Vitrina } from '../componentes/Logros'
+import { Carta3D } from '../componentes/Carta3D'
 import { Cabecera, Hoja, Icono } from '../componentes/ui'
 import { avisar } from '../componentes/dialogos'
 
@@ -78,7 +79,9 @@ export function FichaMister({ datos }: { datos: Datos }) {
       />
 
       <div className="ficha-carta">
-        <CartaMister mister={m} media={e.media} atributos={e.atributos} tendencia={e.tendencia} diseno={vista} />
+        <Carta3D>
+          <CartaMister mister={m} media={e.media} atributos={e.atributos} tendencia={e.tendencia} diseno={vista} />
+        </Carta3D>
       </div>
 
       {desbloqueados.length > 1 && (

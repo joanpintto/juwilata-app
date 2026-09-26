@@ -7,6 +7,7 @@ import { Carta, MiniCarta } from '../componentes/Carta'
 import { DISENOS, disenoDe, disenosDesbloqueados } from '../componentes/disenos'
 import { GraficoEvolucion, Radar } from '../componentes/Graficos'
 import { Vitrina } from '../componentes/Logros'
+import { Carta3D } from '../componentes/Carta3D'
 import { Cabecera, Hoja, Icono } from '../componentes/ui'
 import { avisar, confirmar } from '../componentes/dialogos'
 
@@ -115,7 +116,9 @@ export function FichaJugador({ datos, id }: { datos: Datos; id: string }) {
       />
 
       <div className="ficha-carta">
-        <Carta jugador={j} media={e.media} atributos={e.atributos} tendencia={e.tendencia} diseno={vista} config={config} />
+        <Carta3D>
+          <Carta jugador={j} media={e.media} atributos={e.atributos} tendencia={e.tendencia} diseno={vista} config={config} />
+        </Carta3D>
       </div>
 
       {desbloqueados.length > 1 && (

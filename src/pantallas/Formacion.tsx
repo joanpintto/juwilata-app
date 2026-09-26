@@ -5,8 +5,8 @@ import { nombrePosicion } from '../motor/config'
 import { MiniCarta, MiniCartaMister } from '../componentes/Carta'
 import { disenoDe, disenoMister } from '../componentes/disenos'
 import { Cabecera, Icono, Subpestanas, Vacio } from '../componentes/ui'
+import { avisar } from '../componentes/dialogos'
 
-type Seleccion = { tipo: 'slot'; id: string } | { tipo: 'banco'; jugadorId: string } | null
 type Origen = { tipo: 'slot'; id: string; jugadorId: string } | { tipo: 'banco'; jugadorId: string }
 
 /** Zona sobre la que está el dedo: «slot:<id>» o «banco». */
@@ -20,7 +20,6 @@ function zonaEn(x: number, y: number): string | null {
 
 export function Formacion({ datos }: { datos: Datos }) {
   const { equipo, jugadores, calculo, config, mister, misterFicha } = datos
-  const [sel, setSel] = useState<Seleccion>(null)
   const esquema = ESQUEMAS[equipo.formacion.esquema] ? equipo.formacion.esquema : '1-3-2-1'
   const posiciones = ESQUEMAS[esquema]
   const existe = (id: string | null | undefined) => !!id && jugadores.some((j) => j.id === id)
@@ -34,30 +33,6 @@ export function Formacion({ datos }: { datos: Datos }) {
 
   const guardar = (nuevos: Record<string, string | null>, nuevoEsquema = esquema) =>
     db.equipo.update('equipo', { formacion: { esquema: nuevoEsquema, slots: nuevos } })
-
-  const tocarSlot = async (id: string) => {
-    if (!sel) return setSel({ tipo: 'slot', id })
-    if (sel.tipo === 'slot') {
-      if (sel.id !== id) await guardar({ ...slots, [id]: slots[sel.id], [sel.id]: slots[id] })
-      return setSel(null)
-    }
-    await guardar({ ...slots, [id]: sel.jugadorId })
-    setSel(null)
-  }
-
-  const tocarBanco = async (jugadorId: string) => {
-    if (sel?.tipo === 'slot') {
-      await guardar({ ...slots, [sel.id]: jugadorId })
-      return setSel(null)
-    }
-    setSel(sel?.tipo === 'banco' && sel.jugadorId === jugadorId ? null : { tipo: 'banco', jugadorId })
-  }
-
-  const quitar = async () => {
-    if (sel?.tipo !== 'slot') return
-    await guardar({ ...slots, [sel.id]: null })
-    setSel(null)
-  }
 
   // ─── Arrastrar (si el dedo se mueve) o tocar (si no) ───
   const gesto = useRef<{ x: number; y: number; origen: Origen; arrastrando: boolean } | null>(null)
@@ -98,13 +73,11 @@ export function Formacion({ datos }: { datos: Datos }) {
         await guardar({ ...slots, [destino]: origen.jugadorId })
       }
     }
-    setSel(null)
   }
 
-  const eventos = (origenReal: Origen | null, alTocarReal: () => void) => {
-    // Espectador: la formación se ve pero no se toca.
+  // Arrastrar mueve al jugador (solo el administrador); tocarlo abre su ficha.
+  const eventos = (origenReal: Origen | null, alTocar: () => void) => {
     const origen = SOLO_LECTURA ? null : origenReal
-    const alTocar = SOLO_LECTURA ? () => {} : alTocarReal
     return {
     onPointerDown: (e: EventoPuntero<HTMLElement>) => {
       if (!origen) return
@@ -184,14 +157,13 @@ export function Formacion({ datos }: { datos: Datos }) {
             </div>
             {posiciones.map((p) => {
               const jid = slots[p.id]
-              const activo = sel?.tipo === 'slot' && sel.id === p.id
               return (
                 <button
                   key={p.id}
                   data-zona={`slot:${p.id}`}
-                  className={`hueco ${activo ? 'hueco--sel' : ''} ${jid ? '' : 'hueco--vacio'} ${zona === `slot:${p.id}` ? 'hueco--destino' : ''} ${fantasma && jid === fantasma.jugadorId ? 'hueco--origen' : ''}`}
+                  className={`hueco ${jid ? '' : 'hueco--vacio'} ${zona === `slot:${p.id}` ? 'hueco--destino' : ''} ${fantasma && jid === fantasma.jugadorId ? 'hueco--origen' : ''}`}
                   style={{ left: `${p.x}%`, top: `${p.y}%` }}
-                  {...eventos(jid ? { tipo: 'slot', id: p.id, jugadorId: jid } : null, () => tocarSlot(p.id))}
+                  {...eventos(jid ? { tipo: 'slot', id: p.id, jugadorId: jid } : null, () => (jid ? ir(`/jugador/${jid}`) : !SOLO_LECTURA && avisar('Arrastra aquí un jugador del banquillo.')))}
                   aria-label={jid ? undefined : `Hueco de ${nombrePosicion(p.pos)}`}
                 >
                   {jid ? mini(jid, 70) : <span>{p.pos}</span>}
@@ -203,15 +175,7 @@ export function Formacion({ datos }: { datos: Datos }) {
             </button>
           </div>
 
-          <p className="nota centro editable">
-            {sel ? (sel.tipo === 'slot' ? 'Toca otro hueco para intercambiar o un suplente para ponerlo.' : 'Toca un hueco del campo para colocarlo.') : 'Arrastra un jugador a otro hueco o al banquillo, o tócalo y después toca dónde va.'}
-            {sel?.tipo === 'slot' && slots[sel.id] && (
-              <>
-                {' '}
-                <button className="enlace" onClick={quitar}>Mandar al banquillo</button>
-              </>
-            )}
-          </p>
+          <p className="nota centro editable">Toca un jugador para ver su ficha. Arrástralo para cambiarlo de sitio o mandarlo al banquillo.</p>
 
           <div className="media-titulares">
             <span>Media de los titulares</span>
@@ -223,8 +187,8 @@ export function Formacion({ datos }: { datos: Datos }) {
             {banquillo.map((j) => (
               <button
                 key={j.id}
-                className={`${sel?.tipo === 'banco' && sel.jugadorId === j.id ? 'hueco--sel' : ''} ${fantasma?.jugadorId === j.id ? 'hueco--origen' : ''}`}
-                {...eventos({ tipo: 'banco', jugadorId: j.id }, () => tocarBanco(j.id))}
+                className={fantasma?.jugadorId === j.id ? 'hueco--origen' : ''}
+                {...eventos({ tipo: 'banco', jugadorId: j.id }, () => ir(`/jugador/${j.id}`))}
               >
                 {mini(j.id, 54)}
               </button>
