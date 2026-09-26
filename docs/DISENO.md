@@ -232,16 +232,18 @@ Idea: **subir es lo normal y bajar cuesta mucho**. No hay techo: cualquier jugad
 
 - **8 rangos automáticos según la media:**
 
-| Rango | Media |
-|---|---|
-| Bronce | 60-64 |
-| Bronce Brillante | 65-69 |
-| Plata | 70-74 |
-| Plata Brillante | 75-79 |
-| Oro | 80-84 |
-| Oro Brillante | 85-89 |
-| Élite | 90-94 |
-| Leyenda | 95-99 |
+| Rango | Media | Dificultad de alcanzar |
+|---|---|---|
+| Bronce | 60-62 | Punto de partida |
+| Bronce Brillante | 63-65 | Fácil, ritmo normal |
+| Plata | 66-69 | Fácil, ritmo normal |
+| Plata Brillante | 70-74 | Aquí empieza a apretar la curva |
+| Oro | 75-80 | Requiere regularidad alta |
+| Oro Brillante | 81-89 | Requiere una temporada muy sólida |
+| Élite | 90-94 | Excepcional: pocos jugadores lo lograrán en una temporada |
+| Leyenda | 95-99 | Casi nunca en una sola temporada: más bien un logro de varias |
+
+- Umbrales actualizados por el usuario (antes: 60, 65, 70, 75, 80, 85, 90 y 95). Al abrir la app, si la configuración seguía con los antiguos sin tocar, se crea sola una versión nueva con estos. Los rangos se aplican siempre a todos los partidos, también a los jugados con configuraciones anteriores.
 
 - **3 diseños especiales** que aplica el administrador a mano: **IF**, **POTM** y **TOTY**. Son 100% estéticos: no cambian la media ni las estadísticas.
 - **Acabados:** Bronce, Plata y Oro son mate; sus versiones Brillante llevan más brillo en el marco y un destello abajo a la derecha. Leyenda rompe el patrón con su propia paleta.

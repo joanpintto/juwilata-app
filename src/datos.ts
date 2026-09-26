@@ -46,6 +46,9 @@ export function useDatos(): Datos | undefined {
     if (!temporada || !configs.length) return undefined
     // Las configuraciones antiguas se completan con los valores nuevos que les falten.
     const completas = configs.map((c) => ({ ...c, datos: { ...CONFIG_INICIAL, ...c.datos, mister: { ...CONFIG_INICIAL.mister, ...c.datos.mister } } }))
+    // Los rangos se aplican siempre a todo (también a partidos jugados con configuraciones anteriores).
+    const actual = completas[completas.length - 1].datos
+    for (const c of completas) c.datos = { ...c.datos, rangos: actual.rangos, mister: { ...c.datos.mister, rangos: actual.mister.rangos } }
     return { equipo, temporada, temporadas, jugadores, partidos, configs: completas, rivales, programados, resultadosLiga }
   })
 

@@ -1,5 +1,5 @@
 import Dexie, { type Table } from 'dexie'
-import { CONFIG_INICIAL, rolPorId, type Atributos, type Config, type Posicion } from './motor/config'
+import { CONFIG_INICIAL, RANGOS_ANTIGUOS, rolPorId, type Atributos, type Config, type Posicion } from './motor/config'
 import { atributosIniciales } from './motor/calculo'
 import type { Acciones } from './motor/calculo'
 
@@ -322,6 +322,15 @@ export function inicializar(): Promise<void> {
   inicializacion ??= db.transaction('rw', [db.equipo, db.temporadas, db.configuraciones], async () => {
     if (!(await db.configuraciones.count())) {
       await db.configuraciones.put({ version: 1, datos: CONFIG_INICIAL, creada: new Date().toISOString(), descripcion: 'Valores iniciales del documento de diseño' })
+    }
+    // Nuevos umbrales de los rangos (§7.1): si seguían los antiguos sin tocar, se actualizan.
+    const ultima = await db.configuraciones.orderBy('version').last()
+    const desde = ultima?.datos.rangos?.map((r) => r.desde)
+    if (ultima && JSON.stringify(desde) === JSON.stringify(RANGOS_ANTIGUOS)) {
+      await db.configuraciones.put({
+        version: ultima.version + 1, datos: { ...ultima.datos, rangos: CONFIG_INICIAL.rangos },
+        creada: new Date().toISOString(), descripcion: 'Nuevos umbrales de los rangos',
+      })
     }
     if (!(await db.equipo.get('equipo'))) {
       const temporada: Temporada = { id: nuevoId(), nombre: '2026-2027', inicio: new Date().toISOString().slice(0, 10) }

@@ -186,6 +186,9 @@ export type RangoId =
   | 'bronce' | 'bronce-brillante' | 'plata' | 'plata-brillante'
   | 'oro' | 'oro-brillante' | 'elite' | 'leyenda'
 
+/** Umbrales de los rangos hasta septiembre de 2026 (se actualizan solos si no se habían tocado). */
+export const RANGOS_ANTIGUOS = [60, 65, 70, 75, 80, 85, 90, 95]
+
 export const CONFIG_INICIAL: Config = {
   roles: [
     { id: 'DC', nombre: 'Delantero Posicional', sigla: 'DC', posicion: 'DEL', pesos: [15, 35, 10, 15, 5, 20] },
@@ -271,13 +274,15 @@ export const CONFIG_INICIAL: Config = {
   totyPesos: { notas: 0.5, evolucion: 0.2, produccion: 0.2, mvps: 0.1 },
   totyPartidos: 0.5,
 
+  // Cada vez más separados: Plata Brillante es donde empieza a apretar la curva,
+  // Élite es excepcional y Leyenda, cosa de varias temporadas.
   rangos: [
     { id: 'bronce', nombre: 'Bronce', desde: 60 },
-    { id: 'bronce-brillante', nombre: 'Bronce Brillante', desde: 65 },
-    { id: 'plata', nombre: 'Plata', desde: 70 },
-    { id: 'plata-brillante', nombre: 'Plata Brillante', desde: 75 },
-    { id: 'oro', nombre: 'Oro', desde: 80 },
-    { id: 'oro-brillante', nombre: 'Oro Brillante', desde: 85 },
+    { id: 'bronce-brillante', nombre: 'Bronce Brillante', desde: 63 },
+    { id: 'plata', nombre: 'Plata', desde: 66 },
+    { id: 'plata-brillante', nombre: 'Plata Brillante', desde: 70 },
+    { id: 'oro', nombre: 'Oro', desde: 75 },
+    { id: 'oro-brillante', nombre: 'Oro Brillante', desde: 81 },
     { id: 'elite', nombre: 'Élite', desde: 90 },
     { id: 'leyenda', nombre: 'Leyenda', desde: 95 },
   ],
