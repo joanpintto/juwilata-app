@@ -1,13 +1,18 @@
-// Convierte las 11 plantillas aprobadas (design/cartas/*.svg, sin la foto de
-// ejemplo: los originales con la foto de un jugador real están en docs/cartas/,
-// fuera de git) en plantillas ligeras para la app (public/cartas/*.svg):
+// Convierte las plantillas aprobadas en plantillas ligeras para la app (public/cartas/*.svg):
+// - las 11 de jugador (design/cartas/carta-X.svg → X.svg);
+// - las 6 del míster (design/cartas-entrenador/carta-entrenador-X.svg → mister-X.svg).
+// Las de design/ no llevan la foto de ejemplo: los originales con la foto de un
+// jugador real están en docs/cartas*/, fuera de git.
 // - quita el hueco de la foto de ejemplo, el escudo incrustado y los metadatos;
 // - saca las tipografías Barlow Condensed a public/fuentes/ (se cargan una sola vez);
 // - marca con id los huecos que la app rellena (media, rol, dorsal, tendencia…).
 // Uso: npm run cartas   (solo hace falta al cambiar las plantillas)
 import { mkdirSync, readFileSync, readdirSync, writeFileSync } from 'node:fs'
 
-const ORIGEN = 'design/cartas'
+const ORIGENES = [
+  { dir: 'design/cartas', prefijo: /^carta-/, nuevo: '' },
+  { dir: 'design/cartas-entrenador', prefijo: /^carta-entrenador-/, nuevo: 'mister-' },
+]
 const DESTINO = 'public/cartas'
 const FUENTES = 'public/fuentes'
 mkdirSync(DESTINO, { recursive: true })
@@ -22,8 +27,8 @@ const cambiar = (s, archivo, patron, por, que) => {
   return s.replace(patron, por)
 }
 
-for (const archivo of readdirSync(ORIGEN).filter((f) => f.endsWith('.svg'))) {
-  let s = readFileSync(`${ORIGEN}/${archivo}`, 'utf8')
+for (const { dir, prefijo, nuevo } of ORIGENES) for (const archivo of readdirSync(dir).filter((f) => f.endsWith('.svg'))) {
+  let s = readFileSync(`${dir}/${archivo}`, 'utf8')
 
   if (!fuentesHechas) {
     for (const m of s.matchAll(/@font-face\{[^}]*font-weight:(\d+);font-style:(\w+);src:url\(data:font\/woff2;base64,([A-Za-z0-9+/=]+)\)/g)) {
@@ -63,7 +68,7 @@ for (const archivo of readdirSync(ORIGEN).filter((f) => f.endsWith('.svg'))) {
   s = cambiar(s, archivo, /<path d="M192,420\.5/, '<path id="rombo" d="M192,420.5', 'el rombo')
   if (/data:image|data:font/.test(s)) fallo(archivo, 'restos incrustados')
 
-  const id = archivo.replace(/^carta-/, '').replace(/\.svg$/, '')
+  const id = archivo.replace(prefijo, nuevo).replace(/\.svg$/, '')
   writeFileSync(`${DESTINO}/${id}.svg`, s)
   console.log(`${id}.svg`, Math.round(s.length / 1024), 'KB')
 }

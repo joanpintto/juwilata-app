@@ -28,6 +28,29 @@ export interface Equipo {
   compartir?: Compartir // enlace para los compañeros (Fase 4); nunca se publica
   publicadoEl?: string // (solo espectador) fecha de la copia que se está viendo
   splitActual?: number // split que se está jugando (por defecto, el 1)
+  mister?: Mister // el entrenador (§20); sin dato = el de por defecto
+}
+
+/** El entrenador. Sus medias y atributos se calculan, como los de los jugadores. */
+export interface Mister {
+  nombre: string
+  apodo: string
+  formacion: string // formación favorita: va donde el dorsal en su carta
+  foto: string | null
+  fotoOriginal?: string | null // solo en este móvil, para volver a encuadrarla
+  disenoActivo: string | null // null = el de su rango actual
+  especiales: Especial[] // MOTM / TOTY (parte 2)
+}
+
+export const MISTER_INICIAL: Mister = { nombre: 'Míster', apodo: '', formacion: '1-3-2-1', foto: null, disenoActivo: null, especiales: [] }
+/** Identificador de la foto del míster al compartir (va junto a las de los jugadores). */
+export const ID_FOTO_MISTER = 'mister'
+
+export const misterDe = (e: Equipo): Mister => ({ ...MISTER_INICIAL, ...e.mister })
+
+export async function guardarMister(cambios: Partial<Mister>) {
+  const eq = await db.equipo.get('equipo')
+  if (eq) await db.equipo.update('equipo', { mister: { ...misterDe(eq), ...cambios } })
 }
 
 /** Datos para publicar la copia que ven los compañeros. La clave solo está en este móvil. */
@@ -47,7 +70,7 @@ export interface Temporada {
 }
 
 export type Pierna = 'derecha' | 'izquierda' | 'ambas'
-export type TipoEspecial = 'IF' | 'POTM' | 'TOTY'
+export type TipoEspecial = 'IF' | 'POTM' | 'TOTY' | 'MOTM'
 
 export interface Especial {
   id: string
@@ -141,6 +164,7 @@ export interface Partido {
   actuaciones: Actuacion[]
   mvpId: string | null
   nominados: string[]
+  misterDirigio?: boolean // sin dato = sí (§20.1)
   configVersion: number
   creado: string
   editado: string | null

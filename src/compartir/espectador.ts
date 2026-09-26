@@ -1,10 +1,11 @@
-import { CODIGO_ESPECTADOR, db, importarDatos, validarExportacion, type Exportacion } from '../db'
+import { CODIGO_ESPECTADOR, ID_FOTO_MISTER, db, importarDatos, validarExportacion, type Exportacion, type Mister } from '../db'
 import { rpc } from './nube'
 
 // Modo espectador: descarga la copia que publica el administrador y la guarda
 // en la base de datos aparte de este dispositivo (así funciona también sin conexión).
 
 type JugadorPublicado = Exportacion['jugadores'][number] & { fotoHuella?: string | null }
+type MisterPublicado = Mister & { fotoHuella?: string | null }
 
 export interface ResultadoCarga {
   actualizado: string | null
@@ -29,6 +30,8 @@ export async function cargarEspectador(): Promise<ResultadoCarga> {
   const anteriores = await db.jugadores.toArray()
   const tengo: Record<string, string> = {}
   for (const j of anteriores as JugadorPublicado[]) if (j.foto && j.fotoHuella) tengo[j.id] = j.fotoHuella
+  const misterAnterior = local?.mister as MisterPublicado | undefined
+  if (misterAnterior?.foto && misterAnterior.fotoHuella) tengo[ID_FOTO_MISTER] = misterAnterior.fotoHuella
   const fotos = await rpc<{ jugador_id: string; hash: string; dato: string | null }[]>('leer_fotos', { p_codigo: codigo, p_tengo: tengo })
   const porId = new Map(fotos.map((f) => [f.jugador_id, f]))
 
@@ -38,7 +41,12 @@ export async function cargarEspectador(): Promise<ResultadoCarga> {
     const anterior = anteriores.find((x) => x.id === j.id)
     return { ...j, foto: f ? (f.dato ?? anterior?.foto ?? null) : null, fotoHuella: f?.hash ?? null }
   })
-  copia.equipo = { ...copia.equipo, publicadoEl: actualizado, compartir: undefined }
+  const fm = porId.get(ID_FOTO_MISTER)
+  const mister = copia.equipo.mister as MisterPublicado | undefined
+  copia.equipo = {
+    ...copia.equipo, publicadoEl: actualizado, compartir: undefined,
+    mister: mister && { ...mister, foto: fm ? (fm.dato ?? misterAnterior?.foto ?? null) : null, fotoHuella: fm?.hash ?? null } as Mister,
+  }
   await importarDatos(copia)
   return { actualizado, sinConexion: false }
 }

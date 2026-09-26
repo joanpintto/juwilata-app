@@ -2,8 +2,8 @@ import { useEffect, useRef, useState, type MouseEvent as EventoRaton, type Point
 import { SOLO_LECTURA, db, ESQUEMAS } from '../db'
 import { SUBPESTANAS_PLANTILLA, fmt1, ir, type Datos } from '../datos'
 import { nombrePosicion } from '../motor/config'
-import { MiniCarta } from '../componentes/Carta'
-import { disenoDe } from '../componentes/disenos'
+import { MiniCarta, MiniCartaMister } from '../componentes/Carta'
+import { disenoDe, disenoMister } from '../componentes/disenos'
 import { Cabecera, Icono, Subpestanas, Vacio } from '../componentes/ui'
 
 type Seleccion = { tipo: 'slot'; id: string } | { tipo: 'banco'; jugadorId: string } | null
@@ -19,7 +19,7 @@ function zonaEn(x: number, y: number): string | null {
 }
 
 export function Formacion({ datos }: { datos: Datos }) {
-  const { equipo, jugadores, calculo, config } = datos
+  const { equipo, jugadores, calculo, config, mister, misterFicha } = datos
   const [sel, setSel] = useState<Seleccion>(null)
   const esquema = ESQUEMAS[equipo.formacion.esquema] ? equipo.formacion.esquema : '1-3-2-1'
   const posiciones = ESQUEMAS[esquema]
@@ -198,6 +198,9 @@ export function Formacion({ datos }: { datos: Datos }) {
                 </button>
               )
             })}
+            <button className="mister-campo" onClick={() => ir('/mister')} aria-label="Ficha del míster">
+              <MiniCartaMister mister={misterFicha} media={mister.media} diseno={disenoMister(misterFicha, mister.media, config, mister.rangosAlcanzados)} ancho={54} />
+            </button>
           </div>
 
           <p className="nota centro editable">

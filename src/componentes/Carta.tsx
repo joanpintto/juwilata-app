@@ -1,9 +1,9 @@
 import { useEffect, useId, useMemo, useState } from 'react'
-import type { Jugador } from '../db'
+import type { Jugador, Mister } from '../db'
 import { mediaVisible } from '../motor/calculo'
-import { etiquetas, rolPorId, type Atributos, type Config } from '../motor/config'
-import { nombreVisible } from '../datos'
-import { DISENOS } from './disenos'
+import { ETIQUETAS_MISTER, etiquetas, rolPorId, type Atributos, type Config } from '../motor/config'
+import { nombreMister, nombreVisible } from '../datos'
+import { DISENOS, DISENOS_MISTER } from './disenos'
 import { cargarPlantilla, plantillaLista } from './plantillas'
 
 // Las cartas son las 11 plantillas aprobadas (public/cartas/*.svg, generadas
@@ -19,12 +19,16 @@ function usePlantilla(archivo: string): Document | null {
   return plantillaLista(archivo)
 }
 
+/** Lo que cambia de una carta a otra (jugador o míster). */
 interface Relleno {
-  jugador: Jugador
+  nombre: string
+  sigla: string // rol del jugador o ENT
+  dorsal: string // #9 o la formación favorita del míster
+  foto: string | null
+  etiquetas: readonly string[]
   media: number
   atributos: Atributos
   tendencia: number
-  config: Config
   mini: boolean
 }
 
@@ -50,18 +54,17 @@ function construir(doc: Document, r: Relleno, uid: string): string {
     return el
   }
 
-  const j = r.jugador
-  const nombre = nombreVisible(j).toUpperCase()
+  const nombre = r.nombre.toUpperCase()
   texto('media', String(mediaVisible(r.media)))
-  texto('sigla', rolPorId(r.config, j.rol).sigla)
-  texto('dorsal', `#${j.dorsal}`)
+  texto('sigla', r.sigla)
+  texto('dorsal', r.dorsal)
 
   // Foto real (o silueta si aún no tiene).
   const hueco = $('foto')
   if (hueco) {
     const [x, y, w, h] = ['data-x', 'data-y', 'data-w', 'data-h'].map((a) => Number(hueco.getAttribute(a)))
-    if (j.foto) {
-      hueco.appendChild(crear('image', { href: j.foto, x, y, width: w, height: h, preserveAspectRatio: 'xMidYMin slice' }))
+    if (r.foto) {
+      hueco.appendChild(crear('image', { href: r.foto, x, y, width: w, height: h, preserveAspectRatio: 'xMidYMin slice' }))
     } else {
       const g = crear('g', { fill: '#000', 'fill-opacity': '0.2' })
       const cx = x + w / 2
@@ -103,7 +106,7 @@ function construir(doc: Document, r: Relleno, uid: string): string {
       tend?.remove()
     }
 
-    const labels = etiquetas(j.posicion)
+    const labels = r.etiquetas
     const stats = [...($('stats')?.querySelectorAll('text') ?? [])]
     stats.forEach((t, i) => {
       t.textContent = i % 2 === 0 ? labels[i / 2] : String(Math.round(r.atributos[(i - 1) / 2]))
@@ -132,14 +135,13 @@ function construir(doc: Document, r: Relleno, uid: string): string {
   return new XMLSerializer().serializeToString(svg)
 }
 
-function CartaBase({ diseno, ancho, clase, etiqueta, ...r }: Relleno & { diseno: string; ancho: number | string; clase: string; etiqueta: string }) {
+function CartaBase({ archivo, ancho, clase, etiqueta, ...r }: Relleno & { archivo: string; ancho: number | string; clase: string; etiqueta: string }) {
   const uid = 'c' + useId().replace(/[^a-zA-Z0-9]/g, '')
-  const archivo = (DISENOS[diseno] ?? DISENOS.bronce).archivo
   const doc = usePlantilla(archivo)
-  const { jugador, media, atributos, tendencia, config, mini } = r
+  const { nombre, sigla, dorsal, foto, etiquetas: labels, media, atributos, tendencia, mini } = r
   const html = useMemo(
-    () => (doc ? construir(doc, { jugador, media, atributos, tendencia, config, mini }, uid) : null),
-    [doc, jugador, media, atributos, tendencia, config, mini, uid],
+    () => (doc ? construir(doc, { nombre, sigla, dorsal, foto, etiquetas: labels, media, atributos, tendencia, mini }, uid) : null),
+    [doc, nombre, sigla, dorsal, foto, labels, media, atributos, tendencia, mini, uid],
   )
   return (
     <div className={clase} style={{ width: ancho }} role="img" aria-label={etiqueta}>
@@ -158,10 +160,19 @@ export interface CartaProps {
   ancho?: number | string
 }
 
+/** Datos de la carta de un jugador. */
+function deJugador(j: Jugador, config: Config) {
+  return { nombre: nombreVisible(j), sigla: rolPorId(config, j.rol).sigla, dorsal: `#${j.dorsal}`, foto: j.foto, etiquetas: etiquetas(j.posicion) }
+}
+
 export function Carta(p: CartaProps) {
   return (
     <CartaBase
-      {...p}
+      {...deJugador(p.jugador, p.config)}
+      archivo={(DISENOS[p.diseno] ?? DISENOS.bronce).archivo}
+      media={p.media}
+      atributos={p.atributos}
+      tendencia={p.tendencia}
       mini={false}
       ancho={p.ancho ?? '100%'}
       clase="carta"
@@ -184,13 +195,62 @@ export interface MiniCartaProps {
 export function MiniCarta({ ancho = 70, ...p }: MiniCartaProps) {
   return (
     <CartaBase
-      {...p}
+      {...deJugador(p.jugador, p.config)}
+      archivo={(DISENOS[p.diseno] ?? DISENOS.bronce).archivo}
+      media={p.media}
       atributos={SIN_ATRIBUTOS}
       tendencia={0}
       mini
       ancho={ancho}
       clase="minicarta"
       etiqueta={`${nombreVisible(p.jugador)}, ${mediaVisible(p.media)}`}
+    />
+  )
+}
+
+// ─── Carta del míster (§20.5) ─────────────────────────────────────────
+
+function deMister(m: Mister) {
+  return { nombre: nombreMister(m), sigla: 'ENT', dorsal: m.formacion, foto: m.foto, etiquetas: ETIQUETAS_MISTER }
+}
+
+export interface CartaMisterProps {
+  mister: Mister
+  media: number
+  atributos: Atributos
+  tendencia: number
+  diseno: string
+  ancho?: number | string
+}
+
+export function CartaMister(p: CartaMisterProps) {
+  return (
+    <CartaBase
+      {...deMister(p.mister)}
+      archivo={(DISENOS_MISTER[p.diseno] ?? DISENOS_MISTER.debutante).archivo}
+      media={p.media}
+      atributos={p.atributos}
+      tendencia={p.tendencia}
+      mini={false}
+      ancho={p.ancho ?? '100%'}
+      clase="carta"
+      etiqueta={`Carta ${DISENOS_MISTER[p.diseno]?.nombre ?? ''} de ${nombreMister(p.mister)}, media ${mediaVisible(p.media)}`}
+    />
+  )
+}
+
+export function MiniCartaMister({ ancho = 70, ...p }: { mister: Mister; media: number; diseno: string; ancho?: number }) {
+  return (
+    <CartaBase
+      {...deMister(p.mister)}
+      archivo={(DISENOS_MISTER[p.diseno] ?? DISENOS_MISTER.debutante).archivo}
+      media={p.media}
+      atributos={SIN_ATRIBUTOS}
+      tendencia={0}
+      mini
+      ancho={ancho}
+      clase="minicarta"
+      etiqueta={`${nombreMister(p.mister)}, ${mediaVisible(p.media)}`}
     />
   )
 }

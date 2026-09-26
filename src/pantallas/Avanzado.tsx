@@ -1,10 +1,10 @@
 import { useState } from 'react'
 import { db, nuevoId } from '../db'
 import { conSigno, fmt1, fmt2, type Datos } from '../datos'
-import { atributosIniciales, calcularNota, cambioMedia, media, simular } from '../motor/calculo'
+import { atributosIniciales, calcularNota, cambioMedia, media, simular, simularMister } from '../motor/calculo'
 import {
-  ACCIONES, CONFIG_INICIAL, ETIQUETAS_CAMPO, ETIQUETAS_PORTERO, MEDIDAS_CASA, POSICIONES,
-  type Config, type LogroCasa, type Posicion,
+  ACCIONES, CONFIG_INICIAL, ETIQUETAS_CAMPO, ETIQUETAS_MISTER, ETIQUETAS_PORTERO, MEDIDAS_CASA, POSICIONES,
+  type Config, type ConfigMister, type LogroCasa, type Posicion,
 } from '../motor/config'
 import { ICONOS_LOGRO, defsCasa } from '../motor/logros'
 import { Constante, EditorTabla, Numero } from '../componentes/Editores'
@@ -15,7 +15,7 @@ import { avisar, confirmar } from '../componentes/dialogos'
 // Ajustes → Avanzado: todas las constantes de la app, por apartados.
 // Los cambios se guardan como una nueva versión de la configuración.
 
-type Apartado = 'evolucion' | 'nota' | 'roles' | 'rangos' | 'atributos' | 'premios' | 'casa'
+type Apartado = 'evolucion' | 'nota' | 'roles' | 'rangos' | 'atributos' | 'premios' | 'casa' | 'mister'
 const APARTADOS: { id: Apartado; texto: string }[] = [
   { id: 'evolucion', texto: 'Evolución' },
   { id: 'nota', texto: 'Nota' },
@@ -24,6 +24,7 @@ const APARTADOS: { id: Apartado; texto: string }[] = [
   { id: 'atributos', texto: 'Atributos' },
   { id: 'premios', texto: 'Premios' },
   { id: 'casa', texto: 'Logros de la casa' },
+  { id: 'mister', texto: 'Míster' },
 ]
 
 /** Qué claves de la configuración pertenecen a cada apartado (para «Valores del documento»). */
@@ -38,6 +39,7 @@ const CLAVES: Record<Apartado, (keyof Config)[]> = {
   atributos: ['atributosBase', 'atributosEscala', 'atributoMin', 'atributoMax', 'mediaMin', 'mediaMax', 'atribTope', 'atribFactorSecundario', 'atribMinutos', 'correctorCada', 'correctorUmbral', 'correctorAjuste'],
   premios: ['ifNotaMinima', 'potmPesos', 'potmMinutos', 'totyPesos', 'totyPartidos'],
   casa: ['logrosCasa'],
+  mister: ['mister'],
 }
 
 const NOTAS_SIM = [6, 6.5, 7, 7.5, 8, 8.5, 9]
@@ -53,6 +55,10 @@ function errores(c: Config): string[] {
   }
   const d = c.rangos.map((r) => r.desde)
   if (d.some((v, i) => i > 0 && v <= d[i - 1])) e.push('Los rangos deben ir de menor a mayor.')
+  const sumaMister = c.mister.pesos.reduce((s, p) => s + p, 0)
+  if (Math.abs(sumaMister - 100) > 0.01) e.push(`Los pesos de los atributos del míster suman ${fmt1(sumaMister)} (deben sumar 100).`)
+  const dm = c.mister.rangos.map((r) => r.desde)
+  if (dm.some((v, i) => i > 0 && v <= dm[i - 1])) e.push('Los rangos del míster deben ir de menor a mayor.')
   for (const l of c.logrosCasa) {
     if (!l.nombre.trim()) e.push('Hay un logro de la casa sin nombre.')
     if (l.metas.some((m) => !(m > 0))) e.push(`«${l.nombre || 'Sin nombre'}»: las metas deben ser mayores que 0.`)
@@ -517,6 +523,120 @@ function Casa({ b, set }: Editar) {
   )
 }
 
+const NOTAS_SIM_MISTER = [6.5, 7, 7.5, 8, 8.5, 9]
+const GOLES = ['0', '1', '2', '3', '4 o más']
+
+/** Finales de 3 temporadas seguidas dirigiendo 32 partidos con la misma nota. */
+function finalesMister(nota: number, cfg: Config): number[] {
+  const r: number[] = []
+  let m = cfg.mediaMin
+  for (let t = 0; t < 3; t++) r.push((m = simularMister(nota, 32, cfg, m)[31]))
+  return r
+}
+
+function Mister({ b, config, set, cambiado }: Editar) {
+  const m = b.mister
+  const setM = <K extends keyof ConfigMister>(k: K, v: ConfigMister[K]) => set('mister', { ...m, [k]: v })
+  const trio = (titulo: string, k: 'resultado' | 'tacticaAlto' | 'tacticaBajo') => (
+    <>
+      <Constante texto={`${titulo}: victoria`} valor={m[k].victoria} onChange={(v) => setM(k, { ...m[k], victoria: v })} />
+      <Constante texto={`${titulo}: empate`} valor={m[k].empate} onChange={(v) => setM(k, { ...m[k], empate: v })} />
+      <Constante texto={`${titulo}: derrota`} valor={m[k].derrota} onChange={(v) => setM(k, { ...m[k], derrota: v })} />
+    </>
+  )
+  return (
+    <>
+      <section className="tarjeta">
+        <h2>Simulación del míster</h2>
+        <p className="nota">
+          Media al final de cada temporada si dirige los 32 partidos con la misma nota, empezando en {b.mediaMin}. Usa la nota ponderada y el ritmo del apartado Evolución.
+          {cambiado && ' En pequeño, la diferencia con la configuración actual.'}
+        </p>
+        <div className="simulacion">
+          <table>
+            <thead>
+              <tr><th>Nota</th><th>1ª temp.</th><th>2ª temp.</th><th>3ª temp.</th></tr>
+            </thead>
+            <tbody>
+              {NOTAS_SIM_MISTER.map((nota) => {
+                const nuevo = finalesMister(nota, b)
+                const viejo = finalesMister(nota, config)
+                return (
+                  <tr key={nota}>
+                    <th>{fmt1(nota)}</th>
+                    {nuevo.map((x, i) => {
+                      const d = x - viejo[i]
+                      return <td key={i}>{fmt1(x)}{cambiado && Math.abs(d) >= 0.05 && <small className={d > 0 ? 'sube' : 'baja'}>{conSigno(d)}</small>}</td>
+                    })}
+                  </tr>
+                )
+              })}
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section className="tarjeta">
+        <h2>Nota por partido</h2>
+        <Constante texto="Nota base" valor={m.notaBase} onChange={(v) => setM('notaBase', v)} />
+        {trio('Resultado', 'resultado')}
+        <Constante texto="Por gol de diferencia" valor={m.porGol} onChange={(v) => setM('porGol', v)} />
+        <Constante texto="Tope de la diferencia de goles (±)" valor={m.topeGoles} onChange={(v) => setM('topeGoles', v)} />
+        <Constante texto="Nota media del grupo que ni suma ni resta" valor={m.grupoReferencia} onChange={(v) => setM('grupoReferencia', v)} />
+        <Constante texto="Factor del rendimiento del grupo" valor={m.grupoFactor} onChange={(v) => setM('grupoFactor', v)} />
+        <Constante texto="Portería a cero" valor={m.porteriaCero} onChange={(v) => setM('porteriaCero', v)} />
+        <Constante texto="Ganar a uno de la mitad alta" valor={m.rivalAltoVictoria} onChange={(v) => setM('rivalAltoVictoria', v)} />
+        <Constante texto="Perder con uno de la mitad baja" valor={m.rivalBajoDerrota} onChange={(v) => setM('rivalBajoDerrota', v)} />
+      </section>
+
+      <EditorTabla titulo="Multiplicador del míster" ayuda="Según su media: igual que el de los jugadores hasta 85 y más duro después. No hay techo." tabla={m.multiplicadorMedia} onChange={(t) => setM('multiplicadorMedia', t)} etiquetaX="Media" etiquetaY="×" />
+
+      <section className="tarjeta">
+        <h2>Subidas y bajadas</h2>
+        <Constante texto="Baja con una nota por debajo de" valor={m.umbralBajada} onChange={(v) => setM('umbralBajada', v)} />
+        <Constante texto="Bajada por cada punto por debajo" valor={m.bajadaPorPunto} onChange={(v) => setM('bajadaPorPunto', v)} />
+        <Constante texto="Tope de bajada por partido" valor={m.topeBajada} onChange={(v) => setM('topeBajada', v)} />
+        <Constante texto="Tope de subida por partido" valor={m.topeSubida} onChange={(v) => setM('topeSubida', v)} />
+      </section>
+
+      <section className="tarjeta">
+        <h2>Pesos de los atributos (%)</h2>
+        {ETIQUETAS_MISTER.map((et, i) => (
+          <Constante key={et} texto={et} valor={m.pesos[i]} onChange={(v) => setM('pesos', m.pesos.map((x, j) => (j === i ? v : x)) as ConfigMister['pesos'])} />
+        ))}
+      </section>
+
+      <section className="tarjeta">
+        <h2>Atributos por partido dirigido</h2>
+        <p className="nota">Antes del factor de dificultad y del tope por atributo del apartado Atributos.</p>
+        {GOLES.map((g, i) => (
+          <Constante key={`a${i}`} texto={`ATA: ${g} goles a favor`} valor={m.ataque[i]} onChange={(v) => setM('ataque', m.ataque.map((x, j) => (j === i ? v : x)))} />
+        ))}
+        {GOLES.map((g, i) => (
+          <Constante key={`d${i}`} texto={`DEF: ${g} goles en contra`} valor={m.defensa[i]} onChange={(v) => setM('defensa', m.defensa.map((x, j) => (j === i ? v : x)))} />
+        ))}
+        {trio('TÁC rival de arriba', 'tacticaAlto')}
+        {trio('TÁC rival de abajo', 'tacticaBajo')}
+        <Constante texto="GES: por jugador que sube de rango" valor={m.gestion.subeRango} onChange={(v) => setM('gestion', { ...m.gestion, subeRango: v })} />
+        <Constante texto="GES: por jugador cuya media sube" valor={m.gestion.sube} onChange={(v) => setM('gestion', { ...m.gestion, sube: v })} />
+        <Constante texto="GES: por jugador cuya media baja" valor={m.gestion.baja} onChange={(v) => setM('gestion', { ...m.gestion, baja: v })} />
+        <Constante texto="MOT: victoria tras una derrota" valor={m.motivacion.victoriaTrasDerrota} onChange={(v) => setM('motivacion', { ...m.motivacion, victoriaTrasDerrota: v })} />
+        <Constante texto="MOT: victoria en racha (2 o más)" valor={m.motivacion.racha} onChange={(v) => setM('motivacion', { ...m.motivacion, racha: v })} />
+        <Constante texto="MOT: derrota tras otra derrota" valor={m.motivacion.derrotaTrasDerrota} onChange={(v) => setM('motivacion', { ...m.motivacion, derrotaTrasDerrota: v })} />
+        <Constante texto="EXP: por partido dirigido" valor={m.experiencia} onChange={(v) => setM('experiencia', v)} />
+      </section>
+
+      <section className="tarjeta">
+        <h2>Rangos del míster</h2>
+        <p className="nota">Media a partir de la que cambia la pizarra de su carta.</p>
+        {m.rangos.map((r, i) => (
+          <Constante key={r.id} texto={r.nombre} valor={r.desde} onChange={(v) => setM('rangos', m.rangos.map((x, j) => (j === i ? { ...x, desde: v } : x)))} />
+        ))}
+      </section>
+    </>
+  )
+}
+
 // ─── Pantalla ─────────────────────────────────────────────────────────
 
 export function Avanzado({ datos }: { datos: Datos }) {
@@ -564,6 +684,7 @@ export function Avanzado({ datos }: { datos: Datos }) {
       {apartado === 'atributos' && <Atributos {...editar} />}
       {apartado === 'premios' && <Premios {...editar} />}
       {apartado === 'casa' && <Casa {...editar} />}
+      {apartado === 'mister' && <Mister {...editar} />}
 
       {problemas.length > 0 && (
         <section className="tarjeta tarjeta--aviso">

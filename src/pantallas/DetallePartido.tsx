@@ -1,8 +1,8 @@
 import { SOLO_LECTURA, db } from '../db'
-import { colorNota, conSigno, fechaLarga, fmt1, fmt2, ir, nombreVisible, type Datos } from '../datos'
+import { colorNota, conSigno, fechaLarga, fmt1, fmt2, ir, nombreMister, nombreVisible, type Datos } from '../datos'
 import { ACCIONES } from '../motor/config'
-import { MiniCarta } from '../componentes/Carta'
-import { disenoDe } from '../componentes/disenos'
+import { MiniCarta, MiniCartaMister } from '../componentes/Carta'
+import { disenoDe, disenoMister } from '../componentes/disenos'
 import { Cabecera, Icono } from '../componentes/ui'
 import { MarcadorHero, PodioMvp } from '../componentes/Marcador'
 import { resumenPartido } from './resumenPartido'
@@ -12,7 +12,7 @@ import { avisar, confirmar } from '../componentes/dialogos'
 import { BannerDeshacer } from './Partidos'
 
 export function DetallePartido({ datos, id }: { datos: Datos; id: string }) {
-  const { calculo, equipo, config } = datos
+  const { calculo, equipo, config, mister, misterFicha } = datos
   const r = calculo.partidos.find((x) => x.partido.id === id)
   const resumen = resumenPartido(datos, id)
   if (!r || !resumen) return <Cabecera titulo="Partido no encontrado" atras="/partidos" />
@@ -136,7 +136,30 @@ export function DetallePartido({ datos, id }: { datos: Datos; id: string }) {
               </li>
             )
           })}
+          {mister.porPartido[p.id] && (() => {
+            const pm = mister.porPartido[p.id]
+            const d = pm.detalle
+            const partes = [
+              ['resultado', d.resultado + d.goles], ['el grupo', d.grupo], ['portería a 0', d.porteriaCero], ['rival', d.rival],
+            ].filter(([, v]) => Math.abs(v as number) >= 0.005).map(([k, v]) => `${k} ${conSigno(v as number, fmt2)}`)
+            return (
+              <li className="actuaciones__mister">
+                <button onClick={() => ir('/mister')}>
+                  <MiniCartaMister mister={misterFicha} media={mister.media} diseno={disenoMister(misterFicha, mister.media, config, mister.rangosAlcanzados)} ancho={40} />
+                  <div className="actuaciones__texto">
+                    <strong>{nombreMister(misterFicha)} · ENT</strong>
+                    <span>{partes.join(' · ') || 'nota base'}</span>
+                  </div>
+                  <div className="actuaciones__nums">
+                    <span className="pildora" style={{ background: colorNota(pm.nota) }}>{fmt1(pm.nota)}</span>
+                    <span className={pm.cambio >= 0 ? 'sube' : 'baja'}>{conSigno(pm.cambio, fmt2)}</span>
+                  </div>
+                </button>
+              </li>
+            )
+          })()}
         </ul>
+        {p.misterDirigio === false && <p className="nota">El míster no dirigió este partido: no cuenta para su carta.</p>}
         {sinJugar.length > 0 && (
           <p className="nota">
             Sin minutos: {sinJugar.map((a) => `${nombreVisible(calculo.jugadores[a.jugadorId].jugador)}${a.estado === 'baja' ? ' (baja)' : ''}`).join(', ')}

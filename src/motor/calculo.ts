@@ -274,6 +274,28 @@ export function corrector(attrs: Atributos, pesos: Atributos, cfg: Config): Atri
   return llevarMediaA(corregidos, pesos, m, cfg)
 }
 
+// ─── Evolución de la media del míster (§20.3) ────────────────────────────────────
+
+/** Sin techo ni factor de minutos. Baja solo con una nota por debajo de 6,0, sin multiplicador. */
+export function cambioMediaMister(np: number, nota: number, mediaActual: number, cfg: Config): number {
+  const m = cfg.mister
+  if (nota < m.umbralBajada) return -Math.min(m.topeBajada, m.bajadaPorPunto * (m.umbralBajada - nota))
+  return Math.min(m.topeSubida, Math.max(0, interpolar(cfg.ritmo, np) * interpolar(m.multiplicadorMedia, mediaActual)))
+}
+
+/** Media tras cada partido dirigido con la misma nota (para la simulación de Ajustes → Avanzado). */
+export function simularMister(nota: number, partidos: number, cfg: Config, inicio = cfg.mediaMin): number[] {
+  let mm = inicio
+  const notas: number[] = []
+  const res: number[] = []
+  for (let i = 0; i < partidos; i++) {
+    notas.push(nota)
+    mm = clamp(mm + cambioMediaMister(notaPonderada(notas, cfg), nota, mm, cfg), cfg.mediaMin, cfg.mediaMax)
+    res.push(mm)
+  }
+  return res
+}
+
 // ─── Simulación (Ajustes → Avanzado) ──────────────────────────────────
 
 /** Media tras cada partido jugando siempre con la misma nota, 50 minutos. */

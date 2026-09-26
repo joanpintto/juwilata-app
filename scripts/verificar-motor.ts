@@ -1,7 +1,8 @@
 // Comprueba que el motor cumple las metas de docs/DISENO.md (§6.2).
 // Uso: npm run verificar
 import { CONFIG_INICIAL as cfg } from '../src/motor/config.ts'
-import { simular, cambioMedia } from '../src/motor/calculo.ts'
+import { simular, cambioMedia, simularMister } from '../src/motor/calculo.ts'
+
 
 const metas: [number, number][] = [[6.5, 75], [7, 79], [7.5, 82], [8, 85], [8.5, 88], [9, 90]]
 const idx = [1, 4, 8, 16, 24, 32]
@@ -25,5 +26,15 @@ for (const m of [62, 70, 78, 86, 92]) console.log(`  media ${m} → ${serie(m, [
 const caida86 = 86 - Number(serie(86, [4.5, 4.5, 4.5]))
 if (caida86 < 1 || caida86 > 1.5) ok = false
 console.log('Media 60 con 32 partidos de 6:', simular(6, 32, cfg)[31].toFixed(1))
+// Míster (§20.3): 3 temporadas de 32 partidos con la misma nota.
+console.log('\nMíster | final 1ª, 2ª y 3ª temporada')
+const metasMister: [number, number[]][] = [[7, [78.9, 88.8, 92.6]], [8, [85.1, 92.7, 94.4]], [9, [89.8, 94.3, 95.3]]]
+for (const [nota, meta] of metasMister) {
+  const finales: number[] = []
+  let m = cfg.mediaMin
+  for (let t = 0; t < 3; t++) finales.push((m = simularMister(nota, 32, cfg, m)[31]))
+  finales.forEach((f, i) => { if (Math.abs(f - meta[i]) > 0.3) ok = false })
+  console.log(String(nota).padEnd(6), finales.map((f) => f.toFixed(1)).join(' '), `| meta ${meta.join(' ')}`)
+}
 if (!ok) { console.error('\n✗ Alguna meta no se cumple'); process.exit(1) }
 console.log('\n✓ Metas cumplidas')

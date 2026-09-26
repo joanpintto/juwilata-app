@@ -1,4 +1,4 @@
-import { DISENOS } from './disenos'
+import { DISENOS, DISENOS_MISTER } from './disenos'
 
 // Carga (una vez) las plantillas SVG de las cartas desde public/cartas/.
 // El service worker las guarda para que funcionen sin conexión.
@@ -32,5 +32,5 @@ export function cargarPlantilla(archivo: string): Promise<Document> {
 
 /** Descarga todas las plantillas al abrir la app, para que las listas salgan al instante. */
 export function precargarCartas(): Promise<unknown> {
-  return Promise.all(Object.values(DISENOS).map((d) => cargarPlantilla(d.archivo).catch(() => null)))
+  return Promise.all([...Object.values(DISENOS), ...Object.values(DISENOS_MISTER)].map((d) => cargarPlantilla(d.archivo).catch(() => null)))
 }

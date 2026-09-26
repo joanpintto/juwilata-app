@@ -1,4 +1,4 @@
-import { db, exportarDatos, type Compartir, type Equipo } from '../db'
+import { ID_FOTO_MISTER, db, exportarDatos, misterDe, type Compartir, type Equipo, type Mister } from '../db'
 import { aleatorio, rpc } from './nube'
 
 // Publica una copia del equipo para los compañeros. Los datos van en un solo
@@ -47,7 +47,11 @@ export async function publicar(): Promise<string> {
     const todo = await exportarDatos()
     const temporadas = [...todo.temporadas].sort((a, b) => a.inicio.localeCompare(b.inicio))
     // Lo que ven los compañeros: sin la clave, sin fotos (van aparte) y en la temporada en curso.
-    const equipo: Equipo = { ...todo.equipo, compartir: undefined, partidosDesdeExportacion: 0, temporadaActivaId: temporadas[temporadas.length - 1]?.id ?? todo.equipo.temporadaActivaId }
+    const mister = misterDe(todo.equipo)
+    const equipo: Equipo = {
+      ...todo.equipo, compartir: undefined, partidosDesdeExportacion: 0, temporadaActivaId: temporadas[temporadas.length - 1]?.id ?? todo.equipo.temporadaActivaId,
+      mister: { ...mister, foto: null, fotoOriginal: null, fotoHuella: mister.foto ? huella(mister.foto) : null } as Mister,
+    }
     const jugadores = todo.jugadores.map((j) => ({ ...j, foto: null, fotoOriginal: null, fotoHuella: j.foto ? huella(j.foto) : null }))
     const datos = { ...todo, equipo, jugadores }
 
@@ -57,14 +61,16 @@ export async function publicar(): Promise<string> {
     // 2) Fotos que han cambiado (y quitar las que ya no están).
     const publicadas = { ...c.fotos }
     let cambiaronFotos = false
-    for (const j of todo.jugadores) {
+    // La foto del míster va con las de los jugadores, con el identificador «mister».
+    const conFotos = [...todo.jugadores, { id: ID_FOTO_MISTER, foto: mister.foto }]
+    for (const j of conFotos) {
       const h = j.foto ? huella(j.foto) : null
       if (!h || publicadas[j.id] === h) continue
       await rpc('publicar_foto', { p_codigo: c.codigo, p_clave: c.clave, p_jugador: j.id, p_hash: h, p_dato: await comprimir(j.foto!) })
       publicadas[j.id] = h
       cambiaronFotos = true
     }
-    const conFoto = todo.jugadores.filter((j) => j.foto).map((j) => j.id)
+    const conFoto = conFotos.filter((j) => j.foto).map((j) => j.id)
     if (Object.keys(publicadas).some((id) => !conFoto.includes(id))) {
       await rpc('quitar_fotos', { p_codigo: c.codigo, p_clave: c.clave, p_mantener: conFoto })
       for (const id of Object.keys(publicadas)) if (!conFoto.includes(id)) delete publicadas[id]

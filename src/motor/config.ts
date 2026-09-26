@@ -97,7 +97,47 @@ export interface Config {
 
   // Logros de la casa (editables desde Ajustes → Avanzado)
   logrosCasa: LogroCasa[]
+
+  // Entrenador (§20)
+  mister: ConfigMister
 }
+
+/** Constantes del míster (§20). Usa además la nota ponderada, el ritmo, los topes de atributos y el corrector de los jugadores. */
+export interface ConfigMister {
+  // Nota por partido (§20.2)
+  notaBase: number // 6,0
+  resultado: { victoria: number; empate: number; derrota: number }
+  porGol: number // por gol de diferencia
+  topeGoles: number // ± tope de la diferencia de goles
+  grupoReferencia: number // 6,5: nota media del grupo que no suma ni resta
+  grupoFactor: number // 0,8
+  porteriaCero: number
+  rivalAltoVictoria: number // ganar a uno de la mitad alta
+  rivalBajoDerrota: number // perder con uno de la mitad baja (negativo)
+
+  // Evolución (§20.3): sin techo ni factor de minutos
+  multiplicadorMedia: Tabla
+  umbralBajada: number // 6,0
+  bajadaPorPunto: number // 0,5
+  topeBajada: number // 1,0
+  topeSubida: number // 1,5
+
+  // Atributos (§20.4): ATA · DEF · TÁC · GES · MOT · EXP
+  pesos: Atributos
+  ataque: number[] // por goles a favor: 0, 1, 2, 3, 4 o más
+  defensa: number[] // por goles en contra: 0, 1, 2, 3, 4 o más
+  tacticaAlto: { victoria: number; empate: number; derrota: number }
+  tacticaBajo: { victoria: number; empate: number; derrota: number }
+  gestion: { subeRango: number; sube: number; baja: number }
+  motivacion: { victoriaTrasDerrota: number; racha: number; derrotaTrasDerrota: number }
+  experiencia: number
+
+  rangos: { id: RangoMisterId; nombre: string; desde: number }[]
+}
+
+export type RangoMisterId = 'debutante' | 'consolidado' | 'elite' | 'leyenda'
+
+export const ETIQUETAS_MISTER = ['ATA', 'DEF', 'TÁC', 'GES', 'MOT', 'EXP'] as const
 
 /** Qué se cuenta en un logro de la casa. */
 export type MedidaCasa = AccionId | 'titular' | 'suplente' | 'no_convocado' | 'jugado' | 'mvp' | 'sin_tarjeta' | 'nota_alta'
@@ -238,6 +278,44 @@ export const CONFIG_INICIAL: Config = {
   ],
 
   logrosCasa: LOGROS_CASA_INICIALES,
+
+  mister: {
+    notaBase: 6.0,
+    resultado: { victoria: 1.2, empate: 0.2, derrota: -0.8 },
+    porGol: 0.15,
+    topeGoles: 0.6,
+    grupoReferencia: 6.5,
+    grupoFactor: 0.8,
+    porteriaCero: 0.3,
+    rivalAltoVictoria: 0.3,
+    rivalBajoDerrota: -0.3,
+
+    // Igual que el de los jugadores hasta 85 y más duro después: máximo natural ~94-95.
+    multiplicadorMedia: [
+      { x: 60, y: 1.4 }, { x: 65, y: 1.25 }, { x: 70, y: 1.1 }, { x: 75, y: 1.0 }, { x: 80, y: 0.8 },
+      { x: 85, y: 0.55 }, { x: 90, y: 0.3 }, { x: 92, y: 0.15 }, { x: 94, y: 0.05 }, { x: 96, y: 0 },
+    ],
+    umbralBajada: 6.0,
+    bajadaPorPunto: 0.5,
+    topeBajada: 1.0,
+    topeSubida: 1.5,
+
+    pesos: [18, 18, 20, 16, 16, 12],
+    ataque: [-0.2, 0, 0.15, 0.25, 0.35],
+    defensa: [0.35, 0.2, 0, -0.15, -0.25],
+    tacticaAlto: { victoria: 0.35, empate: 0.1, derrota: -0.1 },
+    tacticaBajo: { victoria: 0.15, empate: -0.05, derrota: -0.3 },
+    gestion: { subeRango: 0.2, sube: 0.05, baja: -0.05 },
+    motivacion: { victoriaTrasDerrota: 0.35, racha: 0.15, derrotaTrasDerrota: -0.15 },
+    experiencia: 0.2,
+
+    rangos: [
+      { id: 'debutante', nombre: 'Debutante', desde: 60 },
+      { id: 'consolidado', nombre: 'Consolidado', desde: 70 },
+      { id: 'elite', nombre: 'Élite', desde: 80 },
+      { id: 'leyenda', nombre: 'Leyenda del banquillo', desde: 90 },
+    ],
+  },
 }
 
 export interface AccionDef {

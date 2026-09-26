@@ -311,6 +311,13 @@ export function RegistroPartido({ datos, id, programadoId }: { datos: Datos; id?
               <button type="button" className={!p.local ? 'activa' : ''} onClick={() => setP({ ...p, local: false })}>Visitante</button>
             </div>
           </div>
+          <label className="interruptor">
+            <div>
+              <strong>El míster dirigió este partido</strong>
+              <span>Si no lo dirigió, no cuenta para su carta.</span>
+            </div>
+            <input type="checkbox" checked={p.misterDirigio !== false} onChange={(e) => setP({ ...p, misterDirigio: e.target.checked })} />
+          </label>
         </section>
       )}
 
@@ -499,6 +506,7 @@ export function RegistroPartido({ datos, id, programadoId }: { datos: Datos; id?
           <p className="nota centro">{p.competicion} · {p.fecha.split('-').reverse().join('/')} · {jugaron.length} jugadores con minutos</p>
           <p>
             MVP: <strong>{p.mvpId ? nombreVisible(jugador(p.mvpId)) : 'ninguno'}</strong>
+            {p.misterDirigio === false && <span className="nota"> · el míster no lo dirigió</span>}
           </p>
           <p className="nota">
             Al confirmar se guardan las notas, se actualizan las medias y se hace una copia automática. {original ? 'Podrás deshacer esta edición desde el propio partido.' : ''}

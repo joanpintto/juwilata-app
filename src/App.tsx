@@ -10,6 +10,8 @@ import { Jugadores } from './pantallas/Jugadores'
 import { Formacion } from './pantallas/Formacion'
 import { FichaJugador } from './pantallas/FichaJugador'
 import { EditarJugador } from './pantallas/EditarJugador'
+import { FichaMister } from './pantallas/FichaMister'
+import { EditarMister } from './pantallas/EditarMister'
 import { Partidos } from './pantallas/Partidos'
 import { Liga } from './pantallas/Liga'
 import { DetallePartido } from './pantallas/DetallePartido'
@@ -35,6 +37,7 @@ function pestanaDe(seg: string[]): string {
   switch (seg[0]) {
     case 'plantilla':
     case 'jugador':
+    case 'mister':
       return 'plantilla'
     case 'partidos':
     case 'partido':
@@ -52,7 +55,7 @@ function pestanaDe(seg: string[]): string {
 /** Rutas de edición que no existen en modo espectador. */
 function esEdicion(seg: string[]): boolean {
   const [a, b, c] = seg
-  return (a === 'jugador' && (b === 'nuevo' || c === 'editar')) || (a === 'partido' && (b === 'nuevo' || c === 'editar')) || a === 'ajustes'
+  return (a === 'jugador' && (b === 'nuevo' || c === 'editar')) || (a === 'mister' && b === 'editar') || (a === 'partido' && (b === 'nuevo' || c === 'editar')) || a === 'ajustes'
 }
 
 function Pantalla({ seg, datos }: { seg: string[]; datos: Datos }): ReactNode {
@@ -67,6 +70,8 @@ function Pantalla({ seg, datos }: { seg: string[]; datos: Datos }): ReactNode {
       if (b === 'nuevo') return <EditarJugador datos={datos} />
       if (c === 'editar') return <EditarJugador datos={datos} id={b} />
       return <FichaJugador datos={datos} id={b} />
+    case 'mister':
+      return b === 'editar' ? <EditarMister datos={datos} /> : <FichaMister datos={datos} />
     case 'partidos':
       return b === 'liga' ? <Liga datos={datos} /> : <Partidos datos={datos} />
     case 'partido':

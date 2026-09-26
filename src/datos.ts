@@ -1,10 +1,11 @@
 import { useLiveQuery } from 'dexie-react-hooks'
 import { useEffect, useMemo, useState } from 'react'
-import { db, enPlantilla, ordenarTemporadas, type ConfigVersion, type Equipo, type Jugador, type Partido, type Programado, type ResultadoLiga, type Rival, type Temporada } from './db'
+import { db, enPlantilla, misterDe, ordenarTemporadas, type ConfigVersion, type Equipo, type Jugador, type Mister, type Partido, type Programado, type ResultadoLiga, type Rival, type Temporada } from './db'
 import { CONFIG_INICIAL, type Config } from './motor/config'
 import { reproducirTemporada, type Inicio, type Temporada as TemporadaCalculada } from './motor/temporada'
 import { partidosLiga, type PartidoLiga } from './motor/liga'
 import { calcularLogros, type ResultadoLogros, type TemporadaLogros } from './motor/logros'
+import { reproducirMister, type EstadoMister, type InicioMister } from './motor/mister'
 
 export interface Datos {
   equipo: Equipo
@@ -23,6 +24,9 @@ export interface Datos {
   calculos: Map<string, TemporadaCalculada> // hasta la temporada que se está viendo
   liga: PartidoLiga[]
   logros: ResultadoLogros
+  misterFicha: Mister // datos del entrenador (nombre, foto…)
+  mister: EstadoMister // su carta calculada en la temporada que se está viendo
+  calculosMister: Map<string, EstadoMister>
 }
 
 export function useDatos(): Datos | undefined {
@@ -60,6 +64,8 @@ export function useDatos(): Datos | undefined {
     const calculos = new Map<string, TemporadaCalculada>()
     const ultimos: Record<string, Inicio> = {}
     const paraLogros: TemporadaLogros[] = []
+    const calculosMister = new Map<string, EstadoMister>()
+    let inicioMister: InicioMister | undefined
     for (const t of orden.slice(0, hasta + 1)) {
       const plantilla = base.jugadores.filter((j) => enPlantilla(j, t.id, orden))
       const inicios = Object.fromEntries(plantilla.filter((j) => ultimos[j.id]).map((j) => [j.id, ultimos[j.id]]))
@@ -68,10 +74,14 @@ export function useDatos(): Datos | undefined {
       for (const e of Object.values(calc.jugadores)) ultimos[e.jugador.id] = { atributos: e.atributos, rangos: e.rangosAlcanzados }
       const rivales = deTemporada(base.rivales, t.id).sort(porNombre)
       const programados = deTemporada(base.programados, t.id).sort(porJornada)
-      paraLogros.push({
-        temporadaId: t.id, calculo: calc, programados, rivales,
-        liga: partidosLiga(deTemporada(base.partidos, t.id), programados, deTemporada(base.resultadosLiga, t.id), rivales),
-      })
+      const liga = partidosLiga(deTemporada(base.partidos, t.id), programados, deTemporada(base.resultadosLiga, t.id), rivales)
+      paraLogros.push({ temporadaId: t.id, calculo: calc, programados, rivales, liga })
+      // El míster también empieza cada temporada donde acabó la anterior.
+      const mister = reproducirMister(
+        deTemporada(base.partidos, t.id), calc, { liga, programados, rivales, nombreEquipo: base.equipo.nombre }, mapa, cfg, inicioMister,
+      )
+      calculosMister.set(t.id, mister)
+      inicioMister = { atributos: mister.atributos, rangos: mister.rangosAlcanzados }
     }
 
     const actual = paraLogros[paraLogros.length - 1]
@@ -92,6 +102,9 @@ export function useDatos(): Datos | undefined {
       calculos,
       liga: actual.liga,
       logros,
+      misterFicha: misterDe(base.equipo),
+      mister: calculosMister.get(base.temporada.id)!,
+      calculosMister,
     }
   }, [base])
 }
@@ -153,6 +166,7 @@ export function colorNota(nota: number): string {
 }
 
 export const nombreVisible = (j: Jugador) => j.apodo?.trim() || j.nombre
+export const nombreMister = (m: Mister) => m.apodo?.trim() || m.nombre
 
 export const SUBPESTANAS_PLANTILLA = [
   { id: 'formacion', texto: 'Formación', ruta: '/plantilla' },

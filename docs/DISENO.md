@@ -451,7 +451,7 @@ La temporada aún no ha empezado, así que no hace falta cargar partidos anterio
   - pantalla adaptada a tablet y ordenador.
 - **Fase 4 (compartir con el equipo):** ✅ construida (ver §18). Los compañeros solo ven; edita solo el administrador.
 - **Recorte automático del fondo:** ✅ construido (ver §19).
-- **Entrenador (míster):** pendiente, en dos partes (ver §20.8).
+- **Entrenador (míster):** parte 1 ✅ construida (ver §20.9); parte 2 pendiente (ver §20.8).
 
 ---
 
@@ -603,7 +603,7 @@ La nota final siempre queda entre 0 y 10.
 |---|---|---|---|---|---|---|---|---|---|---|
 | Multiplicador | ×1,40 | ×1,25 | ×1,10 | ×1,00 | ×0,80 | ×0,55 | ×0,30 | ×0,15 | ×0,05 | 0 |
 
-- **Bajadas:** cuando la nota es menor de 6,0, −0,5 por punto (tope −1,0), sin multiplicador. Es la regla del diseño original; los jugadores usan ahora la de §6.2 (solo bajan con nota < 5,5, según la media). No existe la "vuelta al techo" porque no hay techo.
+- **Bajadas:** cuando la nota es menor de 6,0, −0,5 por punto (tope −1,0), sin multiplicador. Decidido por el usuario: el míster mantiene esta regla aunque los jugadores usen ahora la de §6.2 (solo bajan con nota < 5,5, según la media). No existe la "vuelta al techo" porque no hay techo.
 - **Tope de subida:** +1,5 por partido.
 - **Referencia:**
 
@@ -694,3 +694,18 @@ Las Fases 1-4 de la app ya están hechas; el míster se construye encima en dos 
 
 - **Parte 1:** "dirigió" en el registro, nota, evolución y atributos del míster, sus 4 rangos, su ficha y su mini-carta en Formación.
 - **Parte 2:** sugerencias de MOTM y TOTY y los logros del míster (van con el resto de logros).
+
+### 20.9 Concreciones de la parte 1 (construida)
+
+- **Siempre hay un míster:** empieza llamándose "Míster" con formación 1-3-2-1. Se edita tocando su mini-carta en Formación → ficha → Editar (foto con recorte de fondo, nombre, apodo y formación favorita: una de las 4 del campo u otra escrita a mano).
+- **"Dirigió" es sí por defecto**, también en los partidos ya registrados antes de existir el míster: cuentan todos salvo los que se marquen como no dirigidos (interruptor en el primer paso del registro).
+- **Mitad alta / baja del rival:** clasificación del split con las jornadas anteriores al partido. Solo en partidos de liga; sin clasificación todavía (nadie ha jugado), no se aplica ni en la nota ni en TÁC (TÁC queda en 0 ese partido). Con un número impar de equipos, el del medio no cuenta ni como alto ni como bajo.
+- **GES:** un jugador que sube de rango suma las dos cosas (+0,20 por el rango y +0,05 porque su media sube).
+- **MOT:** se compara con el partido anterior del equipo en la temporada (lo dirigiera o no).
+- **EXP nunca baja:** si la media del míster baja, la bajada se reparte entre los otros 5 atributos.
+- **Temporadas:** como los jugadores, cada temporada empieza con los atributos con los que acabó la anterior.
+- **Detalle del partido:** debajo de las actuaciones sale la fila del míster con su nota, de dónde sale (resultado, el grupo, portería a 0, rival) y cuánto cambia su media.
+- **Diseños especiales MOTM y TOTY:** ya se pueden aplicar a mano desde su ficha; las sugerencias automáticas llegan en la parte 2. La pestaña Logros de su ficha también llega en la parte 2.
+- **Compartir:** los compañeros ven la ficha y la carta del míster (con su foto) en solo lectura.
+- **Ajustes → Avanzado → Míster:** todas sus constantes, con una simulación de 3 temporadas. `npm run verificar` comprueba la tabla de referencia de §20.3.
+- **Plantillas:** `npm run cartas` genera también `public/cartas/mister-*.svg` desde `design/cartas-entrenador/`.
