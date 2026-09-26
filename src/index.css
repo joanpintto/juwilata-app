@@ -682,7 +682,8 @@ input[type='range'] { width: 100%; accent-color: var(--dorado); }
 .rangos__carta strong { font-size: 17px; z-index: 1; }
 .rangos__carta span { font-size: 13px; color: var(--texto-2); z-index: 1; text-align: center; }
 .rangos__carta b { color: var(--dorado); }
-@keyframes revelar { from { opacity: 0; transform: rotateY(90deg) scale(0.8); } }
+/* Giro en plano (scaleX), no en 3D: en Safari el giro 3D deja borrosos los elementos con filtro (el escudo). */
+@keyframes revelar { from { opacity: 0; transform: scaleX(0.05) scale(0.8); } }
 
 .secuencia--mvp .podio { width: 100%; }
 .secuencia--mvp .podio__mvp { animation: revelar 0.9s 0.35s cubic-bezier(0.2, 0.9, 0.3, 1.2) both; }

@@ -93,7 +93,8 @@ function construir(doc: Document, r: Relleno, uid: string): string {
     n?.setAttribute('font-size', String(tamNombre(nombre, 31, 320, 2.5)))
 
     const tend = $('tendencia')
-    const puntos = Math.round(Math.abs(r.tendencia))
+    // Lo que ha cambiado el número que se ve en la carta (p. ej. de 60,0 a 61,5 → ▲ 1).
+    const puntos = Math.abs(mediaVisible(r.media) - mediaVisible(r.media - r.tendencia))
     if (tend && Math.abs(r.tendencia) >= 0.005) {
       const sube = r.tendencia > 0
       tend.querySelector('rect')?.setAttribute('fill', sube ? '#1e6b46' : '#8a2530')
