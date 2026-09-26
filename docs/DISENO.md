@@ -450,6 +450,8 @@ La temporada aún no ha empezado, así que no hace falta cargar partidos anterio
   - varias temporadas con historial;
   - pantalla adaptada a tablet y ordenador.
 - **Fase 4 (compartir con el equipo):** ✅ construida (ver §18). Los compañeros solo ven; edita solo el administrador.
+- **Recorte automático del fondo:** ✅ construido (ver §19).
+- **Entrenador (míster):** pendiente, en dos partes (ver §20.8).
 
 ---
 
@@ -567,3 +569,128 @@ Decisiones del usuario: los compañeros **solo ven** (cartas, clasificación, lo
 - Se guarda también una copia de la **foto original** (máx. 1600 px, solo en este móvil y en las copias de seguridad; no se comparte). "Encuadrar o quitar fondo" parte siempre de ella, así que volver a editar no pierde calidad.
 - Tras quitar el fondo aparece la barra **Ajustar recorte** (de "quita más fondo" a "conserva más"), para cuando el fondo se parece a la ropa (p. ej. fondo granate) y el recorte se come parte de la camiseta. Se ajusta al momento, sin volver a pasar el modelo.
 - Cada pantalla se abre desde arriba y la página ocupa al menos toda la altura: en iPhone, al pasar de una pantalla larga ya bajada a una corta, la barra de abajo se quedaba "subida".
+
+---
+
+## 20. Entrenador (míster)
+
+El entrenador tiene su propia carta, que evoluciona según cómo rinde el equipo. Es un tipo de carta distinto al de los jugadores, pero de la misma familia. Si el míster juega algún partido, tendrá además una carta de jugador aparte, creada como cualquier otro jugador.
+
+### 20.1 Registro
+
+- En el registro de cada partido se marca **"El míster dirigió este partido"** (sí por defecto). Los partidos que no dirigió no cuentan para su carta.
+- El míster **no tiene minutos ni acciones propias**: todo sale de datos que ya se registran (resultado, notas de los jugadores y clasificación).
+
+### 20.2 Nota del míster por partido (0-10)
+
+| Factor | Efecto sobre la base de 6,0 |
+|---|---|
+| Resultado | Victoria +1,2 · empate +0,2 · derrota −0,8 |
+| Diferencia de goles | ±0,15 por gol, con un tope de ±0,6 |
+| Rendimiento del grupo | (nota media de los jugadores que jugaron − 6,5) × 0,8 |
+| Portería a cero | +0,3 |
+| Rival | Ganar a un equipo de la mitad alta de la clasificación: +0,3 · perder con uno de la mitad baja: −0,3. Sin clasificación todavía, no se aplica |
+
+La nota final siempre queda entre 0 y 10.
+
+### 20.3 Evolución de la media
+
+- Usa la **misma nota ponderada y la misma tabla de ritmo** que los jugadores (sección 6.2). La nota neutra es **6,0**.
+- **Sin techo por nota** y **sin factor de minutos**.
+- **Multiplicador del míster:** igual que el de los jugadores hasta 85, pero más duro a partir de ahí. Así el máximo natural queda en ~94-95.
+
+| Media | 60 | 65 | 70 | 75 | 80 | 85 | 90 | 92 | 94 | 96+ |
+|---|---|---|---|---|---|---|---|---|---|---|
+| Multiplicador | ×1,40 | ×1,25 | ×1,10 | ×1,00 | ×0,80 | ×0,55 | ×0,30 | ×0,15 | ×0,05 | 0 |
+
+- **Bajadas:** cuando la nota es menor de 6,0, −0,5 por punto (tope −1,0), sin multiplicador. Es la regla del diseño original; los jugadores usan ahora la de §6.2 (solo bajan con nota < 5,5, según la media). No existe la "vuelta al techo" porque no hay techo.
+- **Tope de subida:** +1,5 por partido.
+- **Referencia:**
+
+| Nota constante | Final 1ª temporada | Final 2ª | Final 3ª |
+|---|---|---|---|
+| 7,0 | 78,9 | 88,8 | 92,6 |
+| 8,0 | 85,1 | 92,7 | 94,4 |
+| 9,0 | 89,8 | 94,3 | 95,3 |
+
+- Todos estos valores se pueden editar en Ajustes → Avanzado, en un apartado propio del míster.
+
+### 20.4 Atributos
+
+- **La media de la carta = media ponderada de los atributos.**
+- **Pesos:** ATA 18% · DEF 18% · TÁC 20% · GES 16% · MOT 16% · EXP 12%.
+- **Valores iniciales:** 60 de media, repartida con la misma fórmula que los jugadores (factor 30).
+
+| Atributo | Qué mide | Cambio por partido dirigido |
+|---|---|---|
+| **ATA** Ataque | Goles a favor | 0 goles −0,20 · 1 gol 0 · 2 goles +0,15 · 3 goles +0,25 · 4 o más +0,35 |
+| **DEF** Defensa | Goles en contra | 0 goles +0,35 · 1 gol +0,20 · 2 goles 0 · 3 goles −0,15 · 4 o más −0,25 |
+| **TÁC** Táctica | Resultado según el rival | Rival de la mitad alta: victoria +0,35 · empate +0,10 · derrota −0,10. Rival de la mitad baja: victoria +0,15 · empate −0,05 · derrota −0,30 |
+| **GES** Gestión | Crecimiento de la plantilla | +0,20 por cada jugador que sube de rango en ese partido · +0,05 por cada jugador cuya media sube · −0,05 por cada uno cuya media baja |
+| **MOT** Motivación | Reacción y rachas | Victoria después de una derrota +0,35 · victoria con 2 o más seguidas +0,15 · derrota después de otra derrota −0,15 · el resto 0 |
+| **EXP** Experiencia | Recorrido | +0,20 por partido dirigido. Nunca baja |
+
+- Se aplican el mismo factor de dificultad por atributo y el mismo tope de ±0,4 por partido que en los jugadores (EXP incluido).
+- Cada 5 partidos, el mismo corrector suave alinea los atributos con la media.
+
+### 20.5 Carta del míster
+
+- **Misma silueta, disposición y tipografía** que las cartas de jugador. Las diferencias:
+  - donde va la posición, la sigla **ENT**;
+  - donde va el dorsal, su **formación favorita** (1-3-2-1, editable);
+  - atributos **ATA · DEF · TÁC · GES · MOT · EXP**;
+  - marca de agua **MÍSTER** (en las especiales, **MOTM** o **TOTY**).
+- **El fondo es siempre una pizarra táctica** que evoluciona con el rango:
+
+| Rango | Media | Pizarra |
+|---|---|---|
+| Debutante | 60-69 | **De tiza:** verde oscuro, dibujo a tiza algo borroso, marco de madera. Mate |
+| Consolidado | 70-79 | **Magnética:** blanca metalizada con cuadrícula, imanes granates y negros, flechas de rotulador rojo, marco de aluminio |
+| Élite | 80-89 | **Digital:** pantalla oscura, campo en neón dorado, mapa de calor, pases en cian con nodos, marco dorado brillante |
+| Leyenda del banquillo | 90-99 | **Marfil y oro:** paleta de la carta Leyenda de jugador, campo grabado en oro, jugadas en líneas de oro brillante, medallones dorados |
+
+- Cada pizarra tiene su propia jugada dibujada: no se repiten.
+- **Diseños especiales**, puramente estéticos y aplicados a mano por el administrador, como en los jugadores:
+
+| Especial | Diseño | Cuándo se sugiere |
+|---|---|---|
+| **MOTM** (Entrenador del mes) | Paleta POTM: granate con rayas y escudo de marca de agua, campo en champán y un pequeño calendario del mes | Mes con nota media del míster de 7,5 o más, o con el 75% de los puntos o más |
+| **TOTY** (Entrenador del año) | Paleta TOTY: azul noche con estrellas, campo en dorado discontinuo y posiciones como constelaciones | Final de temporada con nota media de 7,5 o más, o si el equipo es campeón |
+
+- **Plantillas en el repositorio:** `design/cartas-entrenador/` (debutante, consolidado, elite, leyenda, motm, toty), con el hueco de la foto vacío y el nombre "MÍSTER" provisional: la app pone la foto y el nombre reales del míster. Los originales aprobados llevan la foto de Kampi y, como el repositorio es público, se guardan fuera de git (`docs/cartas-entrenador/`), igual que los de jugador (`docs/cartas/` → `design/cartas/` sin foto → `npm run cartas` → `public/cartas/`).
+
+### 20.6 Dónde aparece
+
+- **Plantilla → Formación:** su mini-carta **arriba a la derecha del campo**, junto a los 7 titulares. Es la misma miniatura que la de los jugadores, con ENT y su media.
+- **Ficha del míster:** la misma estructura que la de un jugador:
+  - carta grande con los diseños desbloqueados;
+  - progreso al siguiente rango;
+  - **cifras:** partidos dirigidos, victorias / empates / derrotas, % de victorias, goles a favor, goles en contra, porterías a cero y nota media;
+  - **forma:** sus 5 últimas notas;
+  - **pestañas:** Atributos, Evolución, Historial y Logros;
+  - **Editar:** foto, nombre, apodo y formación favorita.
+- **Inicio:** puede aparecer en destacados, por ejemplo "El míster sube a 80".
+
+### 20.7 Logros del míster (solo estéticos)
+
+| Logro | Condición |
+|---|---|
+| Primera victoria | Única |
+| Ganador | 10 / 25 / 50 victorias |
+| Matagigantes | Ganar al líder de la liga |
+| Del abismo | Ganar después de 3 derrotas seguidas |
+| Cantera | 3 jugadores suben de rango en una misma temporada |
+| Pizarra maestra | 5 victorias por 3 goles o más en una temporada |
+| Muro táctico | 5 porterías a cero en una temporada |
+| Míster veterano | 10 / 25 / 32 partidos dirigidos en una temporada |
+| Campeón | La liga, también en su vitrina |
+| Temporada invicta | También en su vitrina |
+
+- Primera MOTM · Primer TOTY · Primer ascenso de rango (Consolidado, Élite, Leyenda del banquillo).
+
+### 20.8 Roadmap del míster
+
+Las Fases 1-4 de la app ya están hechas; el míster se construye encima en dos partes:
+
+- **Parte 1:** "dirigió" en el registro, nota, evolución y atributos del míster, sus 4 rangos, su ficha y su mini-carta en Formación.
+- **Parte 2:** sugerencias de MOTM y TOTY y los logros del míster (van con el resto de logros).

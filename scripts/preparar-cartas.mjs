@@ -1,13 +1,13 @@
-// Convierte las 11 plantillas aprobadas (docs/cartas/*.svg, fuera de git porque
-// llevan la foto de ejemplo de un jugador real) en plantillas ligeras
-// para la app (public/cartas/*.svg):
-// - quita la foto de ejemplo, el escudo incrustado y los metadatos;
+// Convierte las 11 plantillas aprobadas (design/cartas/*.svg, sin la foto de
+// ejemplo: los originales con la foto de un jugador real están en docs/cartas/,
+// fuera de git) en plantillas ligeras para la app (public/cartas/*.svg):
+// - quita el hueco de la foto de ejemplo, el escudo incrustado y los metadatos;
 // - saca las tipografías Barlow Condensed a public/fuentes/ (se cargan una sola vez);
 // - marca con id los huecos que la app rellena (media, rol, dorsal, tendencia…).
 // Uso: npm run cartas   (solo hace falta al cambiar las plantillas)
 import { mkdirSync, readFileSync, readdirSync, writeFileSync } from 'node:fs'
 
-const ORIGEN = 'docs/cartas'
+const ORIGEN = 'design/cartas'
 const DESTINO = 'public/cartas'
 const FUENTES = 'public/fuentes'
 mkdirSync(DESTINO, { recursive: true })

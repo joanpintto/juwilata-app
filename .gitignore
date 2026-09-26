@@ -26,3 +26,6 @@ dist-ssr
 # Plantillas originales de las cartas: llevan la foto de ejemplo de un jugador real.
 # Solo se suben las versiones limpias de public/cartas (npm run cartas).
 docs/cartas/
+
+# Originales de las cartas del míster (misma razón).
+docs/cartas-entrenador/
