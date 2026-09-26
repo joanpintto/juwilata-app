@@ -74,6 +74,10 @@ function construir(doc: Document, r: Relleno, uid: string): string {
     }
   }
 
+  // Sin la sombra del escudo: Safari dibuja los filtros sobre imágenes una sola vez
+  // y, si la carta aparece con animación, el escudo se queda borroso o estirado.
+  $('escudo_uso')?.removeAttribute('filter')
+
   if (r.mini) {
     // §7.3: sin estadísticas, escudo, dorsal, tendencia ni marca de agua; media y rol más grandes.
     quitar('stats', 'regla', 'rombo', 'marca_agua', 'escudo_uso', 'dorsal', 'separador', 'tendencia')
