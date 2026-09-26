@@ -682,7 +682,7 @@ La nota final siempre queda entre 0 y 10.
 | Cantera | 3 jugadores suben de rango en una misma temporada |
 | Pizarra maestra | 5 victorias por 3 goles o más en una temporada |
 | Muro táctico | 5 porterías a cero en una temporada |
-| Míster veterano | 10 / 25 / 32 partidos dirigidos en una temporada |
+| Míster veterano | 10 / 18 / 25 partidos dirigidos en una temporada (decidido por el usuario: el oro, como mucho en 25-26, porque 32 es el máximo posible) |
 | Campeón | La liga, también en su vitrina |
 | Temporada invicta | También en su vitrina |
 

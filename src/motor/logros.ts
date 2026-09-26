@@ -87,7 +87,7 @@ export const LOGROS_MISTER: LogroDef[] = [
   { id: 'm-cantera', nombre: 'Cantera', descripcion: '3 jugadores suben de rango en una misma temporada.', icono: 'debut', categoria: 'Míster', ambito: 'mister', repetible: true },
   { id: 'm-pizarra', nombre: 'Pizarra maestra', descripcion: '5 victorias por 3 goles o más en una temporada.', icono: 'balon', categoria: 'Míster', ambito: 'mister', repetible: true },
   { id: 'm-muro', nombre: 'Muro táctico', descripcion: '5 porterías a cero en una temporada.', icono: 'muro', categoria: 'Míster', ambito: 'mister', repetible: true },
-  { id: 'm-veterano', nombre: 'Míster veterano', descripcion: 'Partidos dirigidos en la temporada: 10, 25 y 32.', icono: 'calendario', categoria: 'Míster', ambito: 'mister', niveles: [10, 25, 32], unidad: plural('partido') },
+  { id: 'm-veterano', nombre: 'Míster veterano', descripcion: 'Partidos dirigidos en la temporada: 10, 18 y 25.', icono: 'calendario', categoria: 'Míster', ambito: 'mister', niveles: [10, 18, 25], unidad: plural('partido') },
   { id: 'm-campeon', nombre: 'Campeón', descripcion: 'Gana un split de liga.', icono: 'trofeo', categoria: 'Míster', ambito: 'mister', repetible: true },
   { id: 'm-invicta', nombre: 'Temporada invicta', descripcion: 'Toda la temporada sin perder.', icono: 'escudo', categoria: 'Míster', ambito: 'mister' },
   { id: 'm-motm', nombre: 'Primera MOTM', descripcion: 'Consigue la carta de entrenador del mes.', icono: 'carta', categoria: 'Míster', ambito: 'mister' },
