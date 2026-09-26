@@ -1,13 +1,13 @@
-import { conSigno, fechaCorta, fechaLarga, textoJornada, fmt1, fmt2, ir, nombreRival, nombreVisible, proximoPartido, type Datos } from '../datos'
+import { conSigno, fechaCorta, fechaLarga, textoJornada, fmt1, fmt2, ir, nombreMister, nombreRival, nombreVisible, proximoPartido, type Datos } from '../datos'
 import type { EstadoJugador } from '../motor/temporada'
 import { MiniCarta } from '../componentes/Carta'
 import { disenoDe } from '../componentes/disenos'
 import { Icono } from '../componentes/ui'
-import { SOLO_LECTURA } from '../db'
+import { ID_MISTER, SOLO_LECTURA } from '../db'
 import { Campana } from './Notificaciones'
 import { EscudoLogro, Vitrina } from '../componentes/Logros'
 import { NOMBRE_NIVEL, type EstadoLogro } from '../motor/logros'
-import { nombreMes, sugerenciasIF, sugerenciasPOTM, yaTiene } from '../motor/premios'
+import { nombreMes, sugerenciasIF, sugerenciasMOTM, sugerenciasPOTM, yaTiene, yaTieneMister } from '../motor/premios'
 import { Tendencia } from './Jugadores'
 
 interface Destacado {
@@ -23,13 +23,15 @@ function mejor(lista: EstadoJugador[], puntuar: (e: EstadoJugador) => number, fi
 }
 
 export function Inicio({ datos }: { datos: Datos }) {
-  const { equipo, temporada, calculo, config, jugadores, programados, partidos, rivales, logros } = datos
+  const { equipo, temporada, calculo, config, jugadores, programados, partidos, rivales, logros, mister, misterFicha } = datos
   // Últimos 5 logros conseguidos (de jugadores y del equipo), el más reciente primero.
   const ultimosLogros = [...logros.desbloqueos].reverse().slice(0, 5).map((d) => {
-    const base = d.jugadorId ? logros.jugadores[d.jugadorId]?.find((e) => e.def.id === d.logroId) : logros.equipo.find((e) => e.def.id === d.logroId)
+    const esMister = d.jugadorId === ID_MISTER
+    const lista = esMister ? logros.mister : d.jugadorId ? logros.jugadores[d.jugadorId] : logros.equipo
+    const base = lista?.find((e) => e.def.id === d.logroId)
     const estado: EstadoLogro = { ...base!, nivel: d.nivel, fecha: d.fecha }
-    const j = d.jugadorId ? jugadores.find((x) => x.id === d.jugadorId) : null
-    return { d, estado, nombre: j ? nombreVisible(j) : equipo.nombre }
+    const j = d.jugadorId && !esMister ? jugadores.find((x) => x.id === d.jugadorId) : null
+    return { d, estado, nombre: esMister ? nombreMister(misterFicha) : j ? nombreVisible(j) : equipo.nombre }
   }).filter((x) => x.estado.def)
   const proximo = proximoPartido(programados, partidos)
   const lista = Object.values(calculo.jugadores)
@@ -51,6 +53,8 @@ export function Inicio({ datos }: { datos: Datos }) {
   const potmPendiente = sugerenciasPOTM(calculo, config, equipo.duracionPartido).find(
     (m) => m.mes < mesActual && m.candidatos[0] && !yaTiene(m.candidatos[0].e.jugador, 'POTM', m.clave),
   )
+
+  const motmPendiente = sugerenciasMOTM(mister, config).find((m) => m.mes < mesActual && m.cumple && !yaTieneMister(misterFicha, 'MOTM', m.clave))
 
   const conPartidos = (x: EstadoJugador) => x.estadisticas.partidos > 0
   const puntPortero = (x: EstadoJugador) => {
@@ -134,7 +138,7 @@ export function Inicio({ datos }: { datos: Datos }) {
         </section>
       )}
 
-      {(ifPendiente || potmPendiente) && !SOLO_LECTURA && (
+      {(ifPendiente || potmPendiente || motmPendiente) && !SOLO_LECTURA && (
         <section className="tarjeta">
           <div className="tarjeta__cab">
             <h2>Sugerencias</h2>
@@ -145,6 +149,9 @@ export function Inicio({ datos }: { datos: Datos }) {
           )}
           {potmPendiente && (
             <p className="nota">🏅 POTM de {nombreMes(potmPendiente.mes).toLowerCase()} para <strong>{nombreVisible(potmPendiente.candidatos[0].e.jugador)}</strong>.</p>
+          )}
+          {motmPendiente && (
+            <p className="nota">📋 MOTM de {nombreMes(motmPendiente.mes).toLowerCase()} para <strong>{nombreMister(misterFicha)}</strong>.</p>
           )}
         </section>
       )}
@@ -175,7 +182,7 @@ export function Inicio({ datos }: { datos: Datos }) {
           <ul className="ultimos-logros">
             {ultimosLogros.map(({ d, estado, nombre }, i) => (
               <li key={i}>
-                <button onClick={() => d.jugadorId && ir(`/jugador/${d.jugadorId}`)} disabled={!d.jugadorId}>
+                <button onClick={() => d.jugadorId && ir(d.jugadorId === ID_MISTER ? '/mister' : `/jugador/${d.jugadorId}`)} disabled={!d.jugadorId}>
                   <EscudoLogro estado={estado} tam={40} />
                   <div>
                     <strong>{estado.def.nombre}{estado.def.niveles ? ` · ${NOMBRE_NIVEL[d.nivel]}` : ''}</strong>

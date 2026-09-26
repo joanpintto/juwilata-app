@@ -45,7 +45,7 @@ export function useDatos(): Datos | undefined {
     const temporada = temporadas.find((t) => t.id === equipo.temporadaActivaId)
     if (!temporada || !configs.length) return undefined
     // Las configuraciones antiguas se completan con los valores nuevos que les falten.
-    const completas = configs.map((c) => ({ ...c, datos: { ...CONFIG_INICIAL, ...c.datos } }))
+    const completas = configs.map((c) => ({ ...c, datos: { ...CONFIG_INICIAL, ...c.datos, mister: { ...CONFIG_INICIAL.mister, ...c.datos.mister } } }))
     return { equipo, temporada, temporadas, jugadores, partidos, configs: completas, rivales, programados, resultadosLiga }
   })
 
@@ -63,7 +63,7 @@ export function useDatos(): Datos | undefined {
     // Se reproducen las temporadas en orden: cada jugador empieza donde acabó la anterior.
     const calculos = new Map<string, TemporadaCalculada>()
     const ultimos: Record<string, Inicio> = {}
-    const paraLogros: TemporadaLogros[] = []
+    const paraLogros: (TemporadaLogros & { mister: EstadoMister })[] = []
     const calculosMister = new Map<string, EstadoMister>()
     let inicioMister: InicioMister | undefined
     for (const t of orden.slice(0, hasta + 1)) {
@@ -75,18 +75,18 @@ export function useDatos(): Datos | undefined {
       const rivales = deTemporada(base.rivales, t.id).sort(porNombre)
       const programados = deTemporada(base.programados, t.id).sort(porJornada)
       const liga = partidosLiga(deTemporada(base.partidos, t.id), programados, deTemporada(base.resultadosLiga, t.id), rivales)
-      paraLogros.push({ temporadaId: t.id, calculo: calc, programados, rivales, liga })
       // El míster también empieza cada temporada donde acabó la anterior.
       const mister = reproducirMister(
         deTemporada(base.partidos, t.id), calc, { liga, programados, rivales, nombreEquipo: base.equipo.nombre }, mapa, cfg, inicioMister,
       )
+      paraLogros.push({ temporadaId: t.id, calculo: calc, programados, rivales, liga, mister })
       calculosMister.set(t.id, mister)
       inicioMister = { atributos: mister.atributos, rangos: mister.rangosAlcanzados }
     }
 
     const actual = paraLogros[paraLogros.length - 1]
     const jugadores = base.jugadores.filter((j) => enPlantilla(j, base.temporada.id, orden)).sort((a, b) => a.dorsal - b.dorsal)
-    const logros = calcularLogros({ jugadores: base.jugadores, temporadas: paraLogros, config: cfg, equipo: base.equipo })
+    const logros = calcularLogros({ jugadores: base.jugadores, temporadas: paraLogros, config: cfg, equipo: base.equipo, misterFicha: misterDe(base.equipo) })
     return {
       ...base,
       temporadas: orden,

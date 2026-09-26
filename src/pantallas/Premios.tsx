@@ -1,11 +1,30 @@
 import { SOLO_LECTURA, type Jugador, type TipoEspecial } from '../db'
-import { darEspecial } from '../componentes/especiales'
-import { fechaCorta, fmt1, fmt2, ir, nombreVisible, textoJornada, type Datos } from '../datos'
-import { claveTemporada, nombreMes, sugerenciaTOTY, sugerenciasIF, sugerenciasPOTM, yaTiene, type CandidatoTOTY } from '../motor/premios'
-import { MiniCarta } from '../componentes/Carta'
-import { disenoDe } from '../componentes/disenos'
+import { darEspecial, darEspecialMister } from '../componentes/especiales'
+import { fechaCorta, fmt1, fmt2, ir, nombreMister, nombreVisible, textoJornada, type Datos } from '../datos'
+import {
+  claveTemporada, nombreMes, sugerenciaTOTY, sugerenciaTOTYMister, sugerenciasIF, sugerenciasMOTM, sugerenciasPOTM, yaTiene, yaTieneMister,
+  type CandidatoTOTY,
+} from '../motor/premios'
+import { MiniCarta, MiniCartaMister } from '../componentes/Carta'
+import { disenoDe, disenoMister } from '../componentes/disenos'
 import { Cabecera, Icono, Vacio } from '../componentes/ui'
 import { avisar, confirmar } from '../componentes/dialogos'
+
+function BotonMister({ tipo, clave, fecha, dado }: { tipo: 'MOTM' | 'TOTY'; clave: string; fecha: string; dado: boolean }) {
+  if (dado) return <span className="dado"><Icono nombre="check" tam={16} /> {tipo} dado</span>
+  if (SOLO_LECTURA) return null
+  return (
+    <button
+      className="boton boton--peq"
+      onClick={async () => {
+        await darEspecialMister(tipo, clave, fecha)
+        avisar(`${tipo} para el míster`)
+      }}
+    >
+      Dar {tipo}
+    </button>
+  )
+}
 
 function BotonDar({ j, tipo, clave, fecha }: { j: Jugador; tipo: TipoEspecial; clave: string; fecha: string }) {
   if (SOLO_LECTURA && !yaTiene(j, tipo, clave)) return null
@@ -24,13 +43,18 @@ function BotonDar({ j, tipo, clave, fecha }: { j: Jugador; tipo: TipoEspecial; c
 }
 
 export function Premios({ datos }: { datos: Datos }) {
-  const { calculo, config, equipo, temporada, programados } = datos
+  const { calculo, config, equipo, temporada, programados, mister, misterFicha, logros } = datos
   const ifs = sugerenciasIF(calculo, config).reverse()
   const ifsCon = ifs.filter((x) => x.jugador)
   const potms = sugerenciasPOTM(calculo, config, equipo.duracionPartido)
   const toty = sugerenciaTOTY(calculo, config, temporada.id)
   const siete = [...toty.porteros, ...toty.defensas, ...toty.medios, ...toty.delanteros]
   const hoyISO = new Date().toISOString().slice(0, 10)
+  const idsTemporada = new Set(calculo.partidos.map((r) => r.partido.id))
+  const campeon = logros.desbloqueos.some((x) => x.logroId === 'eq-campeones' && x.partidoId !== null && idsTemporada.has(x.partidoId))
+  const motms = sugerenciasMOTM(mister, config)
+  const totyMister = sugerenciaTOTYMister(mister, campeon, config, temporada.id)
+  const miniMister = (d: string) => <MiniCartaMister mister={misterFicha} media={mister.media} diseno={d} ancho={40} />
   const mini = (e: CandidatoTOTY['e'], ancho = 46) => (
     <MiniCarta jugador={e.jugador} media={e.media} diseno={disenoDe(e.jugador, e.media, config, e.rangosAlcanzados)} config={config} ancho={ancho} />
   )
@@ -51,7 +75,7 @@ export function Premios({ datos }: { datos: Datos }) {
   if (!calculo.partidos.length) {
     return (
       <>
-        <Cabecera titulo="Premios" sub="IF, POTM y TOTY" atras={true} />
+        <Cabecera titulo="Premios" sub="IF, POTM, TOTY y MOTM" atras={true} />
         <Vacio titulo="Sin partidos todavía" texto="Las sugerencias aparecen al registrar partidos." />
       </>
     )
@@ -91,6 +115,42 @@ export function Premios({ datos }: { datos: Datos }) {
           ) : (
             <button className="boton editable" onClick={darTOTY}>Dar TOTY a estos {siete.length}</button>
           ))}
+      </section>
+
+      <section className="tarjeta">
+        <h2>Míster · MOTM y TOTY</h2>
+        <p className="nota">
+          MOTM: mes con nota media del míster de {fmt1(config.mister.motmNota)} o más, o con el {Math.round(config.mister.motmPuntos * 100)}% de los puntos.
+          TOTY: temporada con nota media de {fmt1(config.mister.totyNota)} o más, o campeón (provisional hasta que acabe).
+        </p>
+        {mister.estadisticas.dirigidos === 0 && <p className="nota">Aún no ha dirigido ningún partido esta temporada.</p>}
+        {mister.estadisticas.dirigidos > 0 && (
+          <div className="premio-fila premio-fila--primero">
+            {miniMister('TOTY')}
+            <div className="premio-fila__texto">
+              <strong>TOTY de {nombreMister(misterFicha)}</strong>
+              <span>
+                nota media {totyMister.notaMedia !== null ? fmt2(totyMister.notaMedia) : '—'}{totyMister.campeon ? ' · campeón' : ''}
+                {totyMister.cumple ? '' : ' · de momento no llega'}
+              </span>
+            </div>
+            {(totyMister.cumple || yaTieneMister(misterFicha, 'TOTY', totyMister.clave)) && (
+              <BotonMister tipo="TOTY" clave={totyMister.clave} fecha={hoyISO} dado={yaTieneMister(misterFicha, 'TOTY', totyMister.clave)} />
+            )}
+          </div>
+        )}
+        {motms.map((m) => (
+          <div key={m.mes} className="premio-fila">
+            {miniMister(m.cumple ? 'MOTM' : disenoMister(misterFicha, mister.media, config, mister.rangosAlcanzados))}
+            <div className="premio-fila__texto">
+              <strong>{nombreMes(m.mes)}</strong>
+              <span>{m.dirigidos} dirigido{m.dirigidos === 1 ? '' : 's'} · nota {fmt2(m.notaMedia)} · {Math.round(m.puntos * 100)}% de los puntos{m.cumple ? '' : ' · no llega'}</span>
+            </div>
+            {(m.cumple || yaTieneMister(misterFicha, 'MOTM', m.clave)) && (
+              <BotonMister tipo="MOTM" clave={m.clave} fecha={`${m.mes}-01`} dado={yaTieneMister(misterFicha, 'MOTM', m.clave)} />
+            )}
+          </div>
+        ))}
       </section>
 
       <section className="tarjeta">

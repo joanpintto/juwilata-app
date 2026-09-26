@@ -627,6 +627,13 @@ function Mister({ b, config, set, cambiado }: Editar) {
       </section>
 
       <section className="tarjeta">
+        <h2>Sugerencias de MOTM y TOTY</h2>
+        <Constante texto="MOTM: nota media del mes" valor={m.motmNota} onChange={(v) => setM('motmNota', v)} />
+        <Constante texto="MOTM: o puntos del mes (fracción)" valor={m.motmPuntos} onChange={(v) => setM('motmPuntos', v)} />
+        <Constante texto="TOTY: nota media de la temporada (o campeón)" valor={m.totyNota} onChange={(v) => setM('totyNota', v)} />
+      </section>
+
+      <section className="tarjeta">
         <h2>Rangos del míster</h2>
         <p className="nota">Media a partir de la que cambia la pizarra de su carta.</p>
         {m.rangos.map((r, i) => (

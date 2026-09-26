@@ -1,8 +1,9 @@
 // Logros (§11). Solo estéticos. Se calculan a partir de la temporada reproducida,
 // así que al editar un partido antiguo se revisan en cascada.
-import { SPLITS, splitDe, type Actuacion, type Equipo, type Jugador, type Programado, type Rival } from '../db'
+import { ID_MISTER, SPLITS, splitDe, type Actuacion, type Equipo, type Jugador, type Mister, type Programado, type Rival } from '../db'
 import { MEDIDAS_CASA, type Config, type LogroCasa, type Posicion } from './config'
 import type { Paso, Temporada } from './temporada'
+import type { EstadoMister } from './mister'
 import { NOSOTROS, clasificacion, esLiga, jornadasLider, rivalesDelSplit, splitDePartido, type PartidoLiga } from './liga'
 
 export type IconoLogro =
@@ -20,7 +21,7 @@ export interface LogroDef {
   descripcion: string
   icono: IconoLogro
   categoria: string
-  ambito: 'jugador' | 'equipo'
+  ambito: 'jugador' | 'equipo' | 'mister'
   niveles?: [number, number, number] // bronce, plata, oro
   unidad?: (n: number) => string // texto de la cinta
   repetible?: boolean // se puede conseguir varias veces
@@ -77,6 +78,25 @@ export const LOGROS: LogroDef[] = [
   { id: 'eq-invicta', nombre: 'Temporada invicta', descripcion: 'Toda la temporada sin perder.', icono: 'escudo', categoria: 'Equipo', ambito: 'equipo' },
 ]
 
+// Logros del míster (§20.7). Solo cuentan los partidos que dirigió.
+export const LOGROS_MISTER: LogroDef[] = [
+  { id: 'm-primera-victoria', nombre: 'Primera victoria', descripcion: 'Gana tu primer partido como míster.', icono: 'estrella', categoria: 'Míster', ambito: 'mister' },
+  { id: 'm-ganador', nombre: 'Ganador', descripcion: 'Victorias dirigidas: 10, 25 y 50.', icono: 'trofeo', categoria: 'Míster', ambito: 'mister', niveles: [10, 25, 50], unidad: plural('victoria') },
+  { id: 'm-matagigantes', nombre: 'Matagigantes', descripcion: 'Gana al líder de la liga.', icono: 'rayo', categoria: 'Míster', ambito: 'mister', repetible: true },
+  { id: 'm-abismo', nombre: 'Del abismo', descripcion: 'Gana después de 3 derrotas seguidas.', icono: 'flecha', categoria: 'Míster', ambito: 'mister', repetible: true },
+  { id: 'm-cantera', nombre: 'Cantera', descripcion: '3 jugadores suben de rango en una misma temporada.', icono: 'debut', categoria: 'Míster', ambito: 'mister', repetible: true },
+  { id: 'm-pizarra', nombre: 'Pizarra maestra', descripcion: '5 victorias por 3 goles o más en una temporada.', icono: 'balon', categoria: 'Míster', ambito: 'mister', repetible: true },
+  { id: 'm-muro', nombre: 'Muro táctico', descripcion: '5 porterías a cero en una temporada.', icono: 'muro', categoria: 'Míster', ambito: 'mister', repetible: true },
+  { id: 'm-veterano', nombre: 'Míster veterano', descripcion: 'Partidos dirigidos en la temporada: 10, 25 y 32.', icono: 'calendario', categoria: 'Míster', ambito: 'mister', niveles: [10, 25, 32], unidad: plural('partido') },
+  { id: 'm-campeon', nombre: 'Campeón', descripcion: 'Gana un split de liga.', icono: 'trofeo', categoria: 'Míster', ambito: 'mister', repetible: true },
+  { id: 'm-invicta', nombre: 'Temporada invicta', descripcion: 'Toda la temporada sin perder.', icono: 'escudo', categoria: 'Míster', ambito: 'mister' },
+  { id: 'm-motm', nombre: 'Primera MOTM', descripcion: 'Consigue la carta de entrenador del mes.', icono: 'carta', categoria: 'Míster', ambito: 'mister' },
+  { id: 'm-toty', nombre: 'Primer TOTY', descripcion: 'Consigue la carta de entrenador del año.', icono: 'trofeo', categoria: 'Míster', ambito: 'mister' },
+  { id: 'm-consolidado', nombre: 'Consolidado', descripcion: 'Sube a la pizarra magnética.', icono: 'flecha', categoria: 'Míster', ambito: 'mister' },
+  { id: 'm-elite', nombre: 'Élite', descripcion: 'Sube a la pizarra digital.', icono: 'corona', categoria: 'Míster', ambito: 'mister' },
+  { id: 'm-leyenda', nombre: 'Leyenda del banquillo', descripcion: 'Sube a la pizarra de marfil y oro.', icono: 'corona', categoria: 'Míster', ambito: 'mister' },
+]
+
 /** Convierte los logros de la casa de la configuración en definiciones de logro. */
 export function defsCasa(cfg: Config): LogroDef[] {
   return (cfg.logrosCasa ?? []).map((c) => {
@@ -115,6 +135,7 @@ export interface ResultadoLogros {
   defs: LogroDef[]
   jugadores: Record<string, EstadoLogro[]>
   equipo: EstadoLogro[]
+  mister: EstadoLogro[]
   desbloqueos: Desbloqueo[] // en orden cronológico
 }
 
@@ -168,7 +189,7 @@ class Registro {
     }
   }
 
-  estados(ambito: 'jugador' | 'equipo'): EstadoLogro[] {
+  estados(ambito: LogroDef['ambito']): EstadoLogro[] {
     return this.defs.filter((l) => l.ambito === ambito).map((def) => {
       const nivel = this.niveles.get(def.id) ?? 0
       const veces = this.veces.get(def.id) ?? 0
@@ -234,7 +255,8 @@ export interface TemporadaLogros {
 
 export interface EntradaLogros {
   jugadores: Jugador[] // todos (también los que ya no están)
-  temporadas: TemporadaLogros[]
+  temporadas: (TemporadaLogros & { mister: EstadoMister })[]
+  misterFicha: Mister
   config: Config
   equipo: Equipo
 }
@@ -248,7 +270,7 @@ export function calcularLogros(d: EntradaLogros): ResultadoLogros {
   const jugadores: Record<string, EstadoLogro[]> = {}
   const todos: Desbloqueo[] = []
   const casa = d.config.logrosCasa ?? []
-  const defs = [...LOGROS, ...defsCasa(d.config)]
+  const defs = [...LOGROS, ...LOGROS_MISTER, ...defsCasa(d.config)]
   const reiniciables = [...DE_TEMPORADA, ...casa.filter((c) => c.tipo === 'total' && c.porTemporada !== false).map((c) => c.id)]
 
   for (const j of d.jugadores) {
@@ -392,8 +414,51 @@ export function calcularLogros(d: EntradaLogros): ResultadoLogros {
   }
   todos.push(...reg.desbloqueos)
 
+  // ─── Míster ───
+  const rm = new Registro(ID_MISTER, defs)
+  const umbralMister = (id: string) => d.config.mister.rangos.find((r) => r.id === id)?.desde ?? 999
+  let victorias = 0, derrotasSeguidas = 0
+  for (const t of d.temporadas) {
+    rm.reiniciar('m-veterano')
+    const ascendidos = new Set<string>()
+    let dirigidos = 0, goleadas = 0, ceros = 0
+    for (const h of t.mister.historial) {
+      const f = h.fecha
+      const dif = h.golesFavor - h.golesContra
+      dirigidos++
+      rm.valor('m-veterano', dirigidos, f, h.partidoId)
+      if (dif > 0) {
+        victorias++
+        if (victorias === 1) rm.conseguir('m-primera-victoria', f, h.partidoId)
+        rm.valor('m-ganador', victorias, f, h.partidoId)
+        if (h.rivalLider) rm.conseguir('m-matagigantes', f, h.partidoId)
+        if (derrotasSeguidas >= 3) rm.conseguir('m-abismo', f, h.partidoId)
+        if (dif >= 3 && ++goleadas === 5) rm.conseguir('m-pizarra', f, h.partidoId)
+      }
+      derrotasSeguidas = dif < 0 ? derrotasSeguidas + 1 : 0
+      if (h.golesContra === 0 && ++ceros === 5) rm.conseguir('m-muro', f, h.partidoId)
+      const antes = ascendidos.size
+      for (const id of h.ascensos) ascendidos.add(id)
+      if (antes < 3 && ascendidos.size >= 3) rm.conseguir('m-cantera', f, h.partidoId)
+      for (const r of ['consolidado', 'elite', 'leyenda']) {
+        if (h.mediaDespues >= umbralMister(r) && !rm.niveles.get(`m-${r}`)) rm.conseguir(`m-${r}`, f, h.partidoId)
+      }
+    }
+  }
+  // Los títulos del equipo también van a su vitrina.
+  for (const x of reg.desbloqueos) {
+    if (x.logroId === 'eq-campeones') rm.conseguir('m-campeon', x.fecha, x.partidoId)
+    if (x.logroId === 'eq-invicta') rm.conseguir('m-invicta', x.fecha, x.partidoId)
+  }
+  const espMister = [...d.misterFicha.especiales].sort((x, y) => x.fecha.localeCompare(y.fecha))
+  for (const [tipo, id] of [['MOTM', 'm-motm'], ['TOTY', 'm-toty']] as const) {
+    const primera = espMister.find((x) => x.tipo === tipo)
+    if (primera) rm.conseguir(id, primera.fecha, null)
+  }
+  todos.push(...rm.desbloqueos)
+
   todos.sort((a, b) => a.fecha.localeCompare(b.fecha))
-  return { defs, jugadores, equipo: reg.estados('equipo'), desbloqueos: todos }
+  return { defs, jugadores, equipo: reg.estados('equipo'), mister: rm.estados('mister'), desbloqueos: todos }
 }
 
 export const NOMBRE_NIVEL = ['', 'Bronce', 'Plata', 'Oro'] as const

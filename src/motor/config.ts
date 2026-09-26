@@ -133,6 +133,11 @@ export interface ConfigMister {
   experiencia: number
 
   rangos: { id: RangoMisterId; nombre: string; desde: number }[]
+
+  // Sugerencias de sus cartas especiales (§20.5)
+  motmNota: number // nota media del mes para sugerir MOTM
+  motmPuntos: number // o fracción de los puntos posibles del mes
+  totyNota: number // nota media de la temporada para sugerir TOTY (o ser campeón)
 }
 
 export type RangoMisterId = 'debutante' | 'consolidado' | 'elite' | 'leyenda'
@@ -315,6 +320,10 @@ export const CONFIG_INICIAL: Config = {
       { id: 'elite', nombre: 'Élite', desde: 80 },
       { id: 'leyenda', nombre: 'Leyenda del banquillo', desde: 90 },
     ],
+
+    motmNota: 7.5,
+    motmPuntos: 0.75,
+    totyNota: 7.5,
   },
 }
 

@@ -451,7 +451,7 @@ La temporada aún no ha empezado, así que no hace falta cargar partidos anterio
   - pantalla adaptada a tablet y ordenador.
 - **Fase 4 (compartir con el equipo):** ✅ construida (ver §18). Los compañeros solo ven; edita solo el administrador.
 - **Recorte automático del fondo:** ✅ construido (ver §19).
-- **Entrenador (míster):** parte 1 ✅ construida (ver §20.9); parte 2 pendiente (ver §20.8).
+- **Entrenador (míster):** ✅ construido (ver §20.9 y §20.10).
 
 ---
 
@@ -705,7 +705,21 @@ Las Fases 1-4 de la app ya están hechas; el míster se construye encima en dos 
 - **EXP nunca baja:** si la media del míster baja, la bajada se reparte entre los otros 5 atributos.
 - **Temporadas:** como los jugadores, cada temporada empieza con los atributos con los que acabó la anterior.
 - **Detalle del partido:** debajo de las actuaciones sale la fila del míster con su nota, de dónde sale (resultado, el grupo, portería a 0, rival) y cuánto cambia su media.
-- **Diseños especiales MOTM y TOTY:** ya se pueden aplicar a mano desde su ficha; las sugerencias automáticas llegan en la parte 2. La pestaña Logros de su ficha también llega en la parte 2.
+- **Diseños especiales MOTM y TOTY:** se pueden aplicar a mano desde su ficha (y, desde la parte 2, desde Premios).
 - **Compartir:** los compañeros ven la ficha y la carta del míster (con su foto) en solo lectura.
 - **Ajustes → Avanzado → Míster:** todas sus constantes, con una simulación de 3 temporadas. `npm run verificar` comprueba la tabla de referencia de §20.3.
 - **Plantillas:** `npm run cartas` genera también `public/cartas/mister-*.svg` desde `design/cartas-entrenador/`.
+
+### 20.10 Concreciones de la parte 2 (construida)
+
+- **Premios → "Míster · MOTM y TOTY":**
+  - MOTM por mes natural (con lo que dirigió ese mes): se sugiere si la nota media llega a 7,5 o si consigue el 75% de los puntos (3 por victoria, 1 por empate). Los meses que no llegan también se listan, con "no llega".
+  - TOTY: provisional durante la temporada; se sugiere con nota media de 7,5 o más, o si el equipo es campeón de algún split en esa temporada.
+  - "Dar MOTM/TOTY" le pone la carta especial y la deja como activa. Los umbrales se editan en Ajustes → Avanzado → Míster.
+- **Avisos:** MOTM sugerido de los meses ya acabados, subida de pizarra del míster ("¡Pizarra Élite!") y sus logros. En Inicio, el MOTM pendiente sale en Sugerencias y sus logros en Últimos logros.
+- **Logros del míster** (pestaña Logros de su ficha), solo con los partidos que dirigió:
+  - Ganador y Primera victoria cuentan toda su carrera; Míster veterano, Cantera, Pizarra maestra y Muro táctico son por temporada (los tres últimos se pueden repetir en temporadas distintas).
+  - Matagigantes: el rival iba 1º en la clasificación antes del partido. Del abismo: la victoria llega tras 3 o más derrotas seguidas.
+  - Cantera: 3 jugadores distintos suben de rango en partidos que dirigió en la misma temporada.
+  - Campeón y Temporada invicta son los mismos títulos del equipo, también en su vitrina.
+  - Primera MOTM, Primer TOTY y los ascensos a Consolidado, Élite y Leyenda del banquillo.

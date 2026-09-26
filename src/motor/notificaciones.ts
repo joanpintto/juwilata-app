@@ -2,11 +2,12 @@
 // (logros, subidas de rango, sugerencias pendientes, copia manual); en la base
 // de datos solo se guarda cuáles se han visto.
 import type { Datos } from '../datos'
-import { nombreVisible } from '../datos'
+import { nombreMister, nombreVisible } from '../datos'
 import { rango } from './calculo'
-import { SOLO_LECTURA } from '../db'
+import { ID_MISTER, SOLO_LECTURA } from '../db'
 import { NOMBRE_NIVEL } from './logros'
-import { nombreMes, sugerenciasIF, sugerenciasPOTM, yaTiene } from './premios'
+import { nombreMes, sugerenciasIF, sugerenciasMOTM, sugerenciasPOTM, yaTiene, yaTieneMister } from './premios'
+import { rangoMister } from './mister'
 
 export type TipoNotificacion = 'logro' | 'rango' | 'premio' | 'copia'
 
@@ -22,6 +23,7 @@ export interface Notificacion {
 export function generarNotificaciones(d: Datos): Notificacion[] {
   const lista: Notificacion[] = []
   const nombre = (id: string | null) => {
+    if (id === ID_MISTER) return nombreMister(d.misterFicha)
     const j = id ? d.jugadores.find((x) => x.id === id) : null
     return j ? nombreVisible(j) : d.equipo.nombre
   }
@@ -35,7 +37,7 @@ export function generarNotificaciones(d: Datos): Notificacion[] {
       fecha: x.fecha,
       titulo: `${def.nombre}${def.niveles ? ` · ${NOMBRE_NIVEL[x.nivel]}` : ''}`,
       texto: `${nombre(x.jugadorId)}: ${def.descripcion}`,
-      ruta: x.jugadorId ? `/jugador/${x.jugadorId}` : '/',
+      ruta: x.jugadorId === ID_MISTER ? '/mister' : x.jugadorId ? `/jugador/${x.jugadorId}` : '/',
     })
   }
 
@@ -53,6 +55,21 @@ export function generarNotificaciones(d: Datos): Notificacion[] {
           ruta: `/jugador/${e.jugador.id}`,
         })
       }
+    }
+  }
+
+  for (const h of d.mister.historial) {
+    const antes = rangoMister(d.config, h.mediaAntes)
+    const despues = rangoMister(d.config, h.mediaDespues)
+    if (despues.desde > antes.desde) {
+      lista.push({
+        id: `rango:${ID_MISTER}:${h.partidoId}:${despues.id}`,
+        tipo: 'rango',
+        fecha: h.fecha,
+        titulo: `¡Pizarra ${despues.nombre}!`,
+        texto: `${nombreMister(d.misterFicha)} sube de ${antes.nombre} a ${despues.nombre}.`,
+        ruta: '/mister',
+      })
     }
   }
 
@@ -82,6 +99,19 @@ export function generarNotificaciones(d: Datos): Notificacion[] {
         fecha: `${m.mes}-28`,
         titulo: 'POTM sugerido',
         texto: `${nombreVisible(c.e.jugador)}, jugador de ${nombreMes(m.mes).toLowerCase()}.`,
+        ruta: '/premios',
+      })
+    }
+  }
+
+  for (const m of sugerenciasMOTM(d.mister, d.config)) {
+    if (m.mes < mesActual && m.cumple && !yaTieneMister(d.misterFicha, 'MOTM', m.clave)) {
+      lista.push({
+        id: `motm:${m.mes}`,
+        tipo: 'premio',
+        fecha: `${m.mes}-28`,
+        titulo: 'MOTM sugerido',
+        texto: `${nombreMister(d.misterFicha)}, entrenador de ${nombreMes(m.mes).toLowerCase()}.`,
         ruta: '/premios',
       })
     }

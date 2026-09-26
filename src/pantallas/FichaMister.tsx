@@ -7,10 +7,11 @@ import { rangoMister, siguienteRangoMister } from '../motor/mister'
 import { CartaMister, MiniCartaMister } from '../componentes/Carta'
 import { DISENOS_MISTER, disenoMister, disenosMisterDesbloqueados } from '../componentes/disenos'
 import { GraficoEvolucion, Radar } from '../componentes/Graficos'
+import { Vitrina } from '../componentes/Logros'
 import { Cabecera, Hoja, Icono } from '../componentes/ui'
 import { avisar } from '../componentes/dialogos'
 
-type Pestana = 'atributos' | 'evolucion' | 'historial'
+type Pestana = 'atributos' | 'evolucion' | 'historial' | 'logros'
 const ESPECIALES_MISTER = ['MOTM', 'TOTY'] as const
 
 const TEXTO_NIVEL = { alto: 'rival de arriba', bajo: 'rival de abajo' }
@@ -153,10 +154,10 @@ export function FichaMister({ datos }: { datos: Datos }) {
         </button>
       </div>
 
-      <nav className="subpestanas">
-        {(['atributos', 'evolucion', 'historial'] as Pestana[]).map((p) => (
+      <nav className="subpestanas subpestanas--4">
+        {(['atributos', 'evolucion', 'historial', 'logros'] as Pestana[]).map((p) => (
           <button key={p} className={pestana === p ? 'activa' : ''} onClick={() => setPestana(p)}>
-            {{ atributos: 'Atributos', evolucion: 'Evolución', historial: 'Historial' }[p]}
+            {{ atributos: 'Atributos', evolucion: 'Evolución', historial: 'Historial', logros: 'Logros' }[p]}
           </button>
         ))}
       </nav>
@@ -218,6 +219,12 @@ export function FichaMister({ datos }: { datos: Datos }) {
               ))}
             </ul>
           )}
+        </section>
+      )}
+
+      {pestana === 'logros' && (
+        <section className="tarjeta">
+          <Vitrina estados={datos.logros.mister} vacio="Todavía ninguno. ¡A por la primera victoria!" />
         </section>
       )}
 

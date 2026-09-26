@@ -39,15 +39,21 @@ export interface ContextoLiga {
 
 const normalizar = (s: string) => s.trim().toLocaleLowerCase('es').normalize('NFD').replace(/[̀-ͯ]/g, '')
 
+export interface RivalAntes {
+  nivel: NivelRival
+  lider: boolean // el rival iba 1º en la clasificación
+}
+
 /**
  * Posición del rival antes del partido: mitad alta, mitad baja o sin dato
  * (partido que no es de liga, rival desconocido o nadie ha jugado todavía).
  * Con un número impar de equipos, el del medio no cuenta ni como alto ni como bajo.
  */
-export function nivelRival(p: Partido, previos: Partido[], c: ContextoLiga): NivelRival {
-  if (!esLiga(p.competicion)) return null
+export function rivalAntes(p: Partido, previos: Partido[], c: ContextoLiga): RivalAntes {
+  const nada: RivalAntes = { nivel: null, lider: false }
+  if (!esLiga(p.competicion)) return nada
   const rivalId = p.rivalId ?? c.rivales.find((r) => normalizar(r.nombre) === normalizar(p.rival))?.id
-  if (!rivalId) return null
+  if (!rivalId) return nada
   const split = splitDePartido(p, c.programados)
   // Jornada del partido: la del calendario o, si no hay, cuántos partidos de liga llevamos en el split.
   const jornada =
@@ -55,12 +61,11 @@ export function nivelRival(p: Partido, previos: Partido[], c: ContextoLiga): Niv
     previos.filter((x) => esLiga(x.competicion) && splitDePartido(x, c.programados) === split).length + 1
   const antes = c.liga.filter((x) => x.split === split && x.jornada !== null && x.jornada < jornada)
   const tabla = clasificacion(antes, c.rivales, c.nombreEquipo, split)
-  if (tabla.every((f) => f.pj === 0)) return null
+  if (tabla.every((f) => f.pj === 0)) return nada
   const i = tabla.findIndex((f) => f.id === rivalId)
-  if (i < 0) return null
-  if (i < Math.floor(tabla.length / 2)) return 'alto'
-  if (i >= Math.ceil(tabla.length / 2)) return 'bajo'
-  return null
+  if (i < 0) return nada
+  const nivel: NivelRival = i < Math.floor(tabla.length / 2) ? 'alto' : i >= Math.ceil(tabla.length / 2) ? 'bajo' : null
+  return { nivel, lider: i === 0 }
 }
 
 // ─── Nota del partido (§20.2) ─────────────────────────────────────────
@@ -154,6 +159,8 @@ export interface PasoMister {
   nota: number
   detalle: NotaMister
   nivel: NivelRival
+  rivalLider: boolean
+  ascensos: string[] // jugadores que subieron de rango en el partido
   notaPonderada: number
   mediaAntes: number
   mediaDespues: number
@@ -214,11 +221,11 @@ export function reproducirMister(
   }
 
   // Cambios de los jugadores en cada partido (para GES).
-  const pasos = new Map<string, { antes: number; despues: number }[]>()
+  const pasos = new Map<string, { id: string; antes: number; despues: number }[]>()
   for (const j of Object.values(calculo.jugadores)) {
     for (const h of j.historial) {
       const lista = pasos.get(h.partidoId) ?? []
-      lista.push({ antes: h.mediaAntes, despues: h.mediaDespues })
+      lista.push({ id: j.jugador.id, antes: h.mediaAntes, despues: h.mediaDespues })
       pasos.set(h.partidoId, lista)
     }
   }
@@ -231,7 +238,7 @@ export function reproducirMister(
     const cfg = configs.get(p.configVersion) ?? cfgActual
     const pesos = cfg.mister.pesos
     const previos = ordenados.slice(0, idx)
-    const nivel = nivelRival(p, previos, liga)
+    const { nivel, lider } = rivalAntes(p, previos, liga)
     const detalle = notaMister(p, notasDe.get(p.id) ?? [], nivel, cfg)
     const nota = detalle.nota
     e.notas.push(nota)
@@ -239,20 +246,20 @@ export function reproducirMister(
     const mediaAntes = media(e.atributos, pesos)
     const cambio = cambioMediaMister(np, nota, mediaAntes, cfg)
 
-    let subenRango = 0
+    const ascensos: string[] = []
     let suben = 0
     let bajan = 0
     for (const x of pasos.get(p.id) ?? []) {
       if (x.despues > x.antes + 1e-9) suben++
       if (x.despues < x.antes - 1e-9) bajan++
-      if (rango(cfg, x.despues).desde > rango(cfg, x.antes).desde) subenRango++
+      if (rango(cfg, x.despues).desde > rango(cfg, x.antes).desde) ascensos.push(x.id)
     }
     const resultado = resultadoDe(p)
     const delta = cambiosAtributosMister(
       {
         golesFavor: p.golesFavor, golesContra: p.golesContra, resultado,
         anterior: previos.length ? resultadoDe(previos[previos.length - 1]) : null,
-        nivel, subenRango, suben, bajan,
+        nivel, subenRango: ascensos.length, suben, bajan,
       },
       e.atributos, cfg,
     )
@@ -283,7 +290,7 @@ export function reproducirMister(
 
     const paso: PasoMister = {
       partidoId: p.id, fecha: p.fecha, rival: p.rival, golesFavor: p.golesFavor, golesContra: p.golesContra,
-      nota, detalle, nivel, notaPonderada: np, mediaAntes, mediaDespues, cambio: mediaDespues - mediaAntes, atributos: attrs,
+      nota, detalle, nivel, rivalLider: lider, ascensos, notaPonderada: np, mediaAntes, mediaDespues, cambio: mediaDespues - mediaAntes, atributos: attrs,
     }
     e.historial.push(paso)
     e.porPartido[p.id] = paso

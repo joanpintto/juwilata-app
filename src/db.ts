@@ -43,8 +43,9 @@ export interface Mister {
 }
 
 export const MISTER_INICIAL: Mister = { nombre: 'Míster', apodo: '', formacion: '1-3-2-1', foto: null, disenoActivo: null, especiales: [] }
-/** Identificador de la foto del míster al compartir (va junto a las de los jugadores). */
-export const ID_FOTO_MISTER = 'mister'
+/** Identificador del míster donde se mezcla con los jugadores (fotos al compartir, logros). */
+export const ID_MISTER = 'mister'
+export const ID_FOTO_MISTER = ID_MISTER
 
 export const misterDe = (e: Equipo): Mister => ({ ...MISTER_INICIAL, ...e.mister })
 

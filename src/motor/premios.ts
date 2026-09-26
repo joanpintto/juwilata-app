@@ -1,7 +1,8 @@
 // Sugerencias de IF, POTM y TOTY (§9). Son solo sugerencias: decide el administrador.
-import type { Jugador, Partido } from '../db'
+import type { Jugador, Mister, Partido } from '../db'
 import type { Config, Posicion } from './config'
 import type { EstadoJugador, Temporada } from './temporada'
+import type { EstadoMister } from './mister'
 
 export interface SugerenciaIF {
   partido: Partido
@@ -118,4 +119,46 @@ export function nombreMes(mes: string): string {
   const [a, m] = mes.split('-').map(Number)
   const t = new Date(a, m - 1, 1).toLocaleDateString('es-ES', { month: 'long', year: 'numeric' })
   return t.charAt(0).toUpperCase() + t.slice(1)
+}
+
+// ─── Míster: MOTM y TOTY (§20.5) ──────────────────────────────────────
+
+export function yaTieneMister(m: Mister, tipo: string, clave: string) {
+  return m.especiales.some((x) => x.tipo === tipo && x.detalle === clave)
+}
+
+export interface SugerenciaMOTM {
+  mes: string // AAAA-MM
+  dirigidos: number
+  notaMedia: number
+  puntos: number // fracción de los puntos posibles (3 por victoria, 1 por empate)
+  cumple: boolean
+  clave: string
+}
+
+/** MOTM por mes natural: nota media del míster ≥ 7,5 o ≥ 75% de los puntos. */
+export function sugerenciasMOTM(e: EstadoMister, cfg: Config): SugerenciaMOTM[] {
+  const meses = new Map<string, EstadoMister['historial']>()
+  for (const h of e.historial) meses.set(h.fecha.slice(0, 7), [...(meses.get(h.fecha.slice(0, 7)) ?? []), h])
+  return [...meses.entries()].map(([mes, pasos]) => {
+    const notaMedia = pasos.reduce((s, h) => s + h.nota, 0) / pasos.length
+    const pts = pasos.reduce((s, h) => s + (h.golesFavor > h.golesContra ? 3 : h.golesFavor === h.golesContra ? 1 : 0), 0)
+    const puntos = pts / (3 * pasos.length)
+    const cumple = notaMedia >= cfg.mister.motmNota - 1e-9 || puntos >= cfg.mister.motmPuntos - 1e-9
+    return { mes, dirigidos: pasos.length, notaMedia, puntos, cumple, clave: claveMes(mes) }
+  }).reverse()
+}
+
+export interface SugerenciaTOTYMister {
+  notaMedia: number | null
+  campeon: boolean
+  cumple: boolean
+  clave: string
+}
+
+/** TOTY del míster: nota media de la temporada ≥ 7,5 o el equipo campeón. */
+export function sugerenciaTOTYMister(e: EstadoMister, campeon: boolean, cfg: Config, temporadaId: string): SugerenciaTOTYMister {
+  const nota = e.estadisticas.notaMedia
+  const cumple = e.estadisticas.dirigidos > 0 && ((nota ?? 0) >= cfg.mister.totyNota - 1e-9 || campeon)
+  return { notaMedia: nota, campeon, cumple, clave: claveTemporada(temporadaId) }
 }
