@@ -261,22 +261,27 @@ class JuwilataDB extends Dexie {
 }
 
 // ─── Modo espectador (Fase 4) ─────────────────────────────────────────
-// Un compañero que abre el enlace compartido (#/ver/<código>) ve la app en solo
-// lectura, con los datos en una base aparte: nunca toca los del administrador.
+// Un compañero que abre el enlace compartido (…/?ver=<código>, o el antiguo
+// #/ver/<código>) ve la app en solo lectura, con los datos en una base aparte:
+// nunca toca los del administrador. El código se queda en la dirección para que,
+// al añadirla a la pantalla de inicio del iPhone, siga abriéndose en modo lectura
+// (la app de la pantalla de inicio no comparte lo guardado con Safari).
 
 const CLAVE_ESPECTADOR = 'juwilata-espectador'
 
 function detectarEspectador(): string | null {
   if (typeof window === 'undefined') return null
-  const m = window.location.hash.match(/^#\/ver\/([A-Za-z0-9_-]{16,})/)
+  const enHash = window.location.hash.match(/^#\/ver\/([A-Za-z0-9_-]{16,})/)?.[1]
+  const enQuery = new URLSearchParams(window.location.search).get('ver')
+  const m = enHash ?? (enQuery && /^[A-Za-z0-9_-]{16,}$/.test(enQuery) ? enQuery : null)
   try {
     if (m) {
-      localStorage.setItem(CLAVE_ESPECTADOR, m[1])
-      return m[1]
+      localStorage.setItem(CLAVE_ESPECTADOR, m)
+      return m
     }
     return localStorage.getItem(CLAVE_ESPECTADOR)
   } catch {
-    return m?.[1] ?? null
+    return m
   }
 }
 

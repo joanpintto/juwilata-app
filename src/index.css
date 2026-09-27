@@ -1,3 +1,4 @@
+@font-face { font-family: 'Work Sans'; font-weight: 400 700; font-style: normal; font-display: swap; src: url('/fuentes/work-sans-latin.woff2') format('woff2'); }
 @font-face { font-family: 'Barlow Condensed'; font-weight: 600; font-style: normal; font-display: swap; src: url('/fuentes/barlow-condensed-600.woff2') format('woff2'); }
 @font-face { font-family: 'Barlow Condensed'; font-weight: 700; font-style: normal; font-display: swap; src: url('/fuentes/barlow-condensed-700.woff2') format('woff2'); }
 @font-face { font-family: 'Barlow Condensed'; font-weight: 800; font-style: normal; font-display: swap; src: url('/fuentes/barlow-condensed-800.woff2') format('woff2'); }
@@ -54,8 +55,10 @@ body::before { content: ''; position: fixed; inset: 0; z-index: -1; background: 
 .tarjeta, .subpestanas, .cifras div, .banquillo, .media-titulares, .reg-jugador, .dialogo, .hoja, .boton-icono, .cab__atras,
 .boton--sec, .selector-temporada, .campana, .barra, .cristal, .vacio, .portada, .lista-jugadores button, .lista-partidos button, .ranking button {
   background: var(--cristal); border: 1px solid var(--borde); box-shadow: var(--cristal-sombra);
-  -webkit-backdrop-filter: blur(18px) saturate(170%); backdrop-filter: blur(18px) saturate(170%);
 }
+/* El desenfoque del fondo solo donde hay algo detrás que se mueve (barra, hojas, diálogos):
+   en cada tarjeta hacía el scroll muy lento en iPhone y sobre el degradado liso no se nota. */
+.barra, .hoja, .dialogo { -webkit-backdrop-filter: blur(18px) saturate(170%); backdrop-filter: blur(18px) saturate(170%); }
 
 h1, h2, h3 { font-family: 'Barlow Condensed', 'Work Sans', sans-serif; margin: 0; letter-spacing: 0.3px; }
 
@@ -1103,7 +1106,7 @@ input[type='range'] { width: 100%; accent-color: var(--dorado); }
 .campo-once__franjas { position: absolute; inset: 0; background: repeating-linear-gradient(180deg, rgba(255, 255, 255, 0.07) 0 10%, rgba(0, 0, 0, 0.06) 10% 20%); }
 .campo-once__luces { position: absolute; inset: 0; background: radial-gradient(45% 35% at 0% 0%, rgba(255, 250, 230, 0.28), rgba(255, 250, 230, 0) 70%), radial-gradient(45% 35% at 100% 0%, rgba(255, 250, 230, 0.22), rgba(255, 250, 230, 0) 70%), radial-gradient(60% 30% at 50% 100%, rgba(125, 26, 47, 0.35), rgba(125, 26, 47, 0) 70%); }
 .campo-once__escudo { position: absolute; left: 50%; top: 50%; width: 22%; transform: translate(-50%, -50%); opacity: 0.09; pointer-events: none; }
-.campo-once__barrido { position: absolute; top: -15%; left: -55%; width: 60%; height: 130%; border-radius: 50%; background: radial-gradient(closest-side, rgba(255, 248, 220, 0.42), rgba(255, 248, 220, 0.12) 55%, rgba(255, 248, 220, 0)); filter: blur(22px); mix-blend-mode: screen; animation: barrido 7s ease-in-out infinite; pointer-events: none; }
+.campo-once__barrido { position: absolute; top: -15%; left: -55%; width: 60%; height: 130%; border-radius: 50%; background: radial-gradient(closest-side, rgba(255, 248, 220, 0.42), rgba(255, 248, 220, 0.12) 55%, rgba(255, 248, 220, 0)); animation: barrido 7s ease-in-out infinite; pointer-events: none; }
 @keyframes barrido { to { transform: translateX(330%); } }
 .campo-once__lineas { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
 .campo-once__jugador { position: absolute; width: 17.32%; aspect-ratio: 62 / 88; transform: translate(-50%, -50%); }
@@ -1128,7 +1131,7 @@ input[type='range'] { width: 100%; accent-color: var(--dorado); }
 .campo-once__mister span { font-size: 9px; font-weight: 700; letter-spacing: 1px; padding: 2px 6px; border-radius: 6px; background: rgba(0, 0, 0, 0.45); color: var(--dorado-claro); }
 .campo-once__quimica {
   position: absolute; left: 2.8%; top: 2%; z-index: 3; display: flex; align-items: center; gap: 8px; padding: 6px 10px 6px 6px; border-radius: 16px;
-  background: rgba(0, 0, 0, 0.72); border: 1px solid rgba(255, 255, 255, 0.14); -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+  background: rgba(0, 0, 0, 0.72); border: 1px solid rgba(255, 255, 255, 0.14);
 }
 .campo-once__quimica div { display: flex; flex-direction: column; gap: 1px; }
 .campo-once__quimica span { font-size: 9px; font-weight: 700; letter-spacing: 1px; color: var(--texto-2); }

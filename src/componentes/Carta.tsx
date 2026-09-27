@@ -33,6 +33,35 @@ interface Relleno {
   mini: boolean
 }
 
+// Las fotos se guardan como data URL (cientos de KB de texto). Meter ese texto en
+// cada carta obliga al móvil a copiarlo y leerlo en cada pantalla, y es lo que más
+// la frena. Se convierten una vez en una dirección corta (blob:) que se reutiliza.
+const urlsFoto = new Map<string, string>()
+function urlFoto(foto: string): string {
+  if (!foto.startsWith('data:')) return foto
+  const clave = `${foto.length}:${foto.slice(-80)}`
+  let url = urlsFoto.get(clave)
+  if (!url) {
+    try {
+      const coma = foto.indexOf(',')
+      const tipo = foto.slice(5, coma).split(';')[0] || 'image/png'
+      const bin = atob(foto.slice(coma + 1))
+      const bytes = new Uint8Array(bin.length)
+      for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i)
+      url = URL.createObjectURL(new Blob([bytes], { type: tipo }))
+    } catch {
+      return foto
+    }
+    if (urlsFoto.size > 120) {
+      const [vieja, u] = urlsFoto.entries().next().value!
+      URL.revokeObjectURL(u)
+      urlsFoto.delete(vieja)
+    }
+    urlsFoto.set(clave, url)
+  }
+  return url
+}
+
 function crear(nombre: string, attrs: Record<string, string | number>): SVGElement {
   const el = document.createElementNS(SVG_NS, nombre)
   for (const [k, v] of Object.entries(attrs)) el.setAttribute(k, String(v))
@@ -65,7 +94,7 @@ function construir(doc: Document, r: Relleno, uid: string): string {
   if (hueco) {
     const [x, y, w, h] = ['data-x', 'data-y', 'data-w', 'data-h'].map((a) => Number(hueco.getAttribute(a)))
     if (r.foto) {
-      hueco.appendChild(crear('image', { href: r.foto, x, y, width: w, height: h, preserveAspectRatio: 'xMidYMin slice' }))
+      hueco.appendChild(crear('image', { href: urlFoto(r.foto), x, y, width: w, height: h, preserveAspectRatio: 'xMidYMin slice' }))
     } else {
       const g = crear('g', { fill: '#000', 'fill-opacity': '0.2' })
       const cx = x + w / 2

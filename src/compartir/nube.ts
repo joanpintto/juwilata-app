@@ -52,5 +52,5 @@ export function aleatorio(largo: number): string {
 }
 
 export function enlaceEspectador(codigo: string): string {
-  return `${window.location.origin}${import.meta.env.BASE_URL}#/ver/${codigo}`
+  return `${window.location.origin}${import.meta.env.BASE_URL}?ver=${codigo}`
 }

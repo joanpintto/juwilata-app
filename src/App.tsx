@@ -1,6 +1,6 @@
-import { useEffect, useState, type ReactNode } from 'react'
+import { Suspense, lazy, useEffect, useState, type ReactNode } from 'react'
 import { SOLO_LECTURA, db, inicializar, pedirAlmacenamientoPersistente, registrarApertura, salirDeEspectador } from './db'
-import { cargarEspectador } from './compartir/espectador'
+import { cargarEspectador, prepararAppEspectador } from './compartir/espectador'
 import { vigilarCambios } from './compartir/publicar'
 import { ir, useDatos, useRuta, type Datos } from './datos'
 import { EscudosRivales } from './componentes/escudos'
@@ -9,22 +9,24 @@ import { precargarCartas } from './componentes/plantillas'
 import { Inicio } from './pantallas/Inicio'
 import { EstadisticasOnce, Formacion, Suplentes } from './pantallas/Formacion'
 import { FichaJugador } from './pantallas/FichaJugador'
-import { EditarJugador } from './pantallas/EditarJugador'
 import { FichaMister } from './pantallas/FichaMister'
-import { EditarMister } from './pantallas/EditarMister'
 import { Estadisticas } from './pantallas/Estadisticas'
 import { Mas } from './pantallas/Mas'
 import { Liga } from './pantallas/Liga'
-import { DetallePartido } from './pantallas/DetallePartido'
-import { RegistroPartido } from './pantallas/RegistroPartido'
-import { SecuenciaPartido } from './pantallas/SecuenciaPartido'
-import { Evoluciones } from './pantallas/Evoluciones'
-import { Ajustes } from './pantallas/Ajustes'
-import { Avanzado } from './pantallas/Avanzado'
-import { Copias } from './pantallas/Copias'
-import { Premios } from './pantallas/Premios'
-import { AjustesEspectador } from './pantallas/Compartir'
-import { Notificaciones } from './pantallas/Notificaciones'
+
+// Pantallas de uso ocasional: se cargan al abrirlas (arranque más rápido).
+const EditarJugador = lazy(() => import('./pantallas/EditarJugador').then((m) => ({ default: m.EditarJugador })))
+const EditarMister = lazy(() => import('./pantallas/EditarMister').then((m) => ({ default: m.EditarMister })))
+const DetallePartido = lazy(() => import('./pantallas/DetallePartido').then((m) => ({ default: m.DetallePartido })))
+const RegistroPartido = lazy(() => import('./pantallas/RegistroPartido').then((m) => ({ default: m.RegistroPartido })))
+const SecuenciaPartido = lazy(() => import('./pantallas/SecuenciaPartido').then((m) => ({ default: m.SecuenciaPartido })))
+const Evoluciones = lazy(() => import('./pantallas/Evoluciones').then((m) => ({ default: m.Evoluciones })))
+const Ajustes = lazy(() => import('./pantallas/Ajustes').then((m) => ({ default: m.Ajustes })))
+const Avanzado = lazy(() => import('./pantallas/Avanzado').then((m) => ({ default: m.Avanzado })))
+const Copias = lazy(() => import('./pantallas/Copias').then((m) => ({ default: m.Copias })))
+const Premios = lazy(() => import('./pantallas/Premios').then((m) => ({ default: m.Premios })))
+const AjustesEspectador = lazy(() => import('./pantallas/Compartir').then((m) => ({ default: m.AjustesEspectador })))
+const Notificaciones = lazy(() => import('./pantallas/Notificaciones').then((m) => ({ default: m.Notificaciones })))
 
 // Barra de navegación (§4): Inicio, Plantilla, Liga, Estadísticas y Más.
 const PESTANAS = [
@@ -126,7 +128,7 @@ export default function App() {
     if (SOLO_LECTURA) {
       // Espectador: se descarga la copia publicada por el administrador.
       document.body.classList.add('solo-lectura')
-      if (window.location.hash.startsWith('#/ver/')) window.location.replace('#/')
+      prepararAppEspectador()
       Promise.all([cargarEspectador(), precargarCartas()])
         .then(() => setListo(true))
         .catch((e) => setError((e as Error).message))
@@ -172,7 +174,9 @@ export default function App() {
           </div>
         )}
         <EscudosRivales.Provider value={datos.escudos}>
-          <Pantalla seg={seg} datos={datos} />
+          <Suspense fallback={null}>
+            <Pantalla seg={seg} datos={datos} />
+          </Suspense>
         </EscudosRivales.Provider>
       </main>
       {!enAsistente && (
