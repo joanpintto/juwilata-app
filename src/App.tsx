@@ -5,7 +5,8 @@ import { vigilarCambios } from './compartir/publicar'
 import { ir, useDatos, useRuta, type Datos } from './datos'
 import { EscudosRivales } from './componentes/escudos'
 import { DialogosRaiz, Icono } from './componentes/ui'
-import { precargarCartas } from './componentes/plantillas'
+import { infoPlantilla, plantillaLista, precargarCartas } from './componentes/plantillas'
+import { prepararFotos } from './componentes/fotosCarta'
 import { Inicio } from './pantallas/Inicio'
 import { EstadisticasOnce, Formacion, Suplentes } from './pantallas/Formacion'
 import { FichaJugador } from './pantallas/FichaJugador'
@@ -162,6 +163,15 @@ export default function App() {
     registrarApertura().catch(() => {})
     pedirAlmacenamientoPersistente().catch(() => {})
   }, [])
+
+  // Con la app ya abierta, deja preparadas las fotos de las cartas (recorte y degradado).
+  const fotos = datos?.todosJugadores.map((j) => j.foto).concat(datos.misterFicha.foto)
+  useEffect(() => {
+    if (!listo || !fotos) return
+    const t = setTimeout(() => prepararFotos(fotos, infoPlantilla(plantillaLista('bronce') ?? document)?.silueta ?? ''), 400)
+    return () => clearTimeout(t)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [listo, fotos?.reduce((n, f) => n + (f?.length ?? 0), 0)])
 
   if (error) {
     return (

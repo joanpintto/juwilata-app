@@ -26,7 +26,7 @@ export default defineConfig({
         ],
       },
       workbox: {
-        globPatterns: ['**/*.{js,css,html,png,jpg,svg,woff2}'],
+        globPatterns: ['**/*.{js,css,html,png,jpg,svg,woff2,webp}'],
         // El recorte de fondo (modelo + motor, ~28 MB) no se descarga al instalar:
         // solo la primera vez que se usa, y luego queda guardado para usarlo sin conexión.
         globIgnores: ['**/recorte/**'],

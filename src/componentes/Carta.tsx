@@ -1,10 +1,11 @@
-import { useEffect, useId, useMemo, useState } from 'react'
+import { useEffect, useId, useMemo, useState, useSyncExternalStore } from 'react'
 import type { Jugador, Mister } from '../db'
 import { mediaVisible } from '../motor/calculo'
 import { ETIQUETAS_MISTER, etiquetas, rolEnCarta, siglaJugador, type Atributos, type Config } from '../motor/config'
 import { nombreMister, nombreVisible } from '../datos'
 import { DISENOS, DISENOS_MISTER } from './disenos'
-import { capaFoto, cargarPlantilla, infoPlantilla, plantillaLista } from './plantillas'
+import { cargarPlantilla, infoPlantilla, plantillaLista } from './plantillas'
+import { HUECO_FOTO, colocacion, fotoCarta, fotoLista, suscribirFotos } from './fotosCarta'
 
 // Las cartas son las 11 plantillas aprobadas (public/cartas/*.svg, generadas
 // con `npm run cartas`). Aquí solo se rellenan con los datos del jugador.
@@ -60,44 +61,33 @@ function construir(doc: Document, r: Relleno, uid: string): string {
   texto('sigla', r.sigla)
   texto('dorsal', r.dorsal)
 
-  // Foto real (o silueta si aún no tiene) + degradado + panel inferior: se dibujan
-  // aparte como una imagen fija (una vez por foto y diseño) y en la carta solo
-  // queda esa imagen. Así Safari no repinta la máscara de la foto en cada carta.
+  // Foto: imagen de píxeles con el recorte y el degradado ya aplicados (fotosCarta.ts),
+  // sin máscaras que Safari tenga que recalcular. Mientras se prepara, la foto tal cual.
   const hueco = $('foto')
   const jugador = $('jugador')
-  const panel = $('panel')
   const info = infoPlantilla(doc)
-  const rellenarHueco = () => {
-    if (!hueco) return
-    const [x, y, w, h] = ['data-x', 'data-y', 'data-w', 'data-h'].map((a) => Number(hueco.getAttribute(a)))
+  if (hueco && jugador) {
+    const { x, y, w, h } = HUECO_FOTO
     if (r.foto) {
-      hueco.appendChild(crear('image', { href: r.foto, x, y, width: w, height: h, preserveAspectRatio: 'xMidYMin slice' }))
+      const lista = fotoCarta(r.foto, info?.silueta ?? '')
+      if (lista) {
+        const p = colocacion(lista.ancho, lista.alto)
+        hueco.appendChild(crear('image', { href: lista.url, x: p.x, y: p.y, width: p.w, height: p.h, preserveAspectRatio: 'none' }))
+        jugador.removeAttribute('mask')
+      } else {
+        hueco.appendChild(crear('image', { href: r.foto, x, y, width: w, height: h, preserveAspectRatio: 'xMidYMin slice' }))
+      }
     } else {
+      jugador.removeAttribute('mask')
       const g = crear('g', { fill: '#000', 'fill-opacity': '0.2' })
       const cx = x + w / 2
       g.appendChild(crear('circle', { cx, cy: y + h * 0.3, r: w * 0.11 }))
       g.appendChild(crear('path', { d: `M${cx - w * 0.27} ${y + h * 0.8} Q${cx - w * 0.26} ${y + h * 0.47} ${cx} ${y + h * 0.46} Q${cx + w * 0.26} ${y + h * 0.47} ${cx + w * 0.27} ${y + h * 0.8} Z` }))
       hueco.appendChild(g)
+      // Sin foto, la media y la posición van delante de la silueta (si no, la tapa).
+      const detras = $('cabecera_detras')
+      if (detras && jugador.parentNode) jugador.parentNode.insertBefore(detras, jugador.nextSibling)
     }
-  }
-  if (info && jugador?.parentNode && panel) {
-    const clave = r.foto ? `${r.foto.length}:${r.foto.slice(-80)}` : 'silueta'
-    const ser = new XMLSerializer()
-    const url = capaFoto(info, clave, () => {
-      rellenarHueco()
-      return ser.serializeToString(jugador) + ser.serializeToString(panel)
-    })
-    const img = crear('image', { href: url, x: info.vx - info.tx, y: info.vy - info.ty, width: info.vw, height: info.vh, preserveAspectRatio: 'none' })
-    jugador.parentNode.insertBefore(img, jugador)
-    jugador.remove()
-    panel.remove()
-    // Sin foto, la media y la posición van delante de la silueta (si no, la tapa).
-    const detras = $('cabecera_detras')
-    if (!r.foto && detras && img.parentNode) img.parentNode.insertBefore(detras, img.nextSibling)
-  } else {
-    rellenarHueco()
-    const detras = $('cabecera_detras')
-    if (!r.foto && detras && jugador?.parentNode) jugador.parentNode.insertBefore(detras, jugador.nextSibling)
   }
 
   // Sin la sombra del escudo: Safari dibuja los filtros sobre imágenes una sola vez
@@ -210,9 +200,12 @@ function CartaBase({ archivo, ancho, clase, etiqueta, ...r }: Relleno & { archiv
   const uid = 'c' + useId().replace(/[^a-zA-Z0-9]/g, '')
   const doc = usePlantilla(archivo)
   const { nombre, sigla, rol, dorsal, foto, etiquetas: labels, media, atributos, tendencia, mini } = r
+  // Cambia cuando la foto de esta carta termina de prepararse (y entonces se redibuja).
+  const preparada = useSyncExternalStore(suscribirFotos, () => fotoLista(foto))
   const html = useMemo(
     () => (doc ? construir(doc, { nombre, sigla, rol, dorsal, foto, etiquetas: labels, media, atributos, tendencia, mini }, uid) : null),
-    [doc, nombre, sigla, rol, dorsal, foto, labels, media, atributos, tendencia, mini, uid],
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [doc, nombre, sigla, rol, dorsal, foto, labels, media, atributos, tendencia, mini, uid, preparada],
   )
   return (
     <div className={clase} style={{ width: ancho }} role="img" aria-label={etiqueta}>

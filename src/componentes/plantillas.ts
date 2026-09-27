@@ -1,4 +1,5 @@
 import { DISENOS, DISENOS_MISTER } from './disenos'
+import { CAPAS_GENERADAS } from './capasGeneradas'
 
 // Carga (una vez) las plantillas SVG de las cartas desde public/cartas/.
 // El service worker las guarda para que funcionen sin conexión.
@@ -7,6 +8,19 @@ const BASE = import.meta.env.BASE_URL
 const SVG_NS = 'http://www.w3.org/2000/svg'
 const listas = new Map<string, Document>()
 const imagenesCapas: string[] = []
+
+/** Huella corta de un texto (para saber si una capa ya generada sigue valiendo). */
+export function huellaTexto(t: string): string {
+  let h = 0x811c9dc5
+  for (let i = 0; i < t.length; i++) h = Math.imul(h ^ t.charCodeAt(i), 0x01000193)
+  return (h >>> 0).toString(36) + t.length.toString(36)
+}
+
+// Capas de cada plantilla como SVG (para `scripts/generar-capas.cjs`, que las
+// convierte en imágenes WebP: public/cartas/capas/). En Safari, una imagen SVG se
+// vuelve a dibujar entera cada vez que se pinta; una imagen de píxeles no.
+const capasSvg: Record<string, { texto: string; huella: string }> = {}
+;(window as unknown as { __capasJuwilata: typeof capasSvg }).__capasJuwilata = capasSvg
 
 // Cada plantilla tiene ~2.000 elementos de decoración (panal, estrellas, brillos,
 // sombra con desenfoque) que nunca cambian. Dibujarlos en cada carta hacía la app
@@ -26,32 +40,13 @@ export interface InfoPlantilla {
   ty: number
   transform: string
   defs: string
-  fotos: Map<string, string> // capa de foto ya preparada, por foto
+  silueta: string // forma de la carta (para recortar la foto)
 }
 const infos = new WeakMap<Document, InfoPlantilla>()
 export const infoPlantilla = (doc: Document) => infos.get(doc) ?? null
 
-/**
- * Capa «foto + degradado + panel» de una carta como imagen (una vez por foto y
- * diseño). El recorte con degradado (máscara) es lo que más le cuesta pintar a
- * Safari; como imagen fija se pinta una vez y se reutiliza.
- */
-export function capaFoto(info: InfoPlantilla, clave: string, contenido: () => string): string {
-  let url = info.fotos.get(clave)
-  if (!url) {
-    const texto = `<svg xmlns="${SVG_NS}" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="${info.vb}" width="${info.vw}" height="${info.vh}">${info.defs}<g transform="${info.transform}"><g clip-path="url(#card)">${contenido()}</g></g></svg>`
-    url = URL.createObjectURL(new Blob([texto], { type: 'image/svg+xml' }))
-    if (info.fotos.size > 60) {
-      const [vieja, u] = info.fotos.entries().next().value!
-      URL.revokeObjectURL(u)
-      info.fotos.delete(vieja)
-    }
-    info.fotos.set(clave, url)
-  }
-  return url
-}
 
-function aplanar(doc: Document) {
+function aplanar(doc: Document, archivo: string) {
   const raiz = doc.documentElement
   const fondo = raiz.querySelector('[id="fondo"]')
   const carta = fondo?.parentElement
@@ -64,10 +59,16 @@ function aplanar(doc: Document) {
   const [tx, ty] = t ? [Number(t[1]), Number(t[2])] : [0, 0]
   const ser = new XMLSerializer()
   const defs = raiz.querySelector('defs')
-  infos.set(doc, { vb, vx, vy, vw, vh, tx, ty, transform, defs: defs ? ser.serializeToString(defs) : '', fotos: new Map() })
-  const capa = (contenido: string) => {
+  infos.set(doc, { vb, vx, vy, vw, vh, tx, ty, transform, defs: defs ? ser.serializeToString(defs) : '', silueta: raiz.querySelector('clipPath[id="card"] path')?.getAttribute('d') ?? '' })
+  const capa = (tipo: 'fondo' | 'marco', contenido: string) => {
     const texto = `<svg xmlns="${SVG_NS}" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="${vb}" width="${vw}" height="${vh}">${defs ? ser.serializeToString(defs) : ''}<g transform="${transform}">${contenido}</g></svg>`
-    const url = URL.createObjectURL(new Blob([texto], { type: 'image/svg+xml' }))
+    const clave = `${archivo}-${tipo}`
+    const huella = huellaTexto(texto)
+    capasSvg[clave] = { texto, huella }
+    // Si ya está generada como imagen de píxeles (y es de esta misma versión), se usa esa.
+    const url = CAPAS_GENERADAS[clave] === huella
+      ? `${BASE}cartas/capas/${clave}.webp?v=${huella}`
+      : URL.createObjectURL(new Blob([texto], { type: 'image/svg+xml' }))
     imagenesCapas.push(url)
     return url
   }
@@ -92,7 +93,7 @@ function aplanar(doc: Document) {
   }
   if (antes.length || deco.length) {
     const attrs = [...fondo.attributes].filter((a) => a.name !== 'id').map((a) => `${a.name}="${a.value}"`).join(' ')
-    const url = capa(`${antes.map((e) => ser.serializeToString(e)).join('')}<g ${attrs}>${[...degradados, ...deco].map((e) => ser.serializeToString(e)).join('')}</g>`)
+    const url = capa('fondo', `${antes.map((e) => ser.serializeToString(e)).join('')}<g ${attrs}>${[...degradados, ...deco].map((e) => ser.serializeToString(e)).join('')}</g>`)
     raiz.insertBefore(imagen(url, vx, vy), grupo)
     ;[...antes, ...deco].forEach((e) => e.remove())
   }
@@ -112,11 +113,15 @@ function aplanar(doc: Document) {
   // Lo que queda en el fondo son textos y la capa de foto (que ya lleva su recorte).
   fondo.removeAttribute('clip-path')
 
-  // Capa del marco (encima de la foto).
+  // Capa del marco (encima de la foto), con el panel oscuro de abajo ya recortado con la
+  // forma de la carta (el panel va justo debajo del marco y encima de la foto).
   const marco = carta.querySelector(':scope > [id="marco"]')
+  const panel = fondo.querySelector(':scope > [id="panel"]')
   if (marco) {
-    const url = capa(`<g>${ser.serializeToString(marco)}</g>`)
+    const conPanel = panel ? `<g clip-path="url(#card)">${ser.serializeToString(panel)}</g>` : ''
+    const url = capa('marco', `${conPanel}<g>${ser.serializeToString(marco)}</g>`)
     carta.replaceChild(imagen(url, vx - tx, vy - ty), marco)
+    panel?.remove()
   }
 }
 
@@ -137,7 +142,7 @@ export function cargarPlantilla(archivo: string): Promise<Document> {
       .then((texto) => {
         const doc = new DOMParser().parseFromString(texto.replace('__ESCUDO__', `${BASE}escudo.png`), 'image/svg+xml')
         try {
-          aplanar(doc)
+          aplanar(doc, archivo)
         } catch {
           // si algo falla, la carta se dibuja entera (más lenta, pero igual)
         }
