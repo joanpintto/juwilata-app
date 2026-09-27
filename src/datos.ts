@@ -27,6 +27,7 @@ export interface Datos {
   misterFicha: Mister // datos del entrenador (nombre, foto…)
   mister: EstadoMister // su carta calculada en la temporada que se está viendo
   calculosMister: Map<string, EstadoMister>
+  escudos: Map<string, string> // escudo de cada rival por nombre (de todas las temporadas)
 }
 
 export function useDatos(): Datos | undefined {
@@ -108,6 +109,7 @@ export function useDatos(): Datos | undefined {
       misterFicha: misterDe(base.equipo),
       mister: calculosMister.get(base.temporada.id)!,
       calculosMister,
+      escudos: mapaEscudos(base.rivales, orden),
     }
   }, [base])
 }
@@ -185,6 +187,18 @@ export function partidoDe(prog: Programado, partidos: Partido[]): Partido | unde
 export function proximoPartido(programados: Programado[], partidos: Partido[]): Programado | undefined {
   return programados.find((g) => !g.aplazado && !partidoDe(g, partidos))
 }
+
+/** Escudo de cada rival por su nombre normalizado; si cambia entre temporadas, manda el más reciente. */
+function mapaEscudos(rivales: Rival[], orden: Temporada[]): Map<string, string> {
+  const pos = new Map(orden.map((t, i) => [t.id, i]))
+  const m = new Map<string, string>()
+  for (const r of [...rivales].sort((a, b) => (pos.get(a.temporadaId ?? '') ?? 0) - (pos.get(b.temporadaId ?? '') ?? 0))) {
+    if (r.escudo) m.set(claveRival(r.nombre), r.escudo)
+  }
+  return m
+}
+
+export const claveRival = (s: string) => s.trim().toLocaleLowerCase('es').normalize('NFD').replace(/[\u0300-\u036f]/g, '')
 
 export function nombreRival(rivales: Rival[], id: string | null | undefined, porDefecto = 'Rival'): string {
   return rivales.find((r) => r.id === id)?.nombre ?? porDefecto

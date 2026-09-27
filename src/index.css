@@ -1016,6 +1016,7 @@ input[type='range'] { width: 100%; accent-color: var(--dorado); }
 .pastillas-forma { display: flex; gap: 5px; flex-wrap: wrap; }
 .pastillas-forma--llenas { display: grid; justify-content: space-between; }
 .pastillas-forma--llenas .pastilla-res { width: 100% !important; aspect-ratio: 1; height: auto !important; }
+.escudo-rival--foto { flex-shrink: 0; object-fit: contain; filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.45)); }
 .escudo-rival {
   display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0;
   border-radius: 12px 12px 20px 20px; border: 1px solid rgba(255, 255, 255, 0.25); color: #fff;
@@ -1352,3 +1353,13 @@ input[type='range'] { width: 100%; accent-color: var(--dorado); }
 .deltas-atributos div { display: flex; flex-direction: column; gap: 2px; }
 .deltas-atributos span { font-size: 11px; color: var(--texto-2); font-weight: 600; }
 .deltas-atributos strong { font-family: 'Barlow Condensed', sans-serif; font-size: 17px; font-weight: 700; }
+
+/* Escudos de rivales y paso al split 2 */
+.equipo-liga { display: inline-flex; align-items: center; gap: 8px; min-width: 0; }
+.equipo-liga > span { overflow: hidden; text-overflow: ellipsis; }
+.clasificacion .nombre .equipo-liga { max-width: 100%; }
+.escudo-editar { display: flex; align-items: center; gap: 16px; margin: 12px 0 4px; }
+.escudo-editar__botones { display: flex; flex-direction: column; align-items: flex-start; gap: 8px; }
+.aviso-split { display: flex; flex-direction: column; align-items: flex-start; gap: 8px; margin-bottom: 12px; }
+.aviso-split strong { font-size: 16px; }
+.aviso-split__pasos { margin: 0; padding-left: 18px; display: flex; flex-direction: column; gap: 4px; }

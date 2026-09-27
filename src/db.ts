@@ -117,6 +117,7 @@ export interface Rival {
   creado: string
   splits?: number[] // splits de liga en los que juega (sin dato = solo el 1)
   temporadaId?: string // cada temporada tiene su propia lista de equipos
+  escudo?: string // foto del escudo (imagen pequeña guardada en el móvil)
 }
 
 /** La liga se juega en 2 splits de 16 jornadas que funcionan como dos ligas distintas. */

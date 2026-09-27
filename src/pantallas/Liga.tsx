@@ -1,12 +1,13 @@
-import { useState } from 'react'
+import { useState, type ChangeEvent } from 'react'
 import { SOLO_LECTURA, SPLITS, db, nuevoId, splitDe, splitsDe, type Programado, type ResultadoLiga, type Rival } from '../db'
-import { fechaCorta, fechaLarga, ir, nombreRival, partidoDe, proximoPartido, textoJornada, type Datos } from '../datos'
+import { claveRival, fechaCorta, fechaLarga, ir, nombreRival, partidoDe, proximoPartido, textoJornada, type Datos } from '../datos'
 import { SelectorRival } from '../componentes/SelectorRival'
 import { rivalPorNombre } from '../componentes/rivales'
 import { Cabecera, Contador, Hoja, Icono, Subpestanas, Vacio } from '../componentes/ui'
 import { NOSOTROS, clasificacion, esLiga, partidosLiga, rivalesDelSplit, splitDePartido, type ModoClasificacion } from '../motor/liga'
 import { resultado } from '../motor/equipo'
 import { EscudoRival, PastillaRes } from '../componentes/Piezas'
+import { prepararEscudo } from '../componentes/escudos'
 import { BannerDeshacer } from './Partidos'
 import { avisar, confirmar } from '../componentes/dialogos'
 
@@ -191,6 +192,9 @@ export function Liga({ datos, vista }: { datos: Datos; vista?: string }) {
   const general = clasificacion(lista, datos.rivales, equipo.nombre, split)
   const jornadasOtros = [...new Set(resultadosLiga.map((r) => r.jornada))].sort((a, b) => b - a)
   const ultimaJornada = Math.max(0, ...lista.filter((p) => p.split === split).map((p) => p.jornada ?? 0))
+  // Split 1 acabado: tiene calendario y todas sus jornadas se han jugado.
+  const calendario1 = datos.programados.filter((g) => splitDe(g) === 1)
+  const split1Terminado = calendario1.length > 0 && calendario1.every((g) => partidos.some((p) => p.programadoId === g.id))
   const otroSplit = split === 1 ? 2 : 1
   const rivalesOtro = rivalesDelSplit(datos.rivales, otroSplit)
   const nombreEq = (id: string) => nombreRival(datos.rivales, id, '?')
@@ -204,6 +208,18 @@ export function Liga({ datos, vista }: { datos: Datos; vista?: string }) {
   const [menu, setMenu] = useState<Programado | null>(null)
   const [rivalEdit, setRivalEdit] = useState<Rival | null>(null)
   const [nombreEdit, setNombreEdit] = useState('')
+  const [escudoEdit, setEscudoEdit] = useState<string | undefined>(undefined)
+  const abrirRival = (r: Rival) => { setRivalEdit(r); setNombreEdit(r.nombre); setEscudoEdit(r.escudo ?? datos.escudos.get(claveRival(r.nombre))) }
+  const elegirEscudo = async (e: ChangeEvent<HTMLInputElement>) => {
+    const archivo = e.target.files?.[0]
+    e.target.value = ''
+    if (!archivo) return
+    try {
+      setEscudoEdit(await prepararEscudo(archivo))
+    } catch {
+      avisar('No se ha podido leer esa imagen.')
+    }
+  }
   const [nuevoRival, setNuevoRival] = useState('')
   const proximo = proximoPartido(datos.programados, partidos)
 
@@ -242,7 +258,7 @@ export function Liga({ datos, vista }: { datos: Datos; vista?: string }) {
   const guardarRival = async () => {
     if (!rivalEdit || !nombreEdit.trim()) return
     await db.transaction('rw', db.rivales, db.partidos, async () => {
-      await db.rivales.update(rivalEdit.id, { nombre: nombreEdit.trim() })
+      await db.rivales.update(rivalEdit.id, { nombre: nombreEdit.trim(), escudo: escudoEdit })
       await db.partidos.where('temporadaId').equals(temporada.id).modify((p) => {
         if (p.rivalId === rivalEdit.id) p.rival = nombreEdit.trim()
       })
@@ -288,19 +304,35 @@ export function Liga({ datos, vista }: { datos: Datos; vista?: string }) {
         }
       />
       <Subpestanas opciones={SUBPESTANAS_LIGA} activa={pestana} />
-      {(datos.programados.some((g) => splitDe(g) === 2) || datos.rivales.some((r) => splitsDe(r).includes(2)) || split === 2) && (
-        <div className="segmentos segmentos--split">
-          {SPLITS.map((n) => (
-            <button key={n} className={split === n ? 'activa' : ''} onClick={() => setSplit(n)}>
-              Split {n}
-            </button>
-          ))}
-        </div>
-      )}
+      <div className="segmentos segmentos--split">
+        {SPLITS.map((n) => (
+          <button key={n} className={split === n ? 'activa' : ''} onClick={() => setSplit(n)}>
+            Split {n}
+          </button>
+        ))}
+      </div>
       {!SOLO_LECTURA && pestana === 'calendario' && <BannerDeshacer />}
 
       {pestana === 'calendario' && (
         <>
+          {!SOLO_LECTURA && split === 1 && split1Terminado && !datos.programados.some((g) => splitDe(g) === 2) && (
+            <section className="tarjeta aviso-split">
+              <strong>Split 1 terminado</strong>
+              <p className="nota">Cuando empiece la segunda parte de la liga, pasa al split 2: tendrá su propia clasificación y su calendario.</p>
+              <button className="boton boton--peq" onClick={() => setSplit(2)}>Ir al split 2</button>
+            </section>
+          )}
+          {!SOLO_LECTURA && split === 2 && rivales.length === 0 && !programados.length && (
+            <section className="tarjeta aviso-split">
+              <strong>Empieza el split 2</strong>
+              <p className="nota">Es una liga nueva: clasificación a cero y calendario de la J1 a la J16. Las medias y estadísticas de los jugadores siguen sumando toda la temporada.</p>
+              <ol className="nota aviso-split__pasos">
+                <li>Pon los equipos: copia los del split 1 (los escudos van con ellos) o añádelos en Clasificación → Equipos del split 2.</li>
+                <li>Programa las jornadas con el botón +.</li>
+              </ol>
+              {rivalesOtro.length > 0 && <button className="boton boton--peq" onClick={copiarEquipos}>Copiar los {rivalesOtro.length} equipos del split 1</button>}
+            </section>
+          )}
           {proximoSplit && (
             <button className="cristal fila-proximo" onClick={() => !SOLO_LECTURA && setMenu(proximoSplit)}>
               <span className="fila-liga__j"><strong>J{proximoSplit.jornada}</strong><small>{proximoSplit.fecha ? fechaCorta(proximoSplit.fecha) : 'Sin fecha'}</small></span>
@@ -388,7 +420,12 @@ export function Liga({ datos, vista }: { datos: Datos; vista?: string }) {
                 {tabla.map((f, i) => (
                   <tr key={f.id} className={f.id === NOSOTROS ? 'nosotros' : ''}>
                     <td className="pos">{i + 1}</td>
-                    <td className="izq nombre">{f.nombre}</td>
+                    <td className="izq nombre">
+                      <span className="equipo-liga">
+                        {f.id === NOSOTROS ? <img className="escudo-rival--foto" src={`${import.meta.env.BASE_URL}escudo.png`} alt="" style={{ width: 18, height: 21 }} /> : <EscudoRival nombre={f.nombre} tam={18} />}
+                        <span>{f.nombre}</span>
+                      </span>
+                    </td>
                     <td>{f.pj}</td>
                     <td>{f.v}</td>
                     <td>{f.e}</td>
@@ -452,8 +489,8 @@ export function Liga({ datos, vista }: { datos: Datos; vista?: string }) {
           <ul className="lista-simple">
             {rivales.map((r) => (
               <li key={r.id}>
-                <span>{r.nombre}</span>
-                <button className="enlace editable" onClick={() => { setRivalEdit(r); setNombreEdit(r.nombre) }}>Editar</button>
+                <span className="equipo-liga"><EscudoRival nombre={r.nombre} tam={26} />{r.nombre}</span>
+                <button className="enlace editable" onClick={() => abrirRival(r)}>Editar</button>
               </li>
             ))}
           </ul>
@@ -514,6 +551,19 @@ export function Liga({ datos, vista }: { datos: Datos; vista?: string }) {
 
       <Hoja abierta={!!rivalEdit} onCerrar={() => setRivalEdit(null)} titulo="Editar equipo">
         <input className="input" value={nombreEdit} onChange={(e) => setNombreEdit(e.target.value)} />
+        <div className="escudo-editar">
+          {escudoEdit
+            ? <img className="escudo-rival--foto" src={escudoEdit} alt="Escudo" style={{ width: 64, height: 74 }} />
+            : <EscudoRival nombre={nombreEdit || '?'} tam={64} />}
+          <div className="escudo-editar__botones">
+            <label className="boton boton--sec boton--peq">
+              {escudoEdit ? 'Cambiar escudo' : 'Poner escudo'}
+              <input type="file" accept="image/*" hidden onChange={elegirEscudo} />
+            </label>
+            {escudoEdit && <button className="enlace enlace--peligro" onClick={() => setEscudoEdit(undefined)}>Quitar escudo</button>}
+          </div>
+        </div>
+        <p className="nota">Mejor una imagen del escudo con fondo transparente (PNG) o recortada al escudo.</p>
         <div className="dialogo__botones">
           <button className="boton boton--sec boton--texto-peligro" onClick={borrarRival}>
             {rivalEdit && splitsDe(rivalEdit).length > 1 ? `Quitar del split ${split}` : 'Borrar'}

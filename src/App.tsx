@@ -3,6 +3,7 @@ import { SOLO_LECTURA, db, inicializar, pedirAlmacenamientoPersistente, registra
 import { cargarEspectador } from './compartir/espectador'
 import { vigilarCambios } from './compartir/publicar'
 import { ir, useDatos, useRuta, type Datos } from './datos'
+import { EscudosRivales } from './componentes/escudos'
 import { DialogosRaiz, Icono } from './componentes/ui'
 import { precargarCartas } from './componentes/plantillas'
 import { Inicio } from './pantallas/Inicio'
@@ -170,7 +171,9 @@ export default function App() {
             </button>
           </div>
         )}
-        <Pantalla seg={seg} datos={datos} />
+        <EscudosRivales.Provider value={datos.escudos}>
+          <Pantalla seg={seg} datos={datos} />
+        </EscudosRivales.Provider>
       </main>
       {!enAsistente && (
         <nav className="barra">

@@ -1,4 +1,5 @@
 import type { CSSProperties } from 'react'
+import { useEscudoRival } from './escudos'
 import { colorRival, iniciales, resultado, type Res } from '../motor/equipo'
 
 // Piezas pequeñas del estilo «cristal» que se repiten en varias pantallas.
@@ -22,8 +23,10 @@ export function PastillasForma({ partidos, suave = false }: { partidos: { golesF
   )
 }
 
-/** Escudo genérico de un rival: iniciales sobre un color propio. */
+/** Escudo de un rival: su foto si se ha puesto; si no, iniciales sobre un color propio. */
 export function EscudoRival({ nombre, tam = 40 }: { nombre: string; tam?: number }) {
+  const foto = useEscudoRival(nombre)
+  if (foto) return <img className="escudo-rival--foto" src={foto} alt="" style={{ width: tam, height: tam * 1.15 }} />
   const [a, b] = colorRival(nombre)
   return (
     <span className="escudo-rival" style={{ width: tam, height: tam * 1.15, background: `linear-gradient(160deg, ${a}, ${b})`, fontSize: tam * 0.38 }} aria-hidden="true">
