@@ -1292,34 +1292,38 @@ input[type='range'] { width: 100%; accent-color: var(--dorado); }
 /* Ficha de jugador (§10): fondo dinámico del color del rango */
 .ficha-fondo {
   position: absolute; left: 0; right: 0; top: 0; height: 720px; z-index: -1; pointer-events: none; overflow: hidden;
-  background: radial-gradient(55% 34% at 50% 30%, rgba(var(--luz), 0.34), rgba(var(--luz), 0) 70%);
+  background: radial-gradient(60% 36% at 50% 28%, rgba(var(--luz), 0.16), rgba(var(--luz), 0) 70%);
   -webkit-mask-image: linear-gradient(180deg, #000 60%, transparent); mask-image: linear-gradient(180deg, #000 60%, transparent);
 }
 .ficha-fondo span { position: absolute; border-radius: 50%; background: rgba(var(--luz), 0.85); box-shadow: 0 0 6px rgba(var(--luz), 0.9); animation: particula 6s ease-in-out infinite; }
 @keyframes particula { 0%, 100% { transform: translateY(0); opacity: 0.25; } 50% { transform: translateY(-14px); opacity: 0.9; } }
-/* Luz de la carta en la ficha: halo suave + resplandores que se mueven despacio */
+/* Luz de la carta en la ficha: aura suave que respira + resplandores que orbitan
+   despacio alrededor de la carta. Todo se desvanece en óvalo, sin bordes. */
 .ficha-carta--luz { position: relative; isolation: isolate; }
-.ficha-carta--luz::before {
-  content: ''; position: absolute; z-index: -1; pointer-events: none; left: -18%; right: -18%; top: -20%; bottom: -18%;
-  background: radial-gradient(closest-side, rgba(var(--luz), 0.55), rgba(var(--luz), 0.38) 55%, rgba(var(--luz), 0.12) 82%, rgba(var(--luz), 0) 100%);
-  animation: resplandor 6s ease-in-out infinite;
-}
-@keyframes resplandor { 0%, 100% { opacity: 0.8; transform: scale(0.97); } 50% { opacity: 1; transform: scale(1.03); } }
 .luces-carta {
-  position: absolute; z-index: -2; pointer-events: none; left: 50%; width: 100vw; max-width: 520px; top: -30%; bottom: -26%; transform: translateX(-50%); overflow: hidden;
-  -webkit-mask-image: linear-gradient(180deg, transparent, #000 18%, #000 82%, transparent); mask-image: linear-gradient(180deg, transparent, #000 18%, #000 82%, transparent);
+  position: absolute; z-index: -1; pointer-events: none; left: 50%; top: -14%; bottom: -12%; width: 100vw; max-width: 520px; transform: translateX(-50%); overflow: hidden;
+  -webkit-mask-image: radial-gradient(ellipse 50% 50% at 50% 48%, #000 55%, transparent 100%); mask-image: radial-gradient(ellipse 50% 50% at 50% 48%, #000 55%, transparent 100%);
 }
-.luces-carta i { position: absolute; border-radius: 50%; background: radial-gradient(closest-side, rgba(var(--luz), 0.46), rgba(var(--luz), 0.18) 55%, rgba(var(--luz), 0) 100%); will-change: transform; }
-.luces-carta i:nth-child(1) { width: 70%; aspect-ratio: 1; left: -18%; top: 4%; animation: deriva1 17s ease-in-out infinite alternate; }
-.luces-carta i:nth-child(2) { width: 64%; aspect-ratio: 1; right: -16%; top: 26%; animation: deriva2 21s ease-in-out infinite alternate; }
-.luces-carta i:nth-child(3) { width: 80%; aspect-ratio: 1.3; left: 10%; top: -12%; animation: deriva3 19s ease-in-out infinite alternate; }
-.luces-carta i:nth-child(4) { width: 84%; aspect-ratio: 1.3; left: 8%; bottom: -10%; animation: deriva4 23s ease-in-out infinite alternate; }
-.luces-carta i:nth-child(5) { width: 46%; aspect-ratio: 1; left: 2%; bottom: 14%; opacity: 0.8; animation: deriva2 15s ease-in-out -6s infinite alternate-reverse; }
-@keyframes deriva1 { from { transform: translate(0, 0) scale(1); } to { transform: translate(18%, 22%) scale(1.15); } }
-@keyframes deriva2 { from { transform: translate(0, 0) scale(1.1); } to { transform: translate(-20%, -18%) scale(0.9); } }
-@keyframes deriva3 { from { transform: translate(-8%, 0) scale(0.95); } to { transform: translate(10%, 16%) scale(1.1); } }
-@keyframes deriva4 { from { transform: translate(8%, 0) scale(1.05); } to { transform: translate(-10%, -14%) scale(0.9); } }
-@media (prefers-reduced-motion: reduce) { .ficha-fondo span, .ficha-carta--luz::before, .luces-carta i { animation: none; } }
+.luces-carta i { position: absolute; left: 50%; top: 48%; border-radius: 50%; will-change: transform; }
+/* Aura central (detrás de la carta) */
+.luces-carta i:nth-child(1) {
+  width: 92%; aspect-ratio: 0.82; translate: -50% -50%;
+  background: radial-gradient(closest-side, rgba(var(--luz), 0.5), rgba(var(--luz), 0.24) 55%, rgba(var(--luz), 0) 100%);
+  animation: aura 7s ease-in-out infinite;
+}
+/* Resplandores en órbita */
+.luces-carta i:nth-child(n + 2) {
+  width: 58%; aspect-ratio: 1; margin: -29% 0 0 -29%;
+  background: radial-gradient(closest-side, rgba(var(--luz), 0.42), rgba(var(--luz), 0.16) 50%, rgba(var(--luz), 0) 100%);
+}
+.luces-carta i:nth-child(2) { --r: 42vw; animation: orbita 22s linear infinite, latido 5s ease-in-out infinite; }
+.luces-carta i:nth-child(3) { --r: 38vw; animation: orbita 28s linear -9s infinite reverse, latido 6.5s ease-in-out -2s infinite; }
+.luces-carta i:nth-child(4) { --r: 46vw; width: 46%; margin: -23% 0 0 -23%; animation: orbita 34s linear -20s infinite, latido 8s ease-in-out -4s infinite; }
+.luces-carta i:nth-child(5) { --r: 34vw; width: 40%; margin: -20% 0 0 -20%; animation: orbita 18s linear -5s infinite reverse, latido 4.5s ease-in-out -1s infinite; }
+@keyframes aura { 0%, 100% { opacity: 0.75; scale: 0.94; } 50% { opacity: 1; scale: 1.06; } }
+@keyframes orbita { from { transform: rotate(0deg) translateX(var(--r)) scaleY(1.25); } to { transform: rotate(360deg) translateX(var(--r)) scaleY(1.25); } }
+@keyframes latido { 0%, 100% { opacity: 0.55; scale: 0.9; } 50% { opacity: 1; scale: 1.12; } }
+@media (prefers-reduced-motion: reduce) { .ficha-fondo span, .luces-carta i { animation: none; } }
 .ficha-cab { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
 .ficha-cab .selector-temporada { flex: 0 1 auto; }
 .disenos--cristal .disenos__lista button { padding: 3px; border-radius: 8px; opacity: 0.7; }
