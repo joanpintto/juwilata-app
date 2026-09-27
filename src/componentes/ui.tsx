@@ -25,6 +25,16 @@ const TRAZOS: Record<string, ReactNode> = {
     </>
   ),
   atras: <path d="M15 5 8 12l7 7" />,
+  persona: (
+    <>
+      <circle cx="12" cy="8" r="4" />
+      <path d="M4 21c1-4 5-6 8-6s7 2 8 6" />
+    </>
+  ),
+  trofeo: <path d="M7 4h10v4a5 5 0 0 1-10 0V4ZM12 13v4M8 21h8M17 5h3v2a3 3 0 0 1-3 3M7 5H4v2a3 3 0 0 0 3 3" />,
+  barras: <path d="M4 20V10M10 20V4M16 20v-7M22 20H2" />,
+  calendario: <path d="M4 6h16v14H4ZM4 10h16M8 3.5v4M16 3.5v4" />,
+  descarga: <path d="M12 4v11m0 0-4.5-4.5M12 15l4.5-4.5M5 19.5h14" />,
   mas: <path d="M12 5v14M5 12h14" />,
   menos: <path d="M5 12h14" />,
   puntos: (

@@ -1,5 +1,5 @@
 import { useState, type ReactNode } from 'react'
-import { SPLITS, copiaAutomatica, db, nuevoId, splitDe, type Actuacion, type EstadoConvocatoria, type Partido, type Programado } from '../db'
+import { SPLITS, copiaAutomatica, db, nuevoId, splitDe, type Actuacion, type EstadoConvocatoria, type GolPartido, type Partido, type Programado } from '../db'
 import { colorNota, conSigno, fechaCorta, fmt1, fmt2, hoy, ir, nombreRival, nombreVisible, partidoDe, type Datos } from '../datos'
 import { SelectorRival } from '../componentes/SelectorRival'
 import { rivalPorNombre } from '../componentes/rivales'
@@ -12,7 +12,7 @@ import { disenoDe } from '../componentes/disenos'
 import { Contador, Icono } from '../componentes/ui'
 import { avisar, confirmar } from '../componentes/dialogos'
 
-const PASOS = ['Datos', 'Resultado', 'Convocatoria', 'Minutos', 'Acciones', 'Resumen', 'Confirmar']
+const PASOS = ['Datos', 'Resultado', 'Convocatoria', 'Minutos', 'Acciones', 'Goles', 'Resumen', 'Confirmar']
 
 const ESTADOS: { id: EstadoConvocatoria; texto: string }[] = [
   { id: 'titular', texto: 'Titular' },
@@ -95,7 +95,7 @@ export function RegistroPartido({ datos, id, programadoId }: { datos: Datos; id?
 
   // Simulación exacta: se reproduce la temporada con este partido incluido.
   const simulacion = (() => {
-    if (paso < 5) return null
+    if (paso < 6) return null
     const final: Partido = { ...p, nominados: candidatos, mvpId: mvpValido }
     const otros = partidos.filter((x) => x.id !== p.id)
     const mapa = new Map(configs.map((c) => [c.version, c.datos]))
@@ -112,6 +112,24 @@ export function RegistroPartido({ datos, id, programadoId }: { datos: Datos; id?
     if (paso === 3 && jugaron.length === 0) return 'Nadie ha jugado minutos.'
     return null
   }
+
+  /** Una fila por gol, a partir de las acciones y del marcador (se conservan minutos y asistencias ya puestos). */
+  const prepararGoles = () => {
+    const antes = [...(p.goles ?? [])]
+    const tomar = (lado: GolPartido['lado'], jugadorId: string | null): GolPartido => {
+      const i = antes.findIndex((g) => g.lado === lado && g.jugadorId === jugadorId)
+      if (i >= 0) return antes.splice(i, 1)[0]
+      return { id: nuevoId(), lado, jugadorId, asistenciaId: null, minuto: null }
+    }
+    const lista: GolPartido[] = []
+    for (const a of jugaron) for (let k = 0; k < (a.acciones.gol ?? 0); k++) lista.push(tomar('favor', a.jugadorId))
+    for (let k = golesJugadores; k < p.golesFavor; k++) lista.push(tomar('favor', null))
+    for (let k = 0; k < p.golesContra; k++) lista.push(tomar('contra', null))
+    setP((x) => ({ ...x, goles: lista }))
+  }
+  const hayGoles = p.golesFavor + p.golesContra > 0
+  const setGol = (gid: string, cambio: Partial<GolPartido>) =>
+    setP((x) => ({ ...x, goles: (x.goles ?? []).map((g) => (g.id === gid ? { ...g, ...cambio } : g)) }))
 
   const siguiente = async () => {
     const error = validar()
@@ -142,6 +160,15 @@ export function RegistroPartido({ datos, id, programadoId }: { datos: Datos; id?
         cancelar: 'Revisar',
       })
       if (!ok) return
+    }
+    if (paso === 4) {
+      prepararGoles()
+      // Sin goles en el partido, el paso de los minutos de gol se salta.
+      if (!hayGoles) {
+        setPaso(6)
+        window.scrollTo(0, 0)
+        return
+      }
     }
     setPaso((x) => Math.min(PASOS.length - 1, x + 1))
     window.scrollTo(0, 0)
@@ -449,7 +476,43 @@ export function RegistroPartido({ datos, id, programadoId }: { datos: Datos; id?
         </>
       )}
 
-      {paso === 5 && simulacion && (
+      {paso === 5 && (
+        <>
+          <p className="nota">Apunta el minuto de cada gol (y quién dio la asistencia). Si no lo sabes, déjalo en blanco.</p>
+          <ul className="reg-lista">
+            {(p.goles ?? []).map((g) => (
+              <li key={g.id} className={`reg-gol ${g.lado === 'contra' ? 'reg-gol--rival' : ''}`}>
+                <label className="reg-gol__minuto">
+                  <input
+                    inputMode="numeric"
+                    value={g.minuto ?? ''}
+                    placeholder="—"
+                    aria-label="Minuto"
+                    onChange={(e) => {
+                      const v = e.target.value.replace(/\D/g, '').slice(0, 3)
+                      setGol(g.id, { minuto: v === '' ? null : Math.min(duracion + 15, Number(v)) })
+                    }}
+                  />
+                  <span>′</span>
+                </label>
+                <div className="reg-gol__texto">
+                  <strong>{g.lado === 'contra' ? `Gol de ${p.rival || 'el rival'}` : g.jugadorId ? nombreVisible(jugador(g.jugadorId)) : 'En propia del rival'}</strong>
+                  {g.lado === 'favor' && (
+                    <select className="select select--peq" value={g.asistenciaId ?? ''} onChange={(e) => setGol(g.id, { asistenciaId: e.target.value || null })} aria-label="Asistencia">
+                      <option value="">Sin asistencia</option>
+                      {jugaron.filter((a) => a.jugadorId !== g.jugadorId).sort((x, y) => (y.acciones.asistencia ?? 0) - (x.acciones.asistencia ?? 0)).map((a) => (
+                        <option key={a.jugadorId} value={a.jugadorId}>Asistencia de {nombreVisible(jugador(a.jugadorId))}</option>
+                      ))}
+                    </select>
+                  )}
+                </div>
+              </li>
+            ))}
+          </ul>
+        </>
+      )}
+
+      {paso === 6 && simulacion && (
         <>
           <section className="tarjeta">
             <h2>MVP del partido</h2>
@@ -496,7 +559,7 @@ export function RegistroPartido({ datos, id, programadoId }: { datos: Datos; id?
         </>
       )}
 
-      {paso === 6 && (
+      {paso === 7 && (
         <section className="tarjeta confirmar">
           <div className="marcador">
             <span>{p.local ? equipo.nombre : p.rival}</span>
@@ -526,7 +589,7 @@ export function RegistroPartido({ datos, id, programadoId }: { datos: Datos; id?
 
       <div className="asistente__pie">
         {paso > 0 && (
-          <button className="boton boton--sec" onClick={() => setPaso(paso - 1)}>
+          <button className="boton boton--sec" onClick={() => setPaso(paso === 6 && !hayGoles ? 4 : paso - 1)}>
             Atrás
           </button>
         )}

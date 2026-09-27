@@ -15,8 +15,8 @@ export default defineConfig({
         short_name: 'Juwilata',
         description: 'Cartas evolutivas del Juwilata United',
         lang: 'es',
-        theme_color: '#161617',
-        background_color: '#161617',
+        theme_color: '#000000',
+        background_color: '#000000',
         display: 'standalone',
         orientation: 'portrait',
         icons: [
@@ -26,7 +26,7 @@ export default defineConfig({
         ],
       },
       workbox: {
-        globPatterns: ['**/*.{js,css,html,png,svg,woff2}'],
+        globPatterns: ['**/*.{js,css,html,png,jpg,svg,woff2}'],
         // El recorte de fondo (modelo + motor, ~28 MB) no se descarga al instalar:
         // solo la primera vez que se usa, y luego queda guardado para usarlo sin conexión.
         globIgnores: ['**/recorte/**'],

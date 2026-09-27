@@ -64,8 +64,10 @@ export function partidosLiga(partidos: Partido[], programados: Programado[], res
 /** Equipos de la liga que juegan un split. */
 export const rivalesDelSplit = (rivales: Rival[], split: number) => rivales.filter((r) => splitsDe(r).includes(split))
 
-/** Clasificación de un split (cada split es una liga distinta). */
-export function clasificacion(lista: PartidoLiga[], rivales: Rival[], nombreEquipo: string, split: number, hastaJornada?: number): FilaClasificacion[] {
+export type ModoClasificacion = 'general' | 'local' | 'visitante'
+
+/** Clasificación de un split (cada split es una liga distinta). Local/visitante: solo los partidos en casa / fuera de cada equipo. */
+export function clasificacion(lista: PartidoLiga[], rivales: Rival[], nombreEquipo: string, split: number, hastaJornada?: number, modo: ModoClasificacion = 'general'): FilaClasificacion[] {
   rivales = rivalesDelSplit(rivales, split)
   lista = lista.filter((p) => p.split === split)
   const filas = new Map<string, FilaClasificacion>()
@@ -84,22 +86,19 @@ export function clasificacion(lista: PartidoLiga[], rivales: Rival[], nombreEqui
   const incluidos = lista
     .filter((p) => hastaJornada === undefined || p.jornada === null || p.jornada <= hastaJornada)
     .sort((a, b) => (a.jornada ?? 0) - (b.jornada ?? 0))
+  const sumar = (f: FilaClasificacion, gf: number, gc: number) => {
+    f.pj++
+    f.gf += gf
+    f.gc += gc
+    if (gf > gc) { f.v++; f.pts += 3; f.forma.push('V') }
+    else if (gf < gc) { f.d++; f.forma.push('D') }
+    else { f.e++; f.pts++; f.forma.push('E') }
+  }
   for (const p of incluidos) {
     const l = fila(p.localId)
     const v = fila(p.visitanteId)
-    l.pj++; v.pj++
-    l.gf += p.golesLocal; l.gc += p.golesVisitante
-    v.gf += p.golesVisitante; v.gc += p.golesLocal
-    if (p.golesLocal > p.golesVisitante) {
-      l.v++; l.pts += 3; v.d++
-      l.forma.push('V'); v.forma.push('D')
-    } else if (p.golesLocal < p.golesVisitante) {
-      v.v++; v.pts += 3; l.d++
-      v.forma.push('V'); l.forma.push('D')
-    } else {
-      l.e++; v.e++; l.pts++; v.pts++
-      l.forma.push('E'); v.forma.push('E')
-    }
+    if (modo !== 'visitante') sumar(l, p.golesLocal, p.golesVisitante)
+    if (modo !== 'local') sumar(v, p.golesVisitante, p.golesLocal)
   }
   return [...filas.values()]
     .map((f) => ({ ...f, forma: f.forma.slice(-5) }))

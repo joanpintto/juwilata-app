@@ -1,13 +1,8 @@
 import { useLiveQuery } from 'dexie-react-hooks'
-import { SOLO_LECTURA, db } from '../db'
-import { SUBPESTANAS_PARTIDOS, fechaCorta, ir, nombreVisible, textoJornada, type Datos } from '../datos'
-import { Cabecera, Icono, Subpestanas, Vacio } from '../componentes/ui'
+import { db } from '../db'
+import { Icono } from '../componentes/ui'
 import { avisar, confirmar } from '../componentes/dialogos'
 
-
-function resultado(gf: number, gc: number): 'V' | 'E' | 'D' {
-  return gf > gc ? 'V' : gf === gc ? 'E' : 'D'
-}
 
 async function deshacerUltimo(): Promise<void> {
   const d = await db.deshacer.get('ultimo')
@@ -32,59 +27,5 @@ export function BannerDeshacer() {
         <Icono nombre="deshacer" tam={16} /> Deshacer
       </button>
     </div>
-  )
-}
-
-export function Partidos({ datos }: { datos: Datos }) {
-  const { calculo, jugadores, equipo, programados } = datos
-  const lista = [...calculo.partidos].reverse()
-  const v = calculo.partidos.filter((r) => r.partido.golesFavor > r.partido.golesContra).length
-  const e = calculo.partidos.filter((r) => r.partido.golesFavor === r.partido.golesContra).length
-  const d = calculo.partidos.length - v - e
-  const jornadaDe = (id: string | null | undefined) => {
-    const g = id ? programados.find((x) => x.id === id) : null
-    return g ? `${textoJornada(g, programados)} · ` : ''
-  }
-
-  return (
-    <>
-      <Cabecera
-        titulo="Partidos"
-        sub={`${calculo.partidos.length} de ${equipo.partidosTemporada} · ${v}V ${e}E ${d}D`}
-        acciones={
-          <button className="boton boton--peq editable" onClick={() => ir('/partido/nuevo')} disabled={!jugadores.length}>
-            <Icono nombre="mas" tam={18} /> Nuevo
-          </button>
-        }
-      />
-      <Subpestanas opciones={SUBPESTANAS_PARTIDOS} activa="mis" />
-      {!SOLO_LECTURA && <BannerDeshacer />}
-
-      {!jugadores.length && <Vacio titulo="Primero, la plantilla" texto="Añade jugadores antes de registrar el primer partido." accion={<button className="boton editable" onClick={() => ir('/jugador/nuevo')}>Añadir jugador</button>} />}
-      {jugadores.length > 0 && !lista.length && (
-        <Vacio titulo="Sin partidos todavía" texto="Registra el primer partido de la temporada: resultado, convocatoria, minutos y acciones." accion={<button className="boton editable" onClick={() => ir('/partido/nuevo')}>Registrar partido</button>} />
-      )}
-
-      <ul className="lista-partidos">
-        {lista.map(({ partido: p }) => {
-          const r = resultado(p.golesFavor, p.golesContra)
-          const mvp = p.mvpId ? jugadores.find((j) => j.id === p.mvpId) : null
-          return (
-            <li key={p.id}>
-              <button onClick={() => ir(`/partido/${p.id}`)}>
-                <span className={`res res--${r}`}>{r}</span>
-                <div className="lista-partidos__texto">
-                  <strong>
-                    {jornadaDe(p.programadoId)}{p.local ? 'vs' : 'en'} {p.rival}
-                  </strong>
-                  <span>{fechaCorta(p.fecha)} · {p.competicion}{mvp ? ` · ⭐ ${nombreVisible(mvp)}` : ''}</span>
-                </div>
-                <span className="lista-partidos__marcador">{p.golesFavor}-{p.golesContra}</span>
-              </button>
-            </li>
-          )
-        })}
-      </ul>
-    </>
   )
 }

@@ -210,7 +210,7 @@ export interface MiniCartaProps {
   media: number
   diseno: string
   config: Config
-  ancho?: number
+  ancho?: number | string
 }
 
 /** Miniatura real de la carta activa (§7.3). */
@@ -261,7 +261,7 @@ export function CartaMister(p: CartaMisterProps) {
   )
 }
 
-export function MiniCartaMister({ ancho = 70, ...p }: { mister: Mister; media: number; diseno: string; ancho?: number }) {
+export function MiniCartaMister({ ancho = 70, ...p }: { mister: Mister; media: number; diseno: string; ancho?: number | string }) {
   return (
     <CartaBase
       {...deMister(p.mister)}

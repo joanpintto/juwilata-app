@@ -150,6 +150,15 @@ export interface ResultadoLiga {
   split?: number
 }
 
+/** Un gol del partido: nuestro (con autor si se sabe) o del rival. */
+export interface GolPartido {
+  id: string
+  lado: 'favor' | 'contra'
+  jugadorId: string | null // null: gol en propia del rival o sin autor
+  asistenciaId: string | null
+  minuto: number | null
+}
+
 export interface Partido {
   id: string
   temporadaId: string
@@ -166,6 +175,7 @@ export interface Partido {
   mvpId: string | null
   nominados: string[]
   misterDirigio?: boolean // sin dato = sí (§20.1)
+  goles?: GolPartido[] // minuto de cada gol (§10 Detalle de partido); sin dato en partidos antiguos
   configVersion: number
   creado: string
   editado: string | null

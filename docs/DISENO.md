@@ -762,3 +762,25 @@ Las Fases 1-4 de la app ya están hechas; el míster se construye encima en dos 
   - Cantera: 3 jugadores distintos suben de rango en partidos que dirigió en la misma temporada.
   - Campeón y Temporada invicta son los mismos títulos del equipo, también en su vitrina.
   - Primera MOTM, Primer TOTY y los ascensos a Consolidado, Élite y Leyenda del banquillo.
+
+---
+
+## 21. Concreciones del diseño «cristal» (construido)
+
+- **Tema:** fondo degradado granate → negro fijo sobre negro puro; tarjetas, pastillas, botones, pestañas, hojas y barra de navegación de cristal (§3). Las pantallas que no tienen maqueta propia (Premios, Ajustes, Avanzado, Copias, Registro, Evoluciones, Míster…) heredan el mismo cristal.
+- **Navegación:** Inicio · Plantilla · Liga · Estadísticas · Más. Las rutas antiguas siguen funcionando (`#/partidos` abre Liga; `#/plantilla/jugadores`, Suplentes). En tablet y ordenador la barra flotante pasa a ser una columna de cristal a la izquierda.
+- **Liga:** Calendario con el próximo partido, «Jugados» (todos nuestros partidos de la temporada, también amistosos y copa; los de liga, del split elegido) y «Próximos» (pendientes o aplazados). El botón «+» abre: registrar partido, programar jornada o resultado de otros equipos. Clasificación General / Local / Visitante (local o visitante: solo los partidos en casa o fuera de cada equipo), y debajo, como antes, los resultados de otros equipos y la lista de equipos del split. El selector de split sale en cuanto hay algo del split 2.
+- **Escudos de los rivales:** como no tenemos sus escudos, cada rival lleva sus iniciales sobre un color propio (siempre el mismo para cada nombre).
+- **Formación:**
+  - Posiciones exactas de la maqueta para 1-3-2-1 (campo de 358×500). Los otros tres esquemas usan la misma geometría adaptada y sus propios enlaces (12 en cada uno), y el % se calcula sobre los enlaces que existen.
+  - **Partidos juntos = partidos de todas las temporadas en los que los dos jugaron minutos.** (Si se prefiere solo la temporada actual, es un cambio pequeño.)
+  - La peana muestra la sigla del rol del jugador si juega en su posición (MCO, DC…), y la del hueco si no (LAT, DFC, MC, DC).
+  - Tocar un jugador abre su ficha; arrastrar lo mueve. La formación se cambia con la pastilla de arriba («1-3-2-1 ⌄»). «Convocar» abre el registro del próximo partido.
+  - **Suplentes:** los que no están en el once, con «Al campo» (se elige el hueco) y «Añadir jugador». No se muestra «Disponible / Baja» porque la app no guarda lesiones.
+  - **Estadísticas del once:** media del once, rangos, química (verdes, naranjas, rojas, conexión más fuerte y más débil), media por línea, forma (nota media de los 5 últimos partidos), goles, asistencias y MVPs, y pierna buena. No se muestra la comparación con el «once habitual» (no hay dato).
+- **Estadísticas:** el selector de temporada cambia la temporada que se ve en toda la app. Colores de la gráfica de los 3 que más suben: #d4508f, #3a8fd4 y #bd8428 (validados, con el nombre al final de cada línea).
+- **Más:** Estadísticas del club (todas las temporadas), Récords (de toda la historia), Historia de temporadas, Evoluciones y comparador (la antigua pestaña), Míster, Copias y Ajustes. «Títulos» cuenta los splits ganados.
+- **Minuto de cada gol:** el registro tiene un paso nuevo, «Goles», entre Acciones y Resumen, con una fila por gol (se generan solas a partir de los goles apuntados y del marcador; los que no tienen autor salen como «en propia del rival»). Se apunta el minuto y la asistencia; se puede dejar en blanco. Si el partido acaba 0-0, el paso se salta. Los partidos antiguos muestran los goleadores sin minuto.
+- **Detalle del partido:** no se guarda el nombre del campo, así que la cabecera pone «En casa / Fuera». Suplentes que jugaron: minuto de entrada = duración del partido − minutos jugados.
+- **Inicio:** si hay sugerencias de premios pendientes (IF, POTM, MOTM) se muestran entre la forma y el último partido. La vitrina enseña los 4 últimos logros del equipo; tocando el contador se ven todos.
+- **Maquetas:** las PNG de `design/pantallas/` no se suben al repositorio (salen jugadores reales); `fuente/` y `design/assets/` sí. La foto del estadio se usa en la app como `public/estadio.jpg` (130 KB).

@@ -1,14 +1,22 @@
 import { useState } from 'react'
 import { SOLO_LECTURA, SPLITS, db, nuevoId, splitDe, splitsDe, type Programado, type ResultadoLiga, type Rival } from '../db'
-import { SUBPESTANAS_PARTIDOS, fechaCorta, ir, nombreRival, partidoDe, proximoPartido, type Datos } from '../datos'
+import { fechaCorta, fechaLarga, ir, nombreRival, partidoDe, proximoPartido, textoJornada, type Datos } from '../datos'
 import { SelectorRival } from '../componentes/SelectorRival'
 import { rivalPorNombre } from '../componentes/rivales'
 import { Cabecera, Contador, Hoja, Icono, Subpestanas, Vacio } from '../componentes/ui'
-import { NOSOTROS, clasificacion, partidosLiga, rivalesDelSplit } from '../motor/liga'
+import { NOSOTROS, clasificacion, esLiga, partidosLiga, rivalesDelSplit, splitDePartido, type ModoClasificacion } from '../motor/liga'
+import { resultado } from '../motor/equipo'
+import { EscudoRival, PastillaRes } from '../componentes/Piezas'
+import { BannerDeshacer } from './Partidos'
 import { avisar, confirmar } from '../componentes/dialogos'
 
-// Liga: clasificación, calendario de nuestros partidos, resultados entre otros
-// equipos y lista de equipos de la liga.
+// Liga (§10): Calendario (próximo, jugados y próximos) y Clasificación (general,
+// local y visitante), con los resultados entre otros equipos y la lista de equipos.
+
+const SUBPESTANAS_LIGA = [
+  { id: 'calendario', texto: 'Calendario', ruta: '/liga' },
+  { id: 'clasificacion', texto: 'Clasificación', ruta: '/liga/clasificacion' },
+]
 
 interface Borrador {
   id: string | null
@@ -163,8 +171,11 @@ function FormResultado({ inicial, rivales, temporadaId, split, onCerrar }: { ini
   )
 }
 
-export function Liga({ datos }: { datos: Datos }) {
+export function Liga({ datos, vista }: { datos: Datos; vista?: string }) {
   const { partidos, temporada, equipo } = datos
+  const pestana = vista === 'clasificacion' ? 'clasificacion' : 'calendario'
+  const [modo, setModo] = useState<ModoClasificacion>('general')
+  const [mas, setMas] = useState(false)
   // Cada split es una liga distinta: todo lo de esta pantalla se filtra por el elegido.
   const [split, setSplitLocal] = useState(equipo.splitActual ?? 1)
   const setSplit = (n: number) => {
@@ -176,7 +187,8 @@ export function Liga({ datos }: { datos: Datos }) {
   const rivales = rivalesDelSplit(datos.rivales, split)
   const [formRes, setFormRes] = useState<BorradorResultado | null>(null)
   const lista = partidosLiga(partidos, datos.programados, datos.resultadosLiga, datos.rivales)
-  const tabla = clasificacion(lista, datos.rivales, equipo.nombre, split)
+  const tabla = clasificacion(lista, datos.rivales, equipo.nombre, split, undefined, modo)
+  const general = clasificacion(lista, datos.rivales, equipo.nombre, split)
   const jornadasOtros = [...new Set(resultadosLiga.map((r) => r.jornada))].sort((a, b) => b - a)
   const ultimaJornada = Math.max(0, ...lista.filter((p) => p.split === split).map((p) => p.jornada ?? 0))
   const otroSplit = split === 1 ? 2 : 1
@@ -251,28 +263,110 @@ export function Liga({ datos }: { datos: Datos }) {
     setRivalEdit(null)
   }
 
+  const nuestra = general.findIndex((f) => f.id === NOSOTROS)
+  const filaNuestra = general[nuestra]
+  const jugados = [...partidos]
+    .filter((p) => !esLiga(p.competicion) || splitDePartido(p, datos.programados) === split)
+    .sort((x, y) => y.fecha.localeCompare(x.fecha) || y.creado.localeCompare(x.creado))
+  const pendientes = programados.filter((g) => !partidoDe(g, partidos) && g.id !== proximo?.id)
+  const proximoSplit = proximo && splitDe(proximo) === split ? proximo : null
+  const jornadaDe = (id: string | null | undefined) => {
+    const g = id ? datos.programados.find((x) => x.id === id) : null
+    return g ? textoJornada(g, datos.programados) : null
+  }
+  const campo = (local: boolean) => (local ? 'Casa' : 'Fuera')
+
   return (
     <>
       <Cabecera
-        titulo="Partidos"
-        sub="Liga"
+        titulo="Liga"
+        sub={`Temporada ${temporada.nombre}${filaNuestra && filaNuestra.pj ? ` · ${nuestra + 1}º con ${filaNuestra.pts} puntos` : ''}`}
         acciones={
-          <button className="boton boton--peq editable" onClick={() => setForm(borradorNuevo(programados))}>
-            <Icono nombre="mas" tam={18} /> Programar
+          <button className="boton-icono editable" onClick={() => setMas(true)} aria-label="Añadir">
+            <Icono nombre="mas" />
           </button>
         }
       />
-      <Subpestanas opciones={SUBPESTANAS_PARTIDOS} activa="liga" />
-      <div className="segmentos segmentos--split">
-        {SPLITS.map((n) => (
-          <button key={n} className={split === n ? 'activa' : ''} onClick={() => setSplit(n)}>
-            Split {n}
-          </button>
+      <Subpestanas opciones={SUBPESTANAS_LIGA} activa={pestana} />
+      {(datos.programados.some((g) => splitDe(g) === 2) || datos.rivales.some((r) => splitsDe(r).includes(2)) || split === 2) && (
+        <div className="segmentos segmentos--split">
+          {SPLITS.map((n) => (
+            <button key={n} className={split === n ? 'activa' : ''} onClick={() => setSplit(n)}>
+              Split {n}
+            </button>
+          ))}
+        </div>
+      )}
+      {!SOLO_LECTURA && pestana === 'calendario' && <BannerDeshacer />}
+
+      {pestana === 'calendario' && (
+        <>
+          {proximoSplit && (
+            <button className="cristal fila-proximo" onClick={() => !SOLO_LECTURA && setMenu(proximoSplit)}>
+              <span className="fila-liga__j"><strong>J{proximoSplit.jornada}</strong><small>{proximoSplit.fecha ? fechaCorta(proximoSplit.fecha) : 'Sin fecha'}</small></span>
+              <EscudoRival nombre={nombreRival(datos.rivales, proximoSplit.rivalId)} tam={40} />
+              <span className="fila-liga__texto">
+                <strong>{nombreRival(datos.rivales, proximoSplit.rivalId)}</strong>
+                <small>{campo(proximoSplit.local)}{proximoSplit.fecha ? ` · ${fechaLarga(proximoSplit.fecha).split(',')[0]}` : ''}{proximoSplit.hora ? ` ${proximoSplit.hora}` : ''} · Próximo</small>
+              </span>
+              <Icono nombre="flecha" tam={18} />
+            </button>
+          )}
+
+          {!jugados.length && !programados.length ? (
+            <Vacio
+              titulo="Sin partidos todavía"
+              texto="Programa las jornadas del calendario o registra directamente un partido."
+              accion={<button className="boton editable" onClick={() => setForm(borradorNuevo(programados))}>Programar la jornada 1</button>}
+            />
+          ) : null}
+
+          {jugados.length > 0 && (
+            <>
+              <h3 className="titulo-seccion">Jugados</h3>
+              <section className="tarjeta lista-liga">
+                {jugados.map((p) => {
+                  const j = jornadaDe(p.programadoId)
+                  return (
+                    <button key={p.id} onClick={() => ir(`/partido/${p.id}`)}>
+                      <span className="fila-liga__j"><strong>{j ?? (esLiga(p.competicion) ? '·' : p.competicion.slice(0, 5))}</strong><small>{fechaCorta(p.fecha)}</small></span>
+                      <EscudoRival nombre={p.rival} tam={40} />
+                      <span className="fila-liga__texto"><strong>{p.rival}</strong><small>{campo(p.local)}</small></span>
+                      <span className="fila-liga__marcador">{p.golesFavor} – {p.golesContra}</span>
+                      <PastillaRes r={resultado(p)} suave />
+                    </button>
+                  )
+                })}
+              </section>
+            </>
+          )}
+
+          {pendientes.length > 0 && (
+            <>
+              <h3 className="titulo-seccion">Próximos</h3>
+              <section className="tarjeta lista-liga">
+                {pendientes.map((g) => (
+                  <button key={g.id} onClick={() => !SOLO_LECTURA && setMenu(g)}>
+                    <span className="fila-liga__j"><strong>J{g.jornada}</strong><small>{g.fecha ? fechaCorta(g.fecha) : 'Sin fecha'}</small></span>
+                    <EscudoRival nombre={nombreRival(datos.rivales, g.rivalId)} tam={40} />
+                    <span className="fila-liga__texto"><strong>{nombreRival(datos.rivales, g.rivalId)}</strong><small>{campo(g.local)}{g.hora ? ` · ${g.hora}` : ''}{g.competicion !== 'Liga' ? ` · ${g.competicion}` : ''}</small></span>
+                    <span className="fila-liga__estado">{g.aplazado ? 'Aplazado' : 'Pendiente'}</span>
+                  </button>
+                ))}
+              </section>
+            </>
+          )}
+        </>
+      )}
+
+      {pestana === 'clasificacion' && (
+      <>
+      <div className="chips chips--cristal">
+        {(['general', 'local', 'visitante'] as ModoClasificacion[]).map((m) => (
+          <button key={m} className={modo === m ? 'activa' : ''} onClick={() => setModo(m)}>{{ general: 'General', local: 'Local', visitante: 'Visitante' }[m]}</button>
         ))}
       </div>
-
       <section className="tarjeta">
-        <h2>Clasificación · split {split}</h2>
         {rivales.length === 0 ? (
           <p className="nota">Añade los equipos de este split (abajo) para ver la clasificación.</p>
         ) : (
@@ -307,45 +401,7 @@ export function Liga({ datos }: { datos: Datos }) {
             </table>
           </div>
         )}
-        <p className="nota">Cuentan los partidos con competición «Liga». 3 puntos por victoria y 1 por empate.</p>
-      </section>
-
-      <section className="tarjeta">
-        <h2>Calendario</h2>
-        {programados.length === 0 ? (
-          <Vacio
-            titulo="Sin partidos programados"
-            texto="Programa todas las jornadas de la temporada. Al registrar un partido podrás elegirlo del calendario."
-            accion={<button className="boton editable" onClick={() => setForm(borradorNuevo(programados))}>Programar la jornada 1</button>}
-          />
-        ) : (
-          <ul className="calendario">
-            {programados.map((g) => {
-              const jugado = partidoDe(g, partidos)
-              const r = jugado ? (jugado.golesFavor > jugado.golesContra ? 'V' : jugado.golesFavor === jugado.golesContra ? 'E' : 'D') : null
-              return (
-                <li key={g.id} className={g.id === proximo?.id ? 'calendario--proximo' : ''}>
-                  <button onClick={() => (jugado ? ir(`/partido/${jugado.id}`) : !SOLO_LECTURA && setMenu(g))}>
-                    <span className="calendario__j">J{g.jornada}</span>
-                    <div className="calendario__texto">
-                      <strong>{g.local ? 'vs' : 'en'} {nombreRival(datos.rivales, g.rivalId)}</strong>
-                      <span>
-                        {g.fecha ? fechaCorta(g.fecha) : 'Sin fecha'}{g.hora ? ` · ${g.hora}` : ''}{g.competicion !== 'Liga' ? ` · ${g.competicion}` : ''}
-                      </span>
-                    </div>
-                    {jugado ? (
-                      <span className={`res res--${r}`}>{jugado.golesFavor}-{jugado.golesContra}</span>
-                    ) : g.aplazado ? (
-                      <span className="etiqueta etiqueta--aplazado">Aplazado</span>
-                    ) : g.id === proximo?.id ? (
-                      <span className="etiqueta etiqueta--proximo">Próximo</span>
-                    ) : null}
-                  </button>
-                </li>
-              )
-            })}
-          </ul>
-        )}
+        <p className="nota">Cuentan los partidos con competición «Liga» del split {split}. 3 puntos por victoria y 1 por empate.</p>
       </section>
 
       <section className="tarjeta">
@@ -404,6 +460,24 @@ export function Liga({ datos }: { datos: Datos }) {
         )}
       </section>
 
+
+      </>
+      )}
+
+      <Hoja abierta={mas} onCerrar={() => setMas(false)} titulo="Añadir">
+        <button className="hoja__opcion" disabled={!datos.jugadores.length} onClick={() => ir('/partido/nuevo')}>
+          <strong>Registrar partido</strong>
+          <span>Resultado, convocatoria, minutos, acciones y MVP.</span>
+        </button>
+        <button className="hoja__opcion" onClick={() => { setMas(false); setForm(borradorNuevo(programados)) }}>
+          <strong>Programar jornada</strong>
+          <span>Añadir un partido al calendario del split {split}.</span>
+        </button>
+        <button className="hoja__opcion" disabled={rivales.length < 2} onClick={() => { setMas(false); ir('/liga/clasificacion', true); setFormRes({ id: null, jornada: String(Math.max(1, ultimaJornada)), localId: '', visitanteId: '', golesLocal: 0, golesVisitante: 0 }) }}>
+          <strong>Resultado de otros equipos</strong>
+          <span>Para que la clasificación esté completa.</span>
+        </button>
+      </Hoja>
 
       <Hoja abierta={!!form} onCerrar={() => setForm(null)} titulo={form?.id ? 'Editar partido' : 'Programar partido'}>
         {form && <FormProgramado inicial={form} rivales={rivales} programados={programados} temporadaId={temporada.id} split={split} onCerrar={() => setForm(null)} />}

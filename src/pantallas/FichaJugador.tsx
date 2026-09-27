@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { db, nuevoId, type Jugador, type TipoEspecial } from '../db'
-import { colorNota, conSigno, fechaCorta, fmt1, fmt2, hoy, ir, nombreVisible, type Datos } from '../datos'
+import { colorNota, conSigno, fechaCorta, fmt1, fmt2, hoy, ir, nombreVisible, volver, type Datos } from '../datos'
 import { media as mediaDe, rango, siguienteRango } from '../motor/calculo'
 import { etiquetas, nombrePosicion, rolPorId } from '../motor/config'
 import { Carta, MiniCarta } from '../componentes/Carta'
@@ -10,6 +10,21 @@ import { Vitrina } from '../componentes/Logros'
 import { Carta3D } from '../componentes/Carta3D'
 import { Cabecera, Hoja, Icono } from '../componentes/ui'
 import { avisar, confirmar } from '../componentes/dialogos'
+
+/** Luz del fondo según el rango de la carta. */
+function luzRango(id: string): string {
+  if (id.startsWith('bronce')) return '208,138,82'
+  if (id.startsWith('plata')) return '200,210,222'
+  if (id.startsWith('oro')) return '230,180,80'
+  if (id === 'elite') return '90,170,255'
+  return '240,225,190'
+}
+
+// Partículas del fondo: [x %, y %, tamaño px, desfase s] (fijas, para que no salten al redibujar).
+const PARTICULAS: [number, number, number, number][] = [
+  [8, 12, 3, 0], [22, 30, 2, 2.1], [35, 8, 2, 1.2], [48, 42, 3, 3.3], [63, 18, 2, 0.7], [78, 34, 3, 2.6], [90, 10, 2, 1.8],
+  [15, 55, 2, 3.9], [30, 66, 3, 0.4], [55, 60, 2, 2.9], [70, 52, 3, 1.5], [86, 64, 2, 3.1], [42, 24, 2, 4.2], [94, 44, 2, 0.9],
+]
 
 const PIERNA = { derecha: 'Diestro', izquierda: 'Zurdo', ambas: 'Ambidiestro' }
 type Pestana = 'atributos' | 'evolucion' | 'historial' | 'logros'
@@ -93,27 +108,26 @@ export function FichaJugador({ datos, id }: { datos: Datos; id: string }) {
         ['Tarjetas', `${s.amarillas} · ${s.rojas}`],
       ]
     : [
-        ['Partidos', String(s.partidos)], ['Minutos', String(s.minutos)], ['Goles', String(s.goles)],
-        ['Asistencias', String(s.asistencias)], ['Nota media', s.notaMedia !== null ? fmt2(s.notaMedia) : '—'],
-        ['MVPs', String(s.mvps)], ['Amarillas', String(s.amarillas)], ['Rojas', String(s.rojas)],
+        ['Partidos', String(s.partidos)], ['Minutos', `${s.minutos}′`], ['Goles', String(s.goles)],
+        ['Asist.', String(s.asistencias)], ['Nota media', s.notaMedia !== null ? fmt1(s.notaMedia) : '—'],
+        ['MVP', String(s.mvps)], ['Amarillas', String(s.amarillas)], ['Rojas', String(s.rojas)],
       ]
 
+  const luz = luzRango(actual.id)
   return (
     <>
-      <Cabecera
-        titulo={nombreVisible(j)}
-        atras={true}
-        acciones={
-          <>
-            <select className="selector-temporada" value={tempVista} aria-label="Temporada" onChange={(x) => setTempElegida(x.target.value)} disabled={suyas.length < 2}>
-              {suyas.map((t) => <option key={t.id} value={t.id}>{t.nombre}</option>)}
-            </select>
-            <button className="boton-icono editable" onClick={() => setMenu(true)} aria-label="Más opciones">
-              <Icono nombre="puntos" />
-            </button>
-          </>
-        }
-      />
+      <div className="ficha-fondo" style={{ ['--luz' as string]: luz }} aria-hidden="true">
+        {PARTICULAS.map(([x, y, t, d], i) => <span key={i} style={{ left: `${x}%`, top: `${y}%`, width: t, height: t, animationDelay: `${-d}s` }} />)}
+      </div>
+      <header className="ficha-cab">
+        <button className="cab__atras cristal" onClick={() => volver('/plantilla')} aria-label="Volver"><Icono nombre="atras" /></button>
+        <select className="selector-temporada" value={tempVista} aria-label="Temporada" onChange={(x) => setTempElegida(x.target.value)} disabled={suyas.length < 2}>
+          {suyas.map((t) => <option key={t.id} value={t.id}>Temporada {t.nombre}</option>)}
+        </select>
+        <button className="boton-icono editable" onClick={() => setMenu(true)} aria-label="Más opciones">
+          <Icono nombre="puntos" />
+        </button>
+      </header>
 
       <div className="ficha-carta">
         <Carta3D>
@@ -122,42 +136,49 @@ export function FichaJugador({ datos, id }: { datos: Datos; id: string }) {
       </div>
 
       {desbloqueados.length > 1 && (
-        <div className="disenos">
+        <div className="disenos disenos--cristal">
           <div className="disenos__lista">
             {desbloqueados.map((d) => (
               <button key={d} className={d === vista ? 'activa' : ''} onClick={() => setElegido(d)} aria-label={DISENOS[d].nombre}>
-                <MiniCarta jugador={j} media={e.media} diseno={d} config={config} ancho={46} />
-                <span>{DISENOS[d].nombre}</span>
+                <MiniCarta jugador={j} media={e.media} diseno={d} config={config} ancho={40} />
               </button>
             ))}
           </div>
+          <p className="nota centro">{DISENOS[vista].nombre}{vista === activo ? ' · carta activa' : ''} · {desbloqueados.length} diseños desbloqueados</p>
           {vista !== activo && (
             <button className="boton boton--peq editable" onClick={() => usarComoActiva(vista)}>Usar como activa</button>
           )}
         </div>
       )}
 
-      <section className="tarjeta ficha-datos">
-        <div className="ficha-datos__rol">
-          <strong>{rol.nombre}</strong>
-          <span>#{j.dorsal} · {PIERNA[j.pierna]}{j.apodo ? ` · ${j.nombre}` : ''}</span>
-          {j.secundarias.length > 0 && <span>También: {j.secundarias.map(nombrePosicion).join(', ')}</span>}
+      <div className="ficha-nombre">
+        <h1>{nombreVisible(j).toUpperCase()}</h1>
+        <p>{rol.nombre} · Dorsal {j.dorsal} · {PIERNA[j.pierna]}{j.apodo ? ` · ${j.nombre}` : ''}</p>
+        {j.secundarias.length > 0 && (
+          <div className="ficha-nombre__chips">
+            {j.secundarias.map((x) => <span key={x}>También: {nombrePosicion(x)}</span>)}
+          </div>
+        )}
+      </div>
+
+      <section className="tarjeta ficha-media">
+        <div className="progreso__texto">
+          <span>Media <strong>{fmt1(e.media)}</strong></span>
+          <span>{sig ? <>Faltan {fmt1(sig.desde - e.media)} para <b>{sig.nombre}</b></> : 'Rango máximo'}</span>
         </div>
-        <div className="progreso">
-          <div className="progreso__texto">
-            <span>{actual.nombre} · {fmt1(e.media)}</span>
-            <span>{sig ? `faltan ${fmt1(sig.desde - e.media)} para ${sig.nombre}` : 'Rango máximo'}</span>
-          </div>
-          <div className="progreso__barra">
-            <div style={{ width: `${sig ? Math.max(3, ((e.media - actual.desde) / (sig.desde - actual.desde)) * 100) : 100}%` }} />
-          </div>
+        <div className="progreso__barra">
+          <div style={{ width: `${sig ? Math.max(3, ((e.media - actual.desde) / (sig.desde - actual.desde)) * 100) : 100}%` }} />
         </div>
       </section>
 
-      <section className="cifras">
+      <section className="cifras cifras--cristal">
         {cifras.map(([k, v]) => (
           <div key={k}>
-            <strong>{v}</strong>
+            <strong>
+              {k === 'Amarillas' && <i className="tarjeta-icono tarjeta-icono--amarilla" />}
+              {k === 'Rojas' && <i className="tarjeta-icono tarjeta-icono--roja" />}
+              {v}
+            </strong>
             <span>{k}</span>
           </div>
         ))}
@@ -174,30 +195,26 @@ export function FichaJugador({ datos, id }: { datos: Datos; id: string }) {
         <p className="nota centro">Viendo su temporada {suyas.find((t) => t.id === tempVista)?.nombre}.</p>
       )}
 
-      <section className="tarjeta">
-        <h2>Forma</h2>
+      <div className="forma-ficha">
+        <span className="etiqueta-seccion">Forma</span>
         {forma.length === 0 ? (
           <p className="nota">Aún no ha jugado esta temporada.</p>
         ) : (
-          <div className="forma">
-            {forma.map((p) => (
-              <button key={p.partidoId} className="pildora" style={{ background: colorNota(p.nota) }} onClick={() => ir(`/partido/${p.partidoId}`)}>
-                {fmt1(p.nota)}
-              </button>
-            ))}
-          </div>
+          forma.map((p) => (
+            <button key={p.partidoId} className={`nota-caja ${p.nota >= 7.5 ? 'nota-caja--alta' : ''}`} onClick={() => ir(`/partido/${p.partidoId}`)}>
+              {fmt1(p.nota)}
+            </button>
+          ))
         )}
-      </section>
-
-      <div className="acciones-ficha">
-        <button className="boton boton--sec" onClick={() => ir(`/evoluciones/comparador/${j.id}`)}>Comparar</button>
-        <button className="boton boton--sec editable" onClick={() => setHojaEspecial(true)}>Diseño especial</button>
-        <button className="boton boton--sec editable" onClick={() => ir(`/jugador/${j.id}/editar`)}>
-          <Icono nombre="editar" tam={16} /> Editar
-        </button>
       </div>
 
-      <nav className="subpestanas subpestanas--4">
+      <div className="acciones-ficha acciones-ficha--3">
+        <button className="boton boton--sec boton--dorado-texto" onClick={() => ir(`/evoluciones/comparador/${j.id}`)}>Comparar</button>
+        <button className="boton boton--sec editable" onClick={() => setHojaEspecial(true)}>Diseño especial</button>
+        <button className="boton boton--sec editable" onClick={() => ir(`/jugador/${j.id}/editar`)}>Editar</button>
+      </div>
+
+      <nav className="pestanas-linea">
         {(['atributos', 'evolucion', 'historial', 'logros'] as Pestana[]).map((p) => (
           <button key={p} className={pestana === p ? 'activa' : ''} onClick={() => setPestana(p)}>
             {{ atributos: 'Atributos', evolucion: 'Evolución', historial: 'Historial', logros: 'Logros' }[p]}
@@ -208,6 +225,18 @@ export function FichaJugador({ datos, id }: { datos: Datos; id: string }) {
       {pestana === 'atributos' && (
         <section className="tarjeta">
           <Radar actual={e.atributos} inicio={e.atributosIniciales} etiquetas={etiquetas(j.posicion)} />
+          <div className="deltas-atributos">
+            {etiquetas(j.posicion).map((et, i) => {
+              const d = Math.round(e.atributos[i] - e.atributosIniciales[i])
+              return (
+                <div key={et}>
+                  <span>{et}</span>
+                  <strong className={d > 0 ? 'sube' : d < 0 ? 'baja' : ''}>{d > 0 ? `▲ ${d}` : d < 0 ? `▼ ${-d}` : '='}</strong>
+                </div>
+              )
+            })}
+          </div>
+          <p className="nota centro">Cambio desde el inicio de la temporada</p>
           <p className="nota">
             En dorado, los atributos actuales; en gris, los del inicio de temporada. Media ponderada según su rol: {fmt2(mediaDe(e.atributos, rol.pesos))}.
           </p>

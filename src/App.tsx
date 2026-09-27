@@ -6,13 +6,13 @@ import { ir, useDatos, useRuta, type Datos } from './datos'
 import { DialogosRaiz, Icono } from './componentes/ui'
 import { precargarCartas } from './componentes/plantillas'
 import { Inicio } from './pantallas/Inicio'
-import { Jugadores } from './pantallas/Jugadores'
-import { Formacion } from './pantallas/Formacion'
+import { EstadisticasOnce, Formacion, Suplentes } from './pantallas/Formacion'
 import { FichaJugador } from './pantallas/FichaJugador'
 import { EditarJugador } from './pantallas/EditarJugador'
 import { FichaMister } from './pantallas/FichaMister'
 import { EditarMister } from './pantallas/EditarMister'
-import { Partidos } from './pantallas/Partidos'
+import { Estadisticas } from './pantallas/Estadisticas'
+import { Mas } from './pantallas/Mas'
 import { Liga } from './pantallas/Liga'
 import { DetallePartido } from './pantallas/DetallePartido'
 import { RegistroPartido } from './pantallas/RegistroPartido'
@@ -25,12 +25,13 @@ import { Premios } from './pantallas/Premios'
 import { AjustesEspectador } from './pantallas/Compartir'
 import { Notificaciones } from './pantallas/Notificaciones'
 
+// Barra de navegación (§4): Inicio, Plantilla, Liga, Estadísticas y Más.
 const PESTANAS = [
   { id: 'inicio', texto: 'Inicio', ruta: '/', icono: 'inicio' },
-  { id: 'plantilla', texto: 'Plantilla', ruta: '/plantilla', icono: 'plantilla' },
-  { id: 'partidos', texto: 'Partidos', ruta: '/partidos', icono: 'partidos' },
-  { id: 'evoluciones', texto: 'Evoluciones', ruta: '/evoluciones', icono: 'evoluciones' },
-  { id: 'ajustes', texto: 'Ajustes', ruta: '/ajustes', icono: 'ajustes' },
+  { id: 'plantilla', texto: 'Plantilla', ruta: '/plantilla', icono: 'persona' },
+  { id: 'liga', texto: 'Liga', ruta: '/liga', icono: 'trofeo' },
+  { id: 'estadisticas', texto: 'Estadísticas', ruta: '/estadisticas', icono: 'barras' },
+  { id: 'mas', texto: 'Más', ruta: '/mas', icono: 'puntos' },
 ]
 
 function pestanaDe(seg: string[]): string {
@@ -39,14 +40,17 @@ function pestanaDe(seg: string[]): string {
     case 'jugador':
     case 'mister':
       return 'plantilla'
+    case 'liga':
     case 'partidos':
     case 'partido':
-      return 'partidos'
+      return 'liga'
+    case 'estadisticas':
     case 'evoluciones':
     case 'premios':
-      return 'evoluciones'
+      return 'estadisticas'
+    case 'mas':
     case 'ajustes':
-      return 'ajustes'
+      return 'mas'
     default:
       return 'inicio'
   }
@@ -65,15 +69,23 @@ function Pantalla({ seg, datos }: { seg: string[]; datos: Datos }): ReactNode {
     case undefined:
       return <Inicio datos={datos} />
     case 'plantilla':
-      return b === 'jugadores' ? <Jugadores datos={datos} /> : <Formacion datos={datos} />
+      if (b === 'suplentes' || b === 'jugadores') return <Suplentes datos={datos} />
+      if (b === 'estadisticas') return <EstadisticasOnce datos={datos} />
+      return <Formacion datos={datos} />
     case 'jugador':
       if (b === 'nuevo') return <EditarJugador datos={datos} />
       if (c === 'editar') return <EditarJugador datos={datos} id={b} />
       return <FichaJugador datos={datos} id={b} />
     case 'mister':
       return b === 'editar' ? <EditarMister datos={datos} /> : <FichaMister datos={datos} />
-    case 'partidos':
-      return b === 'liga' ? <Liga datos={datos} /> : <Partidos datos={datos} />
+    case 'liga':
+      return <Liga datos={datos} vista={b} />
+    case 'partidos': // rutas antiguas
+      return <Liga datos={datos} vista={b === 'liga' ? 'clasificacion' : undefined} />
+    case 'estadisticas':
+      return <Estadisticas datos={datos} vista={b} />
+    case 'mas':
+      return <Mas datos={datos} vista={b} />
     case 'partido':
       if (b === 'nuevo') return <RegistroPartido key={c ?? 'nuevo'} datos={datos} programadoId={c} />
       if (c === 'editar') return <RegistroPartido datos={datos} id={b} />
@@ -168,7 +180,7 @@ export default function App() {
           </div>
           {PESTANAS.map((p) => (
             <button key={p.id} className={p.id === activa ? 'activa' : ''} onClick={() => ir(p.ruta)}>
-              <Icono nombre={p.icono} />
+              <span className="barra__icono"><Icono nombre={p.icono} /></span>
               <span>{p.texto}</span>
             </button>
           ))}
