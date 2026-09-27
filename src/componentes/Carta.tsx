@@ -120,7 +120,7 @@ function construir(doc: Document, r: Relleno, uid: string): string {
       defs.appendChild(grad)
       fondo.parentNode.appendChild(crear('rect', {
         id: 'brillo3d_capa', width: 384, height: 552, fill: 'url(#brillo3d)', 'clip-path': 'url(#card)',
-        opacity: 0, style: 'mix-blend-mode: overlay; pointer-events: none',
+        opacity: 0, visibility: 'hidden', style: 'mix-blend-mode: overlay; pointer-events: none',
       }))
     }
   }

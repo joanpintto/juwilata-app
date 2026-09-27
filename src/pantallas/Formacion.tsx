@@ -124,6 +124,29 @@ function CabeceraPlantilla({ datos, activa }: { datos: Datos; activa: string }) 
   )
 }
 
+/** Textura de grano del césped, generada una vez (verde oscuro con transparencia al azar). */
+let grano: string | null = null
+function granoCesped(): string {
+  if (grano) return grano
+  const lienzo = document.createElement('canvas')
+  lienzo.width = 358
+  lienzo.height = 500
+  const ctx = lienzo.getContext('2d')
+  if (!ctx) return ''
+  const img = ctx.createImageData(lienzo.width, lienzo.height)
+  let semilla = 7
+  const azar = () => ((semilla = (semilla * 16807) % 2147483647) / 2147483647)
+  for (let i = 0; i < img.data.length; i += 4) {
+    img.data[i] = 26
+    img.data[i + 1] = 64
+    img.data[i + 2] = 26
+    img.data[i + 3] = Math.round(azar() * azar() * 255)
+  }
+  ctx.putImageData(img, 0, 0)
+  grano = lienzo.toDataURL('image/png')
+  return grano
+}
+
 /** Peana de posición (~44×18), por debajo de la carta. */
 function Peana({ texto, estado }: { texto: string; estado: 'ok' | 'sec' | 'fuera' }) {
   const uid = useId().replace(/[^a-zA-Z0-9]/g, '')
@@ -259,12 +282,11 @@ export function Formacion({ datos }: { datos: Datos }) {
             <img className="campo-once__escudo" src={`${import.meta.env.BASE_URL}escudo.png`} alt="" aria-hidden="true" />
             <div className="campo-once__barrido" aria-hidden="true" />
             <svg className="campo-once__lineas" viewBox={`0 0 ${CAMPO.ancho} ${CAMPO.alto}`} aria-hidden="true">
-              <defs>
-                <filter id="campo-fl" x="-5%" y="-5%" width="110%" height="110%"><feGaussianBlur stdDeviation="1.4" result="b" /><feMerge><feMergeNode in="b" /><feMergeNode in="SourceGraphic" /></feMerge></filter>
-                <filter id="campo-grano"><feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="2" seed="7" /><feColorMatrix values="0 0 0 0 0.1  0 0 0 0 0.25  0 0 0 0 0.1  0 0 0 0.9 0" /></filter>
-              </defs>
-              <rect width={CAMPO.ancho} height={CAMPO.alto} filter="url(#campo-grano)" opacity="0.35" />
-              <g fill="none" stroke="#fff" strokeOpacity="0.6" strokeWidth="1.6" filter="url(#campo-fl)">
+              {/* Grano del césped: textura hecha una sola vez (el filtro de ruido era muy lento en iPhone). */}
+              <image href={granoCesped()} width={CAMPO.ancho} height={CAMPO.alto} opacity="0.35" preserveAspectRatio="none" />
+              {/* Brillo de las líneas: un trazo ancho y suave debajo (en vez de un filtro de desenfoque). */}
+              <use href="#campo-lineas" stroke="#fff" strokeOpacity="0.22" strokeWidth="4" fill="none" />
+              <g fill="none" stroke="#fff" strokeOpacity="0.75" strokeWidth="1.6"><g id="campo-lineas">
                 <rect x="12" y="12" width="334" height="476" rx="4" />
                 <line x1="12" y1="250" x2="346" y2="250" />
                 <circle cx="179" cy="250" r="44" />
@@ -276,11 +298,16 @@ export function Formacion({ datos }: { datos: Datos }) {
                 <rect x="141" y="464" width="76" height="24" />
                 <path d="M149,424 A34,34 0 0 1 209,424" />
                 <path d="M12,22 A10,10 0 0 0 22,12 M336,12 A10,10 0 0 0 346,22 M12,478 A10,10 0 0 1 22,488 M336,488 A10,10 0 0 1 346,478" />
-              </g>
+              </g></g>
               {enlaces.map((l) => {
                 const [x1, y1] = centroPeana(l.a)
                 const [x2, y2] = centroPeana(l.b)
-                return <line key={l.a + l.b} x1={x1} y1={y1} x2={x2} y2={y2} stroke={COLOR_ENLACE[l.color]} strokeOpacity="0.6" strokeWidth="1.6" strokeLinecap="round" filter="url(#campo-fl)" />
+                return (
+                  <g key={l.a + l.b} stroke={COLOR_ENLACE[l.color]} strokeLinecap="round">
+                    <line x1={x1} y1={y1} x2={x2} y2={y2} strokeOpacity="0.18" strokeWidth="4.5" />
+                    <line x1={x1} y1={y1} x2={x2} y2={y2} strokeOpacity="0.6" strokeWidth="1.6" />
+                  </g>
+                )
               })}
             </svg>
 

@@ -24,6 +24,9 @@ export function Carta3D({ children }: { children: ReactNode }) {
     const capa = el.querySelector<SVGElement>('[id$="brillo3d_capa"]')
     const grad = el.querySelector<SVGElement>('[id$="brillo3d"]')
     if (capa) {
+      // Quieta, la capa de brillo se oculta del todo (su modo de fusión cuesta en Safari).
+      if (!soltar) capa.setAttribute('visibility', 'visible')
+      else setTimeout(() => capa.getAttribute('opacity') === '0' && capa.setAttribute('visibility', 'hidden'), 550)
       capa.style.transition = soltar ? 'opacity 0.5s' : 'none'
       capa.setAttribute('opacity', String(0.25 + 0.75 * fuerza))
       if (soltar) capa.setAttribute('opacity', '0')
