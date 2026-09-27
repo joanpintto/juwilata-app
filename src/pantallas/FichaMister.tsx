@@ -9,6 +9,7 @@ import { DISENOS_MISTER, disenoMister, disenosMisterDesbloqueados, luzMister } f
 import { GraficoEvolucion, Radar } from '../componentes/Graficos'
 import { Vitrina } from '../componentes/Logros'
 import { Carta3D } from '../componentes/Carta3D'
+import { LucesCarta } from '../componentes/LucesCarta'
 import { Cabecera, Hoja, Icono } from '../componentes/ui'
 import { avisar } from '../componentes/dialogos'
 
@@ -78,11 +79,11 @@ export function FichaMister({ datos }: { datos: Datos }) {
         }
       />
 
-      <div className="ficha-carta ficha-carta--luz" style={{ ['--luz' as string]: luzMister(vista) }}>
+      <LucesCarta luz={luzMister(vista)}>
         <Carta3D>
           <CartaMister mister={m} media={e.media} atributos={e.atributos} tendencia={e.tendencia} diseno={vista} />
         </Carta3D>
-      </div>
+      </LucesCarta>
 
       {desbloqueados.length > 1 && (
         <div className="disenos">

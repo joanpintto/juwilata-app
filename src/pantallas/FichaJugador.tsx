@@ -8,6 +8,7 @@ import { DISENOS, disenoDe, disenosDesbloqueados, luzDiseno } from '../component
 import { GraficoEvolucion, Radar } from '../componentes/Graficos'
 import { Vitrina } from '../componentes/Logros'
 import { Carta3D } from '../componentes/Carta3D'
+import { LucesCarta } from '../componentes/LucesCarta'
 import { Cabecera, Hoja, Icono } from '../componentes/ui'
 import { avisar, confirmar } from '../componentes/dialogos'
 
@@ -120,11 +121,11 @@ export function FichaJugador({ datos, id }: { datos: Datos; id: string }) {
         </button>
       </header>
 
-      <div className="ficha-carta ficha-carta--luz" style={{ ['--luz' as string]: luz }}>
+      <LucesCarta luz={luz}>
         <Carta3D>
           <Carta jugador={j} media={e.media} atributos={e.atributos} tendencia={e.tendencia} diseno={vista} config={config} />
         </Carta3D>
-      </div>
+      </LucesCarta>
 
       {desbloqueados.length > 1 && (
         <div className="disenos disenos--cristal">
