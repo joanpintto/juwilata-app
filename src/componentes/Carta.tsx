@@ -4,7 +4,7 @@ import { mediaVisible } from '../motor/calculo'
 import { ETIQUETAS_MISTER, etiquetas, rolEnCarta, siglaJugador, type Atributos, type Config } from '../motor/config'
 import { nombreMister, nombreVisible } from '../datos'
 import { DISENOS, DISENOS_MISTER } from './disenos'
-import { cargarPlantilla, plantillaLista } from './plantillas'
+import { capaFoto, cargarPlantilla, infoPlantilla, plantillaLista } from './plantillas'
 
 // Las cartas son las 11 plantillas aprobadas (public/cartas/*.svg, generadas
 // con `npm run cartas`). Aquí solo se rellenan con los datos del jugador.
@@ -31,35 +31,6 @@ interface Relleno {
   atributos: Atributos
   tendencia: number
   mini: boolean
-}
-
-// Las fotos se guardan como data URL (cientos de KB de texto). Meter ese texto en
-// cada carta obliga al móvil a copiarlo y leerlo en cada pantalla, y es lo que más
-// la frena. Se convierten una vez en una dirección corta (blob:) que se reutiliza.
-const urlsFoto = new Map<string, string>()
-function urlFoto(foto: string): string {
-  if (!foto.startsWith('data:')) return foto
-  const clave = `${foto.length}:${foto.slice(-80)}`
-  let url = urlsFoto.get(clave)
-  if (!url) {
-    try {
-      const coma = foto.indexOf(',')
-      const tipo = foto.slice(5, coma).split(';')[0] || 'image/png'
-      const bin = atob(foto.slice(coma + 1))
-      const bytes = new Uint8Array(bin.length)
-      for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i)
-      url = URL.createObjectURL(new Blob([bytes], { type: tipo }))
-    } catch {
-      return foto
-    }
-    if (urlsFoto.size > 120) {
-      const [vieja, u] = urlsFoto.entries().next().value!
-      URL.revokeObjectURL(u)
-      urlsFoto.delete(vieja)
-    }
-    urlsFoto.set(clave, url)
-  }
-  return url
 }
 
 function crear(nombre: string, attrs: Record<string, string | number>): SVGElement {
@@ -89,23 +60,44 @@ function construir(doc: Document, r: Relleno, uid: string): string {
   texto('sigla', r.sigla)
   texto('dorsal', r.dorsal)
 
-  // Foto real (o silueta si aún no tiene).
+  // Foto real (o silueta si aún no tiene) + degradado + panel inferior: se dibujan
+  // aparte como una imagen fija (una vez por foto y diseño) y en la carta solo
+  // queda esa imagen. Así Safari no repinta la máscara de la foto en cada carta.
   const hueco = $('foto')
-  if (hueco) {
+  const jugador = $('jugador')
+  const panel = $('panel')
+  const info = infoPlantilla(doc)
+  const rellenarHueco = () => {
+    if (!hueco) return
     const [x, y, w, h] = ['data-x', 'data-y', 'data-w', 'data-h'].map((a) => Number(hueco.getAttribute(a)))
     if (r.foto) {
-      hueco.appendChild(crear('image', { href: urlFoto(r.foto), x, y, width: w, height: h, preserveAspectRatio: 'xMidYMin slice' }))
+      hueco.appendChild(crear('image', { href: r.foto, x, y, width: w, height: h, preserveAspectRatio: 'xMidYMin slice' }))
     } else {
-      // Sin foto, la media y la posición van delante de la silueta (si no, la tapa).
-      const detras = $('cabecera_detras')
-      const jugador = $('jugador')
-      if (detras && jugador?.parentNode) jugador.parentNode.insertBefore(detras, jugador.nextSibling)
       const g = crear('g', { fill: '#000', 'fill-opacity': '0.2' })
       const cx = x + w / 2
       g.appendChild(crear('circle', { cx, cy: y + h * 0.3, r: w * 0.11 }))
       g.appendChild(crear('path', { d: `M${cx - w * 0.27} ${y + h * 0.8} Q${cx - w * 0.26} ${y + h * 0.47} ${cx} ${y + h * 0.46} Q${cx + w * 0.26} ${y + h * 0.47} ${cx + w * 0.27} ${y + h * 0.8} Z` }))
       hueco.appendChild(g)
     }
+  }
+  if (info && jugador?.parentNode && panel) {
+    const clave = r.foto ? `${r.foto.length}:${r.foto.slice(-80)}` : 'silueta'
+    const ser = new XMLSerializer()
+    const url = capaFoto(info, clave, () => {
+      rellenarHueco()
+      return ser.serializeToString(jugador) + ser.serializeToString(panel)
+    })
+    const img = crear('image', { href: url, x: info.vx - info.tx, y: info.vy - info.ty, width: info.vw, height: info.vh, preserveAspectRatio: 'none' })
+    jugador.parentNode.insertBefore(img, jugador)
+    jugador.remove()
+    panel.remove()
+    // Sin foto, la media y la posición van delante de la silueta (si no, la tapa).
+    const detras = $('cabecera_detras')
+    if (!r.foto && detras && img.parentNode) img.parentNode.insertBefore(detras, img.nextSibling)
+  } else {
+    rellenarHueco()
+    const detras = $('cabecera_detras')
+    if (!r.foto && detras && jugador?.parentNode) jugador.parentNode.insertBefore(detras, jugador.nextSibling)
   }
 
   // Sin la sombra del escudo: Safari dibuja los filtros sobre imágenes una sola vez

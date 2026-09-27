@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { conSigno, fmt1, ir, nombreMister, nombreRival, nombreVisible, proximoPartido, textoJornada, type Datos } from '../datos'
 import type { EstadoJugador } from '../motor/temporada'
 import { MiniCarta } from '../componentes/Carta'
@@ -101,11 +101,7 @@ export function Inicio({ datos }: { datos: Datos }) {
 
   return (
     <>
-      <div className="estadio" aria-hidden="true">
-        <img src={`${BASE}estadio.jpg`} alt="" />
-        <div className="estadio__tinte" />
-        <div className="estadio__focos" />
-      </div>
+      <FondoEstadio />
 
       <header className="inicio-cab">
         <img src={`${BASE}escudo.png`} alt={`Escudo del ${equipo.nombre}`} />
@@ -252,5 +248,71 @@ export function Inicio({ datos }: { datos: Datos }) {
         )}
       </section>
     </>
+  )
+}
+
+/**
+ * Foto del estadio con su tinte granate, los focos y el desvanecido hacia abajo,
+ * dibujados una sola vez en un lienzo (antes era una máscara que Safari repintaba).
+ */
+function FondoEstadio() {
+  const lienzo = useRef<HTMLCanvasElement>(null)
+  useEffect(() => {
+    const c = lienzo.current
+    if (!c) return
+    const img = new Image()
+    img.onload = () => {
+      const esc = Math.min(2, window.devicePixelRatio || 1)
+      const ancho = Math.round((c.clientWidth || 390) * esc)
+      const alto = Math.round(560 * esc)
+      c.width = ancho
+      c.height = alto
+      const ctx = c.getContext('2d')
+      if (!ctx) return
+      // Foto: ancho completo y 470 px de alto, recortada como «cover».
+      const altoFoto = 470 * esc
+      const k = Math.max(ancho / img.width, altoFoto / img.height)
+      const w = img.width * k
+      const h = img.height * k
+      ctx.globalAlpha = 0.9
+      ctx.drawImage(img, (ancho - w) / 2, (altoFoto - h) / 2, w, h)
+      ctx.globalAlpha = 1
+      // Tinte granate.
+      const tinte = ctx.createLinearGradient(0, 0, 0, alto)
+      tinte.addColorStop(0, 'rgba(85, 11, 28, 0.35)')
+      tinte.addColorStop(0.4, 'rgba(85, 11, 28, 0.25)')
+      tinte.addColorStop(0.8, 'rgba(53, 6, 15, 0.55)')
+      tinte.addColorStop(1, 'rgba(53, 6, 15, 0)')
+      ctx.fillStyle = tinte
+      ctx.fillRect(0, 0, ancho, alto)
+      // Focos arriba a los lados.
+      for (const fx of [0.06, 0.94]) {
+        ctx.save()
+        ctx.translate(ancho * fx, 0)
+        ctx.scale(1, (200 * 0.6) / (ancho * 0.4))
+        const r = ancho * 0.4 * 0.7
+        const foco = ctx.createRadialGradient(0, 0, 0, 0, 0, r)
+        foco.addColorStop(0, 'rgba(255, 246, 222, 0.16)')
+        foco.addColorStop(1, 'rgba(255, 246, 222, 0)')
+        ctx.fillStyle = foco
+        ctx.fillRect(-r, 0, r * 2, r)
+        ctx.restore()
+      }
+      // Desvanecido hacia abajo (lo que antes hacía la máscara).
+      ctx.globalCompositeOperation = 'destination-in'
+      const fade = ctx.createLinearGradient(0, 0, 0, alto)
+      fade.addColorStop(0, 'rgba(0, 0, 0, 1)')
+      fade.addColorStop(0.5, 'rgba(0, 0, 0, 0.9)')
+      fade.addColorStop(1, 'rgba(0, 0, 0, 0)')
+      ctx.fillStyle = fade
+      ctx.fillRect(0, 0, ancho, alto)
+      ctx.globalCompositeOperation = 'source-over'
+    }
+    img.src = `${BASE}estadio.jpg`
+  }, [])
+  return (
+    <div className="estadio" aria-hidden="true">
+      <canvas ref={lienzo} />
+    </div>
   )
 }

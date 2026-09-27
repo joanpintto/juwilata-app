@@ -15,6 +15,42 @@ const imagenesCapas: string[] = []
 // los textos y los números.
 const DELANTE_DE_LA_DECORACION = new Set(['marca_agua', 'jugador', 'panel'])
 
+/** Lo necesario para dibujar aparte (como imagen) trozos de una plantilla. */
+export interface InfoPlantilla {
+  vb: string
+  vx: number
+  vy: number
+  vw: number
+  vh: number
+  tx: number
+  ty: number
+  transform: string
+  defs: string
+  fotos: Map<string, string> // capa de foto ya preparada, por foto
+}
+const infos = new WeakMap<Document, InfoPlantilla>()
+export const infoPlantilla = (doc: Document) => infos.get(doc) ?? null
+
+/**
+ * Capa «foto + degradado + panel» de una carta como imagen (una vez por foto y
+ * diseño). El recorte con degradado (máscara) es lo que más le cuesta pintar a
+ * Safari; como imagen fija se pinta una vez y se reutiliza.
+ */
+export function capaFoto(info: InfoPlantilla, clave: string, contenido: () => string): string {
+  let url = info.fotos.get(clave)
+  if (!url) {
+    const texto = `<svg xmlns="${SVG_NS}" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="${info.vb}" width="${info.vw}" height="${info.vh}">${info.defs}<g transform="${info.transform}"><g clip-path="url(#card)">${contenido()}</g></g></svg>`
+    url = URL.createObjectURL(new Blob([texto], { type: 'image/svg+xml' }))
+    if (info.fotos.size > 60) {
+      const [vieja, u] = info.fotos.entries().next().value!
+      URL.revokeObjectURL(u)
+      info.fotos.delete(vieja)
+    }
+    info.fotos.set(clave, url)
+  }
+  return url
+}
+
 function aplanar(doc: Document) {
   const raiz = doc.documentElement
   const fondo = raiz.querySelector('[id="fondo"]')
@@ -28,6 +64,7 @@ function aplanar(doc: Document) {
   const [tx, ty] = t ? [Number(t[1]), Number(t[2])] : [0, 0]
   const ser = new XMLSerializer()
   const defs = raiz.querySelector('defs')
+  infos.set(doc, { vb, vx, vy, vw, vh, tx, ty, transform, defs: defs ? ser.serializeToString(defs) : '', fotos: new Map() })
   const capa = (contenido: string) => {
     const texto = `<svg xmlns="${SVG_NS}" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="${vb}" width="${vw}" height="${vh}">${defs ? ser.serializeToString(defs) : ''}<g transform="${transform}">${contenido}</g></svg>`
     const url = URL.createObjectURL(new Blob([texto], { type: 'image/svg+xml' }))
@@ -72,6 +109,8 @@ function aplanar(doc: Document) {
     }
     fondo.insertBefore(detras, jugador)
   }
+  // Lo que queda en el fondo son textos y la capa de foto (que ya lleva su recorte).
+  fondo.removeAttribute('clip-path')
 
   // Capa del marco (encima de la foto).
   const marco = carta.querySelector(':scope > [id="marco"]')

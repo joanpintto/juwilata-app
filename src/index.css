@@ -1177,9 +1177,8 @@ input[type='range'] { width: 100%; accent-color: var(--dorado); }
 /* Inicio (§10) */
 .estadio {
   position: absolute; left: 0; right: 0; top: 0; height: 560px; z-index: -1; pointer-events: none; overflow: hidden;
-  -webkit-mask-image: linear-gradient(180deg, #000 0%, rgba(0, 0, 0, 0.9) 50%, rgba(0, 0, 0, 0) 100%);
-  mask-image: linear-gradient(180deg, #000 0%, rgba(0, 0, 0, 0.9) 50%, rgba(0, 0, 0, 0) 100%);
 }
+.estadio canvas { display: block; width: 100%; height: 560px; }
 .estadio img { position: absolute; left: 0; top: 0; width: 100%; height: 470px; object-fit: cover; opacity: 0.9; }
 .estadio__tinte { position: absolute; inset: 0; background: linear-gradient(180deg, rgba(85, 11, 28, 0.35) 0%, rgba(85, 11, 28, 0.25) 40%, rgba(53, 6, 15, 0.55) 80%, rgba(53, 6, 15, 0) 100%); }
 .estadio__focos { position: absolute; left: 0; top: 0; width: 100%; height: 200px; background: radial-gradient(40% 60% at 6% 0%, rgba(255, 246, 222, 0.45), rgba(255, 246, 222, 0) 70%), radial-gradient(40% 60% at 94% 0%, rgba(255, 246, 222, 0.45), rgba(255, 246, 222, 0) 70%); opacity: 0.35; }
@@ -1386,3 +1385,6 @@ input[type='range'] { width: 100%; accent-color: var(--dorado); }
 .medida td:first-child { font-family: 'Work Sans', sans-serif; font-size: 13px; }
 .medida .lento { color: #f3a0a8; }
 .medida .rapido { color: #9fe0bd; }
+
+/* Pestañas que se quedan abiertas: el envoltorio no cuenta para la maquetación (mantiene los espacios de .app). */
+.pestana-viva:not([hidden]) { display: contents; }
