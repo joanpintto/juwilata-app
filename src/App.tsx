@@ -1,4 +1,4 @@
-import { Suspense, lazy, useEffect, useState, type ReactNode } from 'react'
+import { Suspense, lazy, memo, useEffect, useState, type ReactNode } from 'react'
 import { SOLO_LECTURA, db, inicializar, pedirAlmacenamientoPersistente, registrarApertura, salirDeEspectador } from './db'
 import { cargarEspectador, prepararAppEspectador } from './compartir/espectador'
 import { vigilarCambios } from './compartir/publicar'
@@ -109,6 +109,16 @@ function Pantalla({ seg, datos }: { seg: string[]; datos: Datos }): ReactNode {
   }
 }
 
+// Las 5 pestañas de la barra se quedan montadas (ocultas) después de abrirlas:
+// volver a una es instantáneo en vez de construirla otra vez con todas sus cartas.
+const PESTANAS_VIVAS = new Set(['', 'plantilla', 'liga', 'estadisticas', 'mas'])
+const PantallaViva = memo(
+  function PantallaViva({ seg, datos }: { seg: string[]; datos: Datos }) {
+    return <Pantalla seg={seg} datos={datos} />
+  },
+  (a, b) => a.datos === b.datos && a.seg.join('/') === b.seg.join('/'),
+)
+
 export default function App() {
   const [listo, setListo] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -117,6 +127,16 @@ export default function App() {
   const seg = ruta.split('/').filter(Boolean)
   const activa = pestanaDe(seg)
   const enAsistente = seg[0] === 'partido' && (seg[1] === 'nuevo' || seg[2] === 'editar' || seg[2] === 'resumen')
+  const clave = seg[0] ?? ''
+  const esPestana = PESTANAS_VIVAS.has(clave) && !(SOLO_LECTURA && esEdicion(seg))
+  const [vivas, setVivas] = useState<Record<string, string>>({}) // pestaña → última ruta abierta en ella
+  if (esPestana && vivas[clave] !== ruta) setVivas({ ...vivas, [clave]: ruta })
+  useEffect(() => {
+    // La prueba de velocidad las vacía para medir la primera vez que se abren.
+    const vaciar = () => setVivas({})
+    window.addEventListener('juwilata:reiniciar-pestanas', vaciar)
+    return () => window.removeEventListener('juwilata:reiniciar-pestanas', vaciar)
+  }, [])
 
   // Cada pantalla empieza arriba. Si no, en el iPhone al pasar de una pantalla larga
   // (bajada) a una corta se queda el desplazamiento y la barra de abajo se "sube".
@@ -175,7 +195,12 @@ export default function App() {
         )}
         <EscudosRivales.Provider value={datos.escudos}>
           <Suspense fallback={null}>
-            <Pantalla seg={seg} datos={datos} />
+            {Object.entries(vivas).map(([k, r]) => (
+              <div key={k} className="pestana-viva" hidden={!esPestana || k !== clave}>
+                <PantallaViva seg={r.split('/').filter(Boolean)} datos={datos} />
+              </div>
+            ))}
+            {!esPestana && <Pantalla seg={seg} datos={datos} />}
           </Suspense>
         </EscudosRivales.Provider>
       </main>

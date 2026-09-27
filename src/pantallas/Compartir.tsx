@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { SeccionRendimiento } from '../componentes/SeccionRendimiento'
 import { CODIGO_ESPECTADOR, db, salirDeEspectador } from '../db'
 import { type Datos } from '../datos'
 import { activarCompartir, dejarDeCompartir, publicar } from '../compartir/publicar'
@@ -121,6 +122,7 @@ export function AjustesEspectador({ datos }: { datos: Datos }) {
         <button className="boton" disabled={ocupado} onClick={actualizar}>{ocupado ? 'Actualizando…' : 'Actualizar ahora'}</button>
         <button className="boton boton--sec" onClick={salir}>Salir del modo espectador</button>
       </section>
+      <SeccionRendimiento idJugador={datos.jugadores[0]?.id ?? null} />
       <footer className="pie">Juwilata United · espectador · {CODIGO_ESPECTADOR?.slice(0, 4)}…</footer>
     </>
   )

@@ -5,6 +5,7 @@ import { ir, type Datos } from '../datos'
 import { Cabecera, Icono } from '../componentes/ui'
 import { SeccionTemporadas } from './Temporadas'
 import { SeccionCompartir } from './Compartir'
+import { SeccionRendimiento } from '../componentes/SeccionRendimiento'
 import { avisar } from '../componentes/dialogos'
 
 function esInstalada(): boolean {
@@ -73,6 +74,8 @@ export function Ajustes({ datos }: { datos: Datos }) {
       <SeccionTemporadas datos={datos} />
 
       <SeccionCompartir datos={datos} />
+
+      <SeccionRendimiento idJugador={datos.jugadores[0]?.id ?? null} />
 
       <section className="tarjeta">
         <label className="interruptor">

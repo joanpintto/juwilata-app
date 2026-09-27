@@ -1371,3 +1371,18 @@ input[type='range'] { width: 100%; accent-color: var(--dorado); }
 .aviso-split { display: flex; flex-direction: column; align-items: flex-start; gap: 8px; margin-bottom: 12px; }
 .aviso-split strong { font-size: 16px; }
 .aviso-split__pasos { margin: 0; padding-left: 18px; display: flex; flex-direction: column; gap: 4px; }
+
+/* Modo ligero (Ajustes → Rendimiento): sin animaciones continuas ni efectos decorativos. */
+.ligero *, .ligero *::before, .ligero *::after { animation-duration: 0s !important; animation-iteration-count: 1 !important; transition: none !important; }
+.ligero .luces-carta, .ligero .ficha-fondo span, .ligero .campo-once__barrido, .ligero .campo-once__halo,
+.ligero .proximo-cristal__pulso, .ligero .proximo-cristal__deriva, .ligero .estadio__focos { display: none; }
+.ligero .hoja, .ligero .dialogo { -webkit-backdrop-filter: none; backdrop-filter: none; background: linear-gradient(145deg, #3a0814, #0c0204 60%, #000); }
+
+/* Prueba de velocidad */
+.medida { width: 100%; border-collapse: collapse; font-size: 13px; }
+.medida th, .medida td { padding: 6px 4px; text-align: right; border-bottom: 1px solid var(--borde); }
+.medida th:first-child, .medida td:first-child { text-align: left; }
+.medida td { font-family: 'Barlow Condensed', sans-serif; font-size: 16px; }
+.medida td:first-child { font-family: 'Work Sans', sans-serif; font-size: 13px; }
+.medida .lento { color: #f3a0a8; }
+.medida .rapido { color: #9fe0bd; }

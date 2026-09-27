@@ -5,6 +5,7 @@ import { CONFIG_INICIAL, type Config } from './motor/config'
 import { reproducirTemporada, type Inicio, type Temporada as TemporadaCalculada } from './motor/temporada'
 import { partidosLiga, type PartidoLiga } from './motor/liga'
 import { calcularLogros, type ResultadoLogros, type TemporadaLogros } from './motor/logros'
+import { cronometrar, medidas } from './componentes/medidas'
 import { reproducirMister, type EstadoMister, type InicioMister } from './motor/mister'
 
 export interface Datos {
@@ -32,6 +33,7 @@ export interface Datos {
 
 export function useDatos(): Datos | undefined {
   const base = useLiveQuery(async () => {
+    const t0 = performance.now()
     const equipo = await db.equipo.get('equipo')
     if (!equipo) return undefined
     const [temporadas, jugadores, partidos, configs, rivales, programados, resultadosLiga] = await Promise.all([
@@ -50,11 +52,31 @@ export function useDatos(): Datos | undefined {
     // Los rangos se aplican siempre a todo (también a partidos jugados con configuraciones anteriores).
     const actual = completas[completas.length - 1].datos
     for (const c of completas) c.datos = { ...c.datos, rangos: actual.rangos, mister: { ...c.datos.mister, rangos: actual.mister.rangos } }
+    medidas.lecturaMs = Math.round(performance.now() - t0)
+    medidas.fotosKB = Math.round(jugadores.reduce((n, j) => n + (j.foto?.length ?? 0) + (j.fotoOriginal?.length ?? 0), 0) / 1024)
     return { equipo, temporada, temporadas, jugadores, partidos, configs: completas, rivales, programados, resultadosLiga }
   })
 
   return useMemo(() => {
     if (!base) return undefined
+    return cronometrar('calculoMs', () => calcularDatos(base))
+  }, [base])
+}
+
+interface Base {
+  equipo: Equipo
+  temporada: Temporada
+  temporadas: Temporada[]
+  jugadores: Jugador[]
+  partidos: Partido[]
+  configs: ConfigVersion[]
+  rivales: Rival[]
+  programados: Programado[]
+  resultadosLiga: ResultadoLiga[]
+}
+
+function calcularDatos(base: Base): Datos {
+  {
     const ultima = base.configs[base.configs.length - 1]
     const cfg = ultima.datos
     const mapa = new Map(base.configs.map((c) => [c.version, c.datos]))
@@ -111,7 +133,7 @@ export function useDatos(): Datos | undefined {
       calculosMister,
       escudos: mapaEscudos(base.rivales, orden),
     }
-  }, [base])
+  }
 }
 
 // ─── Navegación con #/ruta (funciona en la app instalada y sobrevive a recargas) ───
