@@ -25,8 +25,8 @@ Fuente de verdad de la app. Todo lo que aparece aquí está **cerrado**, salvo l
 
 | Uso | Color |
 |---|---|
-| Fondo | #161617 |
-| Fondo elevado | #1F1F21 |
+| Fondo base (debajo del degradado) | #000000 |
+| Fondo de pantalla | degradado granate → negro: `linear-gradient(160deg, #3a0612 0%, #1f050b 28%, #0a0405 60%, #000000 100%)` más brillos radiales granate/dorado muy suaves |
 | Dorado champán (botones, iconos activos, números destacados) | #CCA37C |
 | Granate (marca, cabeceras, navegación activa) | #550B1C |
 | Texto | #F2F0EC |
@@ -36,15 +36,19 @@ Fuente de verdad de la app. Todo lo que aparece aquí está **cerrado**, salvo l
 - **Tipografía:** Barlow Condensed para números, marcadores y dorsales; Work Sans para el texto.
 - **Escudo real:** óvalo bicolor con la cabra y la cruz.
 - Bordes sutiles (dorados o granates, nunca los dos brillando a la vez), iconos de un solo estilo, degradados suaves y microanimaciones al tocar.
+- **Estilo «cristal líquido»:** todas las tarjetas, pastillas, botones y la barra de navegación son de cristal con un mini degradado de granate a negro: `linear-gradient(145deg, rgba(85,11,28,0.55), rgba(20,4,8,0.82) 55%, rgba(0,0,0,0.92))`, `backdrop-filter: blur(18px) saturate(170%)`, borde `1px rgba(255,255,255,0.12)`, reflejo interior arriba `inset 0 1px 0 rgba(255,255,255,0.16)` y sombra `0 10px 24px rgba(0,0,0,0.45)`. Nada de grises: el degradado siempre va de granate a negro.
+- **Gráficas de línea:** línea granate brillante (#d11f45 con resplandor), área rellena en degradado #b3183a → #4a0816 → casi negro, y **un punto en cada jornada** (el último, más grande).
+- **Referencia visual:** las maquetas aprobadas están en `design/pantallas/` (ver README de esa carpeta).
 
 ## 4. Navegación
 
-- **Móvil:** 5 pestañas abajo.
+- **Móvil:** barra flotante de cristal abajo con 5 pestañas.
   1. Inicio.
-  2. Plantilla, con las subpestañas Jugadores y Formación.
-  3. Partidos, con las subpestañas Mis partidos y Liga.
-  4. Evoluciones: clasificación interna, comparador, galería de cartas y gráficos.
-  5. Ajustes.
+  2. Plantilla, con Titulares (formación), Suplentes y Estadísticas del once.
+  3. Liga: Calendario (jugados y próximos) y Clasificación. Sustituye a la antigua pestaña Partidos.
+  4. Estadísticas: Equipo, Jugadores y Evolución (incluye comparador y gráficos).
+  5. Más: estadísticas del club, récords, historia de temporadas, evoluciones y comparador, míster, copias de seguridad y Ajustes.
+- **Pestaña activa:** etiqueta en dorado y el icono dentro de una pastilla con resplandor rojo.
 - **Tablet:** barra lateral estrecha.
 - **Ordenador:** menú lateral completo.
 
@@ -101,6 +105,12 @@ Hay 9 roles de campo más el portero. Atributos: RIT, TIR, PAS, REG, DEF y FIS. 
 - **Atributos iniciales** de un jugador nuevo: el perfil de su rol, `(peso del rol − 16,67%) × 30`, desplazado para que la media ponderada sea **exactamente 60,0**. Todo jugador nuevo empieza con carta de Bronce y media 60,0.
 - **Fichajes a mitad de temporada:** mismo proceso. Su historial empieza desde el partido en que llegan.
 - **Posiciones secundarias:** hasta 2, solo informativas. Un partido fuera de su posición se puntúa con la principal.
+- **Pierna buena:** derecha, izquierda o ambas. En la ficha aparece como Diestro, Zurdo o Ambidiestro. Solo informativa.
+- **Aviso en la formación:** si un titular juega en una de sus posiciones secundarias, su mini-carta lleva un «!» **naranja** arriba a la derecha; si juega en una posición que no es ni su principal ni una secundaria, el «!» es **rojo**. Debajo del campo se explica cada aviso («ÁLEX es MCD y juega de DFC, su posición secundaria»).
+- **Carta y peana de posición (Formación):** la mini-carta siempre muestra la posición principal del jugador (un DC pone DC aunque juegue de lateral). Debajo de cada carta hay una peana pequeña al estilo de los antiguos FIFA (~44×18 px) con las siglas del hueco que ocupa en la formación (LAT, DFC…).
+  - **Forma:** hexágono aplanado que se lee como una sola pieza en granate: cara superior algo más clara, laterales casi del mismo tono y cara frontal trapezoidal (la más cercana, donde van las siglas) solo un punto más oscura, con un filo de luz en su borde superior. Poco contraste entre caras: profundidad sin parecer un pegote.
+  - **Capas:** la peana va por debajo de la carta; el pico inferior de la carta queda apoyado encima.
+  - **Color de las siglas:** brillan en verde si juega en su posición, en naranja si es su secundaria y en rojo si está fuera de sus posiciones.
 - **Pierna buena:** derecha, izquierda o ambas. En la ficha aparece como Diestro, Zurdo o Ambidiestro. Solo informativa.
 - **Cambiar de posición o de rol:**
   - el selector de rol solo muestra los roles de la posición elegida;
@@ -263,7 +273,7 @@ Idea: **subir es lo normal y bajar cuesta mucho**. No hay techo: cualquier jugad
 - Es una miniatura real de la carta activa: misma forma, mismo fondo y marco del rango y la foto real.
 - Lleva la media y la sigla más grandes, y el nombre abajo.
 - Quita las 6 estadísticas, el escudo, el dorsal, la tendencia y la marca de agua.
-- Tamaños: 70 px en el campo y 54 px en el banquillo.
+- Tamaños: 62×88 px en el campo, 56×80 px en el banquillo y 54×77 px la del míster en la esquina del campo.
 
 ---
 
@@ -296,6 +306,11 @@ Idea: **subir es lo normal y bajar cuesta mucho**. No hay techo: cualquier jugad
 ## 10. Pantallas
 
 ### Inicio
+- **Cabecera:** foto de un estadio (solo gradas, sin césped) fundida en el degradado granate, con escudo, nombre y temporada.
+- **Próximo partido:** tarjeta de cristal más translúcida con un resplandor animado; rival, fecha, hora, casa/fuera, posición del rival, cuenta atrás y botón «Registrar partido».
+- **Liga:** posición, puntos, V-E-D y goles.
+- **Forma del equipo:** a la izquierda la media del equipo con su tendencia; a la derecha las pastillas V/E/D de los 5 últimos partidos (el más reciente a la derecha).
+- **Último partido:** resultado, MVP y su nota, con enlace al resumen.
 - Resultados de la temporada (partidos, victorias, empates, derrotas y goles).
 - **Destacados:**
   - goleador;
@@ -308,11 +323,17 @@ Idea: **subir es lo normal y bajar cuesta mucho**. No hay techo: cualquier jugad
 - Vitrina de logros del equipo.
 
 ### Plantilla → Formación
-- Campo de F7 con las mini-cartas colocadas por posición, y el banquillo debajo.
+- Selector en pastilla: **Titulares · Suplentes · Estadísticas**.
+- **Campo de F7 (1-3-2-1)** con textura de césped, franjas, grano y un resplandor de luz que barre el campo. Mini-cartas colocadas por posición, cada una sobre su peana de posición (ver 5.3), con un halo de luz bajo cada carta del color de su rango.
+- **Química:** 12 links entre jugadores cercanos (delantero–2 medios, medio–medio, cada medio con su lateral y con el central, central–laterales y portero–3 defensas). Líneas finas (1,6 px, 60 % de opacidad, sin números) que salen del centro de cada peana y pasan por debajo de peanas y cartas. Color según partidos jugados juntos: rojo 0-4, naranja 5-9, verde 10+.
+- **% de química** arriba a la izquierda del campo en un anillo: verde cuenta entera, naranja media y rojo nada; 100 % = todos los links en verde (con 12 links, cada verde ≈ 8,3 % y cada naranja ≈ 4,2 %).
+- **Aviso «!»** arriba a la derecha de la carta: naranja si juega en su posición secundaria, rojo si juega fuera de sus posiciones. Debajo del campo, un recuadro explica cada aviso («ÁLEX es MCD y juega de DFC, su posición secundaria»).
+- **Carta del míster** arriba a la derecha del campo con la etiqueta MÍSTER.
+- Debajo: leyenda de colores de los links, medias por líneas (Once, Defensa, Medio, Ataque) y banquillo.
 - Se arrastra para cambiar jugadores de sitio o mandarlos al banquillo; al tocar un jugador se abre su ficha (decidido por el usuario).
-- Encima del banquillo, la media de los titulares.
 
 ### Ficha de jugador
+- **Fondo dinámico:** partículas y resplandor del color del rango de la carta (sin rayos giratorios).
 - **Carta 3D:** la carta grande de la ficha (también la del míster) se inclina al arrastrarla con el dedo, hasta 28° para que siempre se vea el frente, con un brillo que se mueve según la inclinación; al soltarla vuelve sola. Arrastrar hacia arriba o abajo sigue desplazando la página.
 - **Arriba:** selector de temporada y menú "⋯", que incluye Eliminar con confirmación.
 - **Carta activa grande** y, debajo, las miniaturas de los diseños desbloqueados. Botón "Usar como activa".
@@ -328,12 +349,27 @@ Idea: **subir es lo normal y bajar cuesta mucho**. No hay techo: cualquier jugad
   - **Historial:** filtrable por temporada.
   - **Logros:** vitrina.
 
-### Evoluciones
+### Estadísticas
+- Selector de temporada y pestañas **Equipo · Jugadores · Evolución**.
+- **Equipo:** cifras clave (partidos, % de victorias, diferencia de goles, goles a favor y en contra por partido, porterías a cero), barras de goles por jornada, línea de la media del equipo, forma de los últimos 10 y récords de la temporada. Sin posesión ni tiros.
+- **Jugadores:** rankings por categoría y acceso a «Comparar dos jugadores».
+- **Evolución:** quién más sube, gráfica de los 3 que más suben (punto por jornada), plantilla por rango y ascensos de rango.
 - **Comparador:** 2 jugadores cara a cara, con una barra que marca quién gana en cada categoría.
 - **Galería:** la carta activa de cada jugador, con filtros y buscador.
-- **Gráficos.**
+
+### Detalle de partido
+- Cabecera con competición, jornada, fecha, hora, campo y marcador.
+- Pestañas **Resumen · Alineación · Notas**.
+- **Goles con minuto** (y asistente), gol rival incluido; jugador del partido con su nota; cambios de media; logros desbloqueados.
+- Alineación en 1-3-2-1 y suplentes que jugaron con el minuto de entrada.
+- En el registro de partido se apunta el **minuto de cada gol**.
+
+### Más
+- Cabecera con el escudo, temporadas, partidos y títulos.
+- Lista: Estadísticas del club, Récords, Historia de temporadas, Evoluciones y comparador, Míster, Copias de seguridad y Ajustes.
 
 ### Liga
+- Pestañas **Calendario · Clasificación**. Calendario con Próximo, Jugados y Próximos; clasificación con filtros General, Local y Visitante.
 - **Partidos propios:** registro completo.
 - **Partidos entre otros equipos:** solo el resultado.
 - **Dos splits:** la liga se juega en 2 splits de 16 jornadas (el primero hasta febrero, el segundo hasta junio o julio) que funcionan como dos ligas distintas. Cada split tiene su propia clasificación, su calendario (J1 a J16), sus resultados y su lista de equipos (pueden cambiar de un split a otro; se pueden copiar los del otro split). **Las medias, estadísticas y premios de los jugadores siguen toda la temporada (32 partidos).**

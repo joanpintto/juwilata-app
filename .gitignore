@@ -29,3 +29,6 @@ docs/cartas/
 
 # Originales de las cartas del míster (misma razón).
 docs/cartas-entrenador/
+
+# Capturas de las maquetas: salen fotos de jugadores reales (se quedan en local, como los originales de las cartas).
+design/pantallas/*.png
