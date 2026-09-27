@@ -1,7 +1,7 @@
 import { useEffect, useId, useMemo, useState } from 'react'
 import type { Jugador, Mister } from '../db'
 import { mediaVisible } from '../motor/calculo'
-import { ETIQUETAS_MISTER, etiquetas, rolPorId, type Atributos, type Config } from '../motor/config'
+import { ETIQUETAS_MISTER, etiquetas, rolEnCarta, siglaJugador, type Atributos, type Config } from '../motor/config'
 import { nombreMister, nombreVisible } from '../datos'
 import { DISENOS, DISENOS_MISTER } from './disenos'
 import { cargarPlantilla, plantillaLista } from './plantillas'
@@ -22,7 +22,8 @@ function usePlantilla(archivo: string): Document | null {
 /** Lo que cambia de una carta a otra (jugador o míster). */
 interface Relleno {
   nombre: string
-  sigla: string // rol del jugador o ENT
+  sigla: string // MC, LI, DFC… o ENT
+  rol?: string | null // rol dentro de la carta grande (Ofensivo, Carrilero…)
   dorsal: string // #9 o la formación favorita del míster
   foto: string | null
   etiquetas: readonly string[]
@@ -113,6 +114,29 @@ function construir(doc: Document, r: Relleno, uid: string): string {
     const n = texto('nombre', nombre)
     n?.setAttribute('font-size', String(tamNombre(nombre, 31, 320, 2.5)))
 
+    // Rol de centrocampistas y laterales, pequeño bajo la sigla (solo en la carta grande).
+    const sigla = $('sigla')
+    if (r.rol && sigla?.parentNode) {
+      const y = Number(sigla.getAttribute('y'))
+      const rol = sigla.cloneNode(false) as SVGElement
+      rol.removeAttribute('id')
+      rol.setAttribute('y', String(y + 19))
+      rol.setAttribute('font-size', '15')
+      rol.setAttribute('font-weight', '600')
+      rol.setAttribute('letter-spacing', '1.2')
+      rol.setAttribute('fill-opacity', '0.78')
+      rol.textContent = r.rol.toUpperCase()
+      sigla.parentNode.insertBefore(rol, sigla.nextSibling)
+      // Baja lo que hay debajo para dejarle sitio.
+      const sep = $('separador')
+      for (const a of ['y1', 'y2']) sep?.setAttribute(a, String(Number(sep.getAttribute(a)) + 19))
+      const dorsal = $('dorsal')
+      dorsal?.setAttribute('y', String(Number(dorsal.getAttribute('y')) + 19))
+      const tend = $('tendencia')
+      const m = tend?.getAttribute('transform')?.match(/translate\(([\d.]+),\s*([\d.]+)\)/)
+      if (tend && m) tend.setAttribute('transform', `translate(${m[1]},${Number(m[2]) + 19})`)
+    }
+
     const tend = $('tendencia')
     // Lo que ha cambiado el número que se ve en la carta (p. ej. de 60,0 a 61,5 → ▲ 1).
     const puntos = Math.abs(mediaVisible(r.media) - mediaVisible(r.media - r.tendencia))
@@ -160,10 +184,10 @@ function construir(doc: Document, r: Relleno, uid: string): string {
 function CartaBase({ archivo, ancho, clase, etiqueta, ...r }: Relleno & { archivo: string; ancho: number | string; clase: string; etiqueta: string }) {
   const uid = 'c' + useId().replace(/[^a-zA-Z0-9]/g, '')
   const doc = usePlantilla(archivo)
-  const { nombre, sigla, dorsal, foto, etiquetas: labels, media, atributos, tendencia, mini } = r
+  const { nombre, sigla, rol, dorsal, foto, etiquetas: labels, media, atributos, tendencia, mini } = r
   const html = useMemo(
-    () => (doc ? construir(doc, { nombre, sigla, dorsal, foto, etiquetas: labels, media, atributos, tendencia, mini }, uid) : null),
-    [doc, nombre, sigla, dorsal, foto, labels, media, atributos, tendencia, mini, uid],
+    () => (doc ? construir(doc, { nombre, sigla, rol, dorsal, foto, etiquetas: labels, media, atributos, tendencia, mini }, uid) : null),
+    [doc, nombre, sigla, rol, dorsal, foto, labels, media, atributos, tendencia, mini, uid],
   )
   return (
     <div className={clase} style={{ width: ancho }} role="img" aria-label={etiqueta}>
@@ -184,7 +208,7 @@ export interface CartaProps {
 
 /** Datos de la carta de un jugador. */
 function deJugador(j: Jugador, config: Config) {
-  return { nombre: nombreVisible(j), sigla: rolPorId(config, j.rol).sigla, dorsal: `#${j.dorsal}`, foto: j.foto, etiquetas: etiquetas(j.posicion) }
+  return { nombre: nombreVisible(j), sigla: siglaJugador(config, j), rol: rolEnCarta(config, j), dorsal: `#${j.dorsal}`, foto: j.foto, etiquetas: etiquetas(j.posicion) }
 }
 
 export function Carta(p: CartaProps) {

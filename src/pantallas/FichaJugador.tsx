@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { db, nuevoId, type Jugador, type TipoEspecial } from '../db'
 import { colorNota, conSigno, fechaCorta, fmt1, fmt2, hoy, ir, nombreVisible, volver, type Datos } from '../datos'
 import { media as mediaDe, rango, siguienteRango } from '../motor/calculo'
-import { etiquetas, nombrePosicion, rolPorId } from '../motor/config'
+import { descripcionPosicion, etiquetas, nombrePosicion, rolPorId } from '../motor/config'
 import { Carta, MiniCarta } from '../componentes/Carta'
 import { DISENOS, disenoDe, disenosDesbloqueados, luzDiseno } from '../componentes/disenos'
 import { GraficoEvolucion, Radar } from '../componentes/Graficos'
@@ -145,7 +145,7 @@ export function FichaJugador({ datos, id }: { datos: Datos; id: string }) {
 
       <div className="ficha-nombre">
         <h1>{nombreVisible(j).toUpperCase()}</h1>
-        <p>{rol.nombre} · Dorsal {j.dorsal} · {PIERNA[j.pierna]}{j.apodo ? ` · ${j.nombre}` : ''}</p>
+        <p>{descripcionPosicion(config, j)} · Dorsal {j.dorsal} · {PIERNA[j.pierna]}{j.apodo ? ` · ${j.nombre}` : ''}</p>
         {j.secundarias.length > 0 && (
           <div className="ficha-nombre__chips">
             {j.secundarias.map((x) => <span key={x}>También: {nombrePosicion(x)}</span>)}

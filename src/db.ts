@@ -1,5 +1,5 @@
 import Dexie, { type Table } from 'dexie'
-import { CONFIG_INICIAL, RANGOS_ANTIGUOS, rolPorId, type Atributos, type Config, type Posicion } from './motor/config'
+import { CONFIG_INICIAL, RANGOS_ANTIGUOS, rolPorId, type Atributos, type Config, type Lado, type Posicion } from './motor/config'
 import { atributosIniciales } from './motor/calculo'
 import type { Acciones } from './motor/calculo'
 
@@ -89,6 +89,7 @@ export interface Jugador {
   rol: string
   secundarias: Posicion[]
   pierna: Pierna
+  lado?: Lado // banda, solo laterales (sin dato: la de su pierna buena)
   foto: string | null // PNG en data URL
   fotoOriginal?: string | null // foto sin encuadrar ni recortar (solo en este móvil), para volver a editarla
   atributosIniciales: Atributos

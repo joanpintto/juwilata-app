@@ -5,7 +5,7 @@ import { SelectorRival } from '../componentes/SelectorRival'
 import { rivalPorNombre } from '../componentes/rivales'
 import { esLiga, rivalesDelSplit } from '../motor/liga'
 import { calcularNota, mediaVisible, rango } from '../motor/calculo'
-import { ACCIONES, ACCIONES_RAPIDAS, rolPorId, type AccionId } from '../motor/config'
+import { ACCIONES, ACCIONES_RAPIDAS, siglaJugador, type AccionId } from '../motor/config'
 import { reproducirTemporada } from '../motor/temporada'
 import { MiniCarta } from '../componentes/Carta'
 import { disenoDe } from '../componentes/disenos'
@@ -249,7 +249,7 @@ export function RegistroPartido({ datos, id, programadoId }: { datos: Datos; id?
         <MiniCarta jugador={j} media={e.media} diseno={disenoDe(j, e.media, config, e.rangosAlcanzados)} config={config} ancho={40} />
         <div className="reg-jugador__nombre">
           <strong>{nombreVisible(j)}</strong>
-          <span>#{j.dorsal} · {rolPorId(config, act(jid).rol).sigla}</span>
+          <span>#{j.dorsal} · {siglaJugador(config, { ...act(jid), pierna: j.pierna, lado: j.lado })}</span>
         </div>
         {extra}
       </div>

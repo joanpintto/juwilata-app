@@ -378,6 +378,37 @@ export function rolesDePosicion(cfg: Config, pos: Posicion): RolDef[] {
   return cfg.roles.filter((r) => r.posicion === pos)
 }
 
+/** Banda del lateral. */
+export type Lado = 'izquierdo' | 'derecho'
+export const SIGLA_LADO: Record<Lado, string> = { izquierdo: 'LI', derecho: 'LD' }
+
+/** Banda de un lateral: la elegida o, si no se eligió, la de su pierna buena (zurdo → izquierda). */
+export const ladoDe = (j: { lado?: Lado | null; pierna: string }): Lado => j.lado ?? (j.pierna === 'izquierda' ? 'izquierdo' : 'derecho')
+
+/**
+ * Sigla que se ve «por fuera» (formación, mini-cartas, listas): los centrocampistas
+ * son todos MC y los laterales LI o LD; el resto, la sigla de su rol.
+ */
+export function siglaJugador(cfg: Config, j: { posicion: Posicion; rol: string; lado?: Lado | null; pierna: string }): string {
+  if (j.posicion === 'MED') return 'MC'
+  if (j.posicion === 'LAT') return SIGLA_LADO[ladoDe(j)]
+  return rolPorId(cfg, j.rol).sigla
+}
+
+/** Rol que se ve dentro de la carta grande (solo centrocampistas y laterales): «Ofensivo», «Carrilero»… */
+export function rolEnCarta(cfg: Config, j: { posicion: Posicion; rol: string }): string | null {
+  if (j.posicion !== 'MED' && j.posicion !== 'LAT') return null
+  return rolPorId(cfg, j.rol).nombre.replace(/^(MC|Lateral)\s+/i, '')
+}
+
+/** Descripción completa de la posición: «Lateral izquierdo · Carrilero», «MC · Box to Box»… */
+export function descripcionPosicion(cfg: Config, j: { posicion: Posicion; rol: string; lado?: Lado | null; pierna: string }): string {
+  const rol = rolEnCarta(cfg, j)
+  if (j.posicion === 'LAT') return `Lateral ${ladoDe(j)} · ${rol}`
+  if (j.posicion === 'MED') return `Centrocampista · ${rol}`
+  return rolPorId(cfg, j.rol).nombre
+}
+
 export function nombrePosicion(pos: Posicion): string {
   return POSICIONES.find((p) => p.id === pos)?.nombre ?? pos
 }

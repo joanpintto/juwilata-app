@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { conSigno, fechaCorta, fmt1, fmt2, ir, nombreVisible, textoJornada, type Datos } from '../datos'
 import { mediaVisible, rango } from '../motor/calculo'
-import { POSICIONES, etiquetas, rolPorId, type Posicion } from '../motor/config'
+import { POSICIONES, etiquetas, siglaJugador, type Posicion } from '../motor/config'
 import type { EstadoJugador } from '../motor/temporada'
 import { Carta, MiniCarta } from '../componentes/Carta'
 import { DISENOS, disenoDe } from '../componentes/disenos'
@@ -32,7 +32,7 @@ function Ranking({ datos }: { datos: Datos }) {
             <MiniCarta jugador={e.jugador} media={e.media} diseno={disenoDe(e.jugador, e.media, config, e.rangosAlcanzados)} config={config} ancho={40} />
             <div className="ranking__texto">
               <strong>{nombreVisible(e.jugador)}</strong>
-              <span>{rolPorId(config, e.jugador.rol).sigla} · {conSigno(e.media - e.mediaInicial)} esta temporada</span>
+              <span>{siglaJugador(config, e.jugador)} · {conSigno(e.media - e.mediaInicial)} esta temporada</span>
             </div>
             <span className="ranking__media">
               {mediaVisible(e.media)} <Tendencia valor={e.tendencia} />

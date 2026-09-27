@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { db, nuevoId, type Jugador, type Pierna } from '../db'
 import { fmt1, ir, volver, type Datos } from '../datos'
 import { atributosIniciales, media, mediaVisible } from '../motor/calculo'
-import { POSICIONES, rolesDePosicion, rolPorId, type Posicion } from '../motor/config'
+import { POSICIONES, SIGLA_LADO, ladoDe, rolEnCarta, rolesDePosicion, rolPorId, type Lado, type Posicion } from '../motor/config'
 import { Carta } from '../componentes/Carta'
 import { disenoDe } from '../componentes/disenos'
 import { FotoEditor } from '../componentes/FotoEditor'
@@ -26,6 +26,7 @@ export function EditarJugador({ datos, id }: { datos: Datos; id?: string }) {
   const [posicion, setPosicion] = useState<Posicion>(existente?.posicion ?? 'MED')
   const [rol, setRol] = useState(existente?.rol ?? rolesDePosicion(config, 'MED')[0].id)
   const [pierna, setPierna] = useState<Pierna>(existente?.pierna ?? 'derecha')
+  const [lado, setLado] = useState<Lado>(existente ? ladoDe(existente) : 'derecho')
   const [secundarias, setSecundarias] = useState<Posicion[]>(existente?.secundarias ?? [])
   const [foto, setFoto] = useState<string | null>(existente?.foto ?? null)
   const [fotoOriginal, setFotoOriginal] = useState<string | null>(existente?.fotoOriginal ?? null)
@@ -52,7 +53,7 @@ export function EditarJugador({ datos, id }: { datos: Datos; id?: string }) {
   const previa: Jugador = {
     ...(existente ?? ({} as Jugador)),
     id: existente?.id ?? 'previa', nombre: nombre || 'Nombre', apodo, dorsal: Number(dorsal) || 0,
-    posicion, rol, secundarias, pierna, foto, especiales: existente?.especiales ?? [], disenoActivo: existente?.disenoActivo ?? null,
+    posicion, rol, secundarias, pierna, lado, foto, especiales: existente?.especiales ?? [], disenoActivo: existente?.disenoActivo ?? null,
   }
 
   const guardar = async () => {
@@ -85,7 +86,7 @@ export function EditarJugador({ datos, id }: { datos: Datos; id?: string }) {
     setGuardando(true)
     try {
       if (existente) {
-        const cambios: Partial<Jugador> = { nombre: nombre.trim(), apodo: apodo.trim(), dorsal: d, posicion, rol, secundarias, pierna, foto, fotoOriginal }
+        const cambios: Partial<Jugador> = { nombre: nombre.trim(), apodo: apodo.trim(), dorsal: d, posicion, rol, secundarias, pierna, lado, foto, fotoOriginal }
         if (sinPartidos && rol !== existente.rol) {
           cambios.atributosIniciales = atributosIniciales(pesos, config)
           cambios.rolInicial = rol
@@ -95,7 +96,7 @@ export function EditarJugador({ datos, id }: { datos: Datos; id?: string }) {
         volver(`/jugador/${existente.id}`)
       } else {
         const nuevo: Jugador = {
-          id: nuevoId(), nombre: nombre.trim(), apodo: apodo.trim(), dorsal: d, posicion, rol, secundarias, pierna, foto, fotoOriginal,
+          id: nuevoId(), nombre: nombre.trim(), apodo: apodo.trim(), dorsal: d, posicion, rol, secundarias, pierna, lado, foto, fotoOriginal,
           atributosIniciales: atributosIniciales(pesos, config), rolInicial: rol, temporadaId: temporada.id,
           creado: new Date().toISOString(), disenoActivo: null, especiales: [],
         }
@@ -166,12 +167,25 @@ export function EditarJugador({ datos, id }: { datos: Datos; id?: string }) {
           </div>
         </div>
 
+        {posicion === 'LAT' && (
+          <div className="campo">
+            <span>Banda</span>
+            <div className="segmentos">
+              {(['izquierdo', 'derecho'] as Lado[]).map((l) => (
+                <button key={l} type="button" className={lado === l ? 'activa' : ''} onClick={() => setLado(l)}>
+                  {SIGLA_LADO[l]} · {l === 'izquierdo' ? 'Izquierdo' : 'Derecho'}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
         <div className="campo">
           <span>Rol</span>
           <div className="opciones-rol">
             {rolesDePosicion(config, posicion).map((r) => (
               <button key={r.id} type="button" className={rol === r.id ? 'activa' : ''} onClick={() => setRol(r.id)}>
-                <strong>{r.sigla}</strong> {r.nombre}
+                {rolEnCarta(config, { posicion: r.posicion, rol: r.id }) ? <strong>{rolEnCarta(config, { posicion: r.posicion, rol: r.id })}</strong> : <><strong>{r.sigla}</strong> {r.nombre}</>}
               </button>
             ))}
           </div>

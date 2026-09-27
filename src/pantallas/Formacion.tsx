@@ -2,9 +2,9 @@ import { useEffect, useId, useRef, useState, type MouseEvent as EventoRaton, typ
 import { SOLO_LECTURA, db, ESQUEMAS, type Jugador } from '../db'
 import { fechaLarga, fmt1, ir, nombreMister, nombreRival, nombreVisible, proximoPartido, type Datos } from '../datos'
 import { rango } from '../motor/calculo'
-import { rolPorId, type Posicion } from '../motor/config'
+import { siglaJugador, type Posicion } from '../motor/config'
 import {
-  CAMPO, DISPOSICION, SIGLA_HUECO, claveJuntos, colorEnlace, encaje, partidosJuntos, porcentajeQuimica, type ColorEnlace,
+  CAMPO, DISPOSICION, siglaHueco, claveJuntos, colorEnlace, encaje, partidosJuntos, porcentajeQuimica, type ColorEnlace,
 } from '../motor/quimica'
 import type { EstadoJugador } from '../motor/temporada'
 import { MiniCarta, MiniCartaMister } from '../componentes/Carta'
@@ -66,7 +66,7 @@ function useOnce(datos: Datos) {
     .filter((h) => slots[h.id])
     .map((h) => {
       const e = calculo.jugadores[slots[h.id]!]
-      return { h, e, encaje: encaje(h.pos, e.jugador.posicion, e.jugador.secundarias) }
+      return { h, e, encaje: encaje(h, e.jugador) }
     })
   const media = (xs: { e: EstadoJugador }[]) => (xs.length ? xs.reduce((s, x) => s + x.e.media, 0) / xs.length : null)
   const linea = (ps: Posicion[]) => media(titulares.filter((t) => ps.includes(t.h.pos)))
@@ -289,7 +289,7 @@ export function Formacion({ datos }: { datos: Datos }) {
               const jid = slots[h.id]
               const t = jid ? titulares.find((z) => z.h.id === h.id) : null
               const e = t?.e
-              const sigla = e ? (t!.encaje === 'ok' ? rolPorId(config, e.jugador.rol).sigla : SIGLA_HUECO[h.pos]) : SIGLA_HUECO[h.pos]
+              const sigla = e && t!.encaje === 'ok' ? siglaJugador(config, e.jugador) : siglaHueco(h)
               return (
                 <div key={h.id} className="campo-once__jugador" style={{ left: pct(x, CAMPO.ancho), top: pct(y, CAMPO.alto) }}>
                   {e && <span className="campo-once__halo" style={{ background: `radial-gradient(closest-side, rgba(${luzRango(rango(config, e.media).id)},0.45), rgba(${luzRango(rango(config, e.media).id)},0))` }} />}
@@ -298,9 +298,9 @@ export function Formacion({ datos }: { datos: Datos }) {
                     data-zona={`slot:${h.id}`}
                     className={`hueco ${jid ? '' : 'hueco--vacio'} ${zona === `slot:${h.id}` ? 'hueco--destino' : ''} ${fantasma && jid === fantasma.jugadorId ? 'hueco--origen' : ''}`}
                     {...eventos(jid ? { tipo: 'slot', id: h.id, jugadorId: jid } : null, () => (jid ? ir(`/jugador/${jid}`) : !SOLO_LECTURA && avisar('Arrastra aquí un jugador del banquillo.')))}
-                    aria-label={e ? `${nombreVisible(e.jugador)}, ${sigla}` : `Hueco de ${SIGLA_HUECO[h.pos]}`}
+                    aria-label={e ? `${nombreVisible(e.jugador)}, ${sigla}` : `Hueco de ${siglaHueco(h)}`}
                   >
-                    {jid ? mini(jid, '100%') : <span>{SIGLA_HUECO[h.pos]}</span>}
+                    {jid ? mini(jid, '100%') : <span>{siglaHueco(h)}</span>}
                     {t && t.encaje !== 'ok' && (
                       <span className="aviso-pos" style={{ background: AVISO[t.encaje][0], boxShadow: `0 0 10px rgba(${AVISO[t.encaje][1]},0.9)` }} aria-label={AVISO[t.encaje][2]}>!</span>
                     )}
@@ -341,7 +341,7 @@ export function Formacion({ datos }: { datos: Datos }) {
                 <div key={t.h.id}>
                   <span className="aviso-pos aviso-pos--quieto" style={{ background: AVISO[t.encaje as 'sec' | 'fuera'][0] }}>!</span>
                   <span>
-                    <b>{nombreVisible(t.e.jugador).toUpperCase()}</b> es {rolPorId(config, t.e.jugador.rol).sigla} y juega de <b>{SIGLA_HUECO[t.h.pos]}</b>, {AVISO[t.encaje as 'sec' | 'fuera'][2]}
+                    <b>{nombreVisible(t.e.jugador).toUpperCase()}</b> es {siglaJugador(config, t.e.jugador)} y juega de <b>{siglaHueco(t.h)}</b>, {AVISO[t.encaje as 'sec' | 'fuera'][2]}
                   </span>
                 </div>
               ))}
@@ -371,7 +371,7 @@ export function Formacion({ datos }: { datos: Datos }) {
                   {...eventos({ tipo: 'banco', jugadorId: j.id }, () => ir(`/jugador/${j.id}`))}
                 >
                   {mini(j.id, 56)}
-                  <span>{rolPorId(config, j.rol).sigla}</span>
+                  <span>{siglaJugador(config, j)}</span>
                 </button>
               ))}
             </div>
@@ -416,7 +416,7 @@ export function Suplentes({ datos }: { datos: Datos }) {
               </button>
               <div className="fila-suplente__texto">
                 <strong>{nombreVisible(j)}</strong>
-                <span>{rolPorId(config, j.rol).sigla} · media {Math.floor(e.media)} · {e.estadisticas.minutos}′ jugados</span>
+                <span>{siglaJugador(config, j)} · media {Math.floor(e.media)} · {e.estadisticas.minutos}′ jugados</span>
               </div>
               <button className="boton-dorado-suave editable" onClick={() => setElegido(j)}>Al campo</button>
             </div>
@@ -429,7 +429,7 @@ export function Suplentes({ datos }: { datos: Datos }) {
           const ocupa = o.slots[h.id] ? calculo.jugadores[o.slots[h.id]!]?.jugador : null
           return (
             <button key={h.id} className="hoja__opcion" onClick={() => alCampo(h.id)}>
-              <strong>{SIGLA_HUECO[h.pos]}</strong>
+              <strong>{siglaHueco(h)}</strong>
               <span>{ocupa ? `Ahora: ${nombreVisible(ocupa)}` : 'Libre'}</span>
             </button>
           )

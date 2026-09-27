@@ -1,6 +1,6 @@
 // Química de la formación (§10): enlaces entre titulares cercanos, coloreados
 // según los partidos que han jugado juntos (los dos con minutos).
-import type { Posicion } from './config'
+import { SIGLA_LADO, ladoDe, type Lado, type Posicion } from './config'
 import type { Temporada } from './temporada'
 
 export type ColorEnlace = 'verde' | 'naranja' | 'rojo'
@@ -57,10 +57,18 @@ export function porcentajeQuimica(colores: ColorEnlace[]): number {
 }
 
 /** Cómo encaja un jugador en el hueco: su posición, una secundaria o fuera de sus posiciones. */
-export function encaje(hueco: Posicion, principal: Posicion, secundarias: Posicion[]): 'ok' | 'sec' | 'fuera' {
-  if (hueco === principal) return 'ok'
-  return secundarias.includes(hueco) ? 'sec' : 'fuera'
+/** Banda de un hueco de lateral según dónde está en el campo. */
+export const ladoHueco = (h: { x: number }): Lado => (h.x < 50 ? 'izquierdo' : 'derecho')
+
+/**
+ * ¿Encaja el jugador en el hueco? Un lateral en la banda contraria cuenta
+ * como posición secundaria (aviso amarillo).
+ */
+export function encaje(hueco: { pos: Posicion; x: number }, j: { posicion: Posicion; secundarias: Posicion[]; lado?: Lado | null; pierna: string }): 'ok' | 'sec' | 'fuera' {
+  if (hueco.pos === j.posicion) return hueco.pos === 'LAT' && ladoHueco(hueco) !== ladoDe(j) ? 'sec' : 'ok'
+  return j.secundarias.includes(hueco.pos) ? 'sec' : 'fuera'
 }
 
-/** Siglas del hueco en la peana cuando no es su posición principal. */
-export const SIGLA_HUECO: Record<Posicion, string> = { POR: 'POR', DFC: 'DFC', LAT: 'LAT', MED: 'MC', DEL: 'DC' }
+/** Siglas del hueco (en la peana cuando no es su posición principal): los laterales, LI o LD. */
+const SIGLA_POS: Record<Posicion, string> = { POR: 'POR', DFC: 'DFC', LAT: 'LAT', MED: 'MC', DEL: 'DC' }
+export const siglaHueco = (h: { pos: Posicion; x: number }) => (h.pos === 'LAT' ? SIGLA_LADO[ladoHueco(h)] : SIGLA_POS[h.pos])
