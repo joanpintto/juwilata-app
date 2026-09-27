@@ -60,6 +60,19 @@ function aplanar(doc: Document) {
     ;[...antes, ...deco].forEach((e) => e.remove())
   }
 
+  // Media y posición (y la columna de debajo: separador y dorsal) van detrás de la
+  // foto del jugador, como en las cartas oficiales. La tendencia y el escudo siguen delante.
+  const jugador = fondo.querySelector(':scope > [id="jugador"]')
+  if (jugador) {
+    const detras = doc.createElementNS(SVG_NS, 'g')
+    detras.setAttribute('id', 'cabecera_detras')
+    for (const id of ['media', 'sigla', 'separador', 'dorsal']) {
+      const el = carta.querySelector(`[id="${id}"]`)
+      if (el) detras.appendChild(el)
+    }
+    fondo.insertBefore(detras, jugador)
+  }
+
   // Capa del marco (encima de la foto).
   const marco = carta.querySelector(':scope > [id="marco"]')
   if (marco) {

@@ -96,6 +96,10 @@ function construir(doc: Document, r: Relleno, uid: string): string {
     if (r.foto) {
       hueco.appendChild(crear('image', { href: urlFoto(r.foto), x, y, width: w, height: h, preserveAspectRatio: 'xMidYMin slice' }))
     } else {
+      // Sin foto, la media y la posición van delante de la silueta (si no, la tapa).
+      const detras = $('cabecera_detras')
+      const jugador = $('jugador')
+      if (detras && jugador?.parentNode) jugador.parentNode.insertBefore(detras, jugador.nextSibling)
       const g = crear('g', { fill: '#000', 'fill-opacity': '0.2' })
       const cx = x + w / 2
       g.appendChild(crear('circle', { cx, cy: y + h * 0.3, r: w * 0.11 }))
