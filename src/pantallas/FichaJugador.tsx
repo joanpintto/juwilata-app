@@ -4,21 +4,12 @@ import { colorNota, conSigno, fechaCorta, fmt1, fmt2, hoy, ir, nombreVisible, vo
 import { media as mediaDe, rango, siguienteRango } from '../motor/calculo'
 import { etiquetas, nombrePosicion, rolPorId } from '../motor/config'
 import { Carta, MiniCarta } from '../componentes/Carta'
-import { DISENOS, disenoDe, disenosDesbloqueados } from '../componentes/disenos'
+import { DISENOS, disenoDe, disenosDesbloqueados, luzDiseno } from '../componentes/disenos'
 import { GraficoEvolucion, Radar } from '../componentes/Graficos'
 import { Vitrina } from '../componentes/Logros'
 import { Carta3D } from '../componentes/Carta3D'
 import { Cabecera, Hoja, Icono } from '../componentes/ui'
 import { avisar, confirmar } from '../componentes/dialogos'
-
-/** Luz del fondo según el rango de la carta. */
-function luzRango(id: string): string {
-  if (id.startsWith('bronce')) return '208,138,82'
-  if (id.startsWith('plata')) return '200,210,222'
-  if (id.startsWith('oro')) return '230,180,80'
-  if (id === 'elite') return '90,170,255'
-  return '240,225,190'
-}
 
 // Partículas del fondo: [x %, y %, tamaño px, desfase s] (fijas, para que no salten al redibujar).
 const PARTICULAS: [number, number, number, number][] = [
@@ -113,7 +104,7 @@ export function FichaJugador({ datos, id }: { datos: Datos; id: string }) {
         ['MVP', String(s.mvps)], ['Amarillas', String(s.amarillas)], ['Rojas', String(s.rojas)],
       ]
 
-  const luz = luzRango(actual.id)
+  const luz = luzDiseno(vista)
   return (
     <>
       <div className="ficha-fondo" style={{ ['--luz' as string]: luz }} aria-hidden="true">
@@ -129,7 +120,7 @@ export function FichaJugador({ datos, id }: { datos: Datos; id: string }) {
         </button>
       </header>
 
-      <div className="ficha-carta">
+      <div className="ficha-carta ficha-carta--luz" style={{ ['--luz' as string]: luz }}>
         <Carta3D>
           <Carta jugador={j} media={e.media} atributos={e.atributos} tendencia={e.tendencia} diseno={vista} config={config} />
         </Carta3D>

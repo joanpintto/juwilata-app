@@ -1001,7 +1001,7 @@ input[type='range'] { width: 100%; accent-color: var(--dorado); }
 .pastillas--4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
 .pastilla { display: flex; flex-direction: column; align-items: center; gap: 1px; padding: 9px 4px; border-radius: 14px; text-align: center; }
 .pastilla strong { font-family: 'Barlow Condensed', sans-serif; font-size: 22px; font-weight: 800; font-variant-numeric: tabular-nums; }
-.pastilla span { font-size: 10px; color: var(--texto-2); letter-spacing: 0.6px; text-transform: uppercase; }
+.pastilla > span { font-size: 10px; color: var(--texto-2); letter-spacing: 0.6px; text-transform: uppercase; }
 
 .cifras-grandes { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
 .cifras-grandes > div { display: flex; flex-direction: column; gap: 2px; padding: 12px 10px; border-radius: 16px; }
@@ -1204,7 +1204,7 @@ input[type='range'] { width: 100%; accent-color: var(--dorado); }
 .proximo-cristal__vs { font-family: 'Barlow Condensed', sans-serif; font-size: 22px; font-weight: 700; color: var(--dorado-claro); }
 .proximo-cristal__info { margin: 0; font-size: 12px; color: var(--texto-suave); text-align: center; }
 .apagado { color: #8a847d; }
-.pastilla strong small { font-size: 16px; }
+.pastilla strong span, .pastilla strong small { font-size: inherit; letter-spacing: 0; text-transform: none; }
 .forma-equipo { flex-direction: row; align-items: center; gap: 10px; }
 .forma-equipo > div:first-child { display: flex; flex-direction: column; gap: 2px; }
 .forma-equipo__media { display: flex; align-items: baseline; gap: 8px; }
@@ -1296,7 +1296,15 @@ input[type='range'] { width: 100%; accent-color: var(--dorado); }
 }
 .ficha-fondo span { position: absolute; border-radius: 50%; background: rgba(var(--luz), 0.85); box-shadow: 0 0 6px rgba(var(--luz), 0.9); animation: particula 6s ease-in-out infinite; }
 @keyframes particula { 0%, 100% { transform: translateY(0); opacity: 0.25; } 50% { transform: translateY(-14px); opacity: 0.9; } }
-@media (prefers-reduced-motion: reduce) { .ficha-fondo span { animation: none; } }
+/* Resplandor del color de la carta, justo detrás de ella (bien visible) */
+.ficha-carta--luz { position: relative; isolation: isolate; }
+.ficha-carta--luz::before {
+  content: ''; position: absolute; z-index: -1; pointer-events: none; left: -30%; right: -30%; top: -16%; bottom: -14%;
+  background: radial-gradient(closest-side, rgba(var(--luz), 1), rgba(var(--luz), 0.85) 55%, rgba(var(--luz), 0.35) 78%, rgba(var(--luz), 0) 100%);
+  animation: resplandor 3.2s ease-in-out infinite; transition: background 0.4s;
+}
+@keyframes resplandor { 0%, 100% { opacity: 0.8; transform: scale(0.96); } 50% { opacity: 1; transform: scale(1.04); } }
+@media (prefers-reduced-motion: reduce) { .ficha-fondo span, .ficha-carta--luz::before { animation: none; } }
 .ficha-cab { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
 .ficha-cab .selector-temporada { flex: 0 1 auto; }
 .disenos--cristal .disenos__lista button { padding: 3px; border-radius: 8px; opacity: 0.7; }

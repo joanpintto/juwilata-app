@@ -60,3 +60,18 @@ export function disenoMister(m: Mister, mediaActual: number, cfg: Config, rangos
   if (m.disenoActivo && disenosMisterDesbloqueados(m, rangosAlcanzados).includes(m.disenoActivo)) return m.disenoActivo
   return rangoMister(cfg, mediaActual).id
 }
+
+/** Color (r,g,b) del resplandor que se ve detrás de la carta en la ficha, según su diseño. */
+const LUZ_DISENO: Record<string, string> = {
+  bronce: '214,138,78', 'bronce-brillante': '240,158,88',
+  plata: '205,215,230', 'plata-brillante': '232,240,255',
+  oro: '240,188,78', 'oro-brillante': '255,206,92',
+  elite: '120,130,255', leyenda: '236,206,120',
+  IF: '242,196,100', POTM: '220,90,125', TOTY: '90,145,255',
+}
+const LUZ_MISTER: Record<string, string> = {
+  debutante: '120,205,145', consolidado: '205,215,230', elite: '67,212,255',
+  leyenda: '236,206,120', MOTM: '220,90,125', TOTY: '90,145,255',
+}
+export const luzDiseno = (id: string) => LUZ_DISENO[id] ?? '240,225,190'
+export const luzMister = (id: string) => LUZ_MISTER[id] ?? '240,225,190'

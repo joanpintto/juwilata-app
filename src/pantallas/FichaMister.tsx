@@ -5,7 +5,7 @@ import { media as mediaDe } from '../motor/calculo'
 import { ETIQUETAS_MISTER } from '../motor/config'
 import { rangoMister, siguienteRangoMister } from '../motor/mister'
 import { CartaMister, MiniCartaMister } from '../componentes/Carta'
-import { DISENOS_MISTER, disenoMister, disenosMisterDesbloqueados } from '../componentes/disenos'
+import { DISENOS_MISTER, disenoMister, disenosMisterDesbloqueados, luzMister } from '../componentes/disenos'
 import { GraficoEvolucion, Radar } from '../componentes/Graficos'
 import { Vitrina } from '../componentes/Logros'
 import { Carta3D } from '../componentes/Carta3D'
@@ -78,7 +78,7 @@ export function FichaMister({ datos }: { datos: Datos }) {
         }
       />
 
-      <div className="ficha-carta">
+      <div className="ficha-carta ficha-carta--luz" style={{ ['--luz' as string]: luzMister(vista) }}>
         <Carta3D>
           <CartaMister mister={m} media={e.media} atributos={e.atributos} tendencia={e.tendencia} diseno={vista} />
         </Carta3D>
