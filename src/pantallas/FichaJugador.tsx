@@ -201,7 +201,7 @@ export function FichaJugador({ datos, id }: { datos: Datos; id: string }) {
       </div>
 
       <div className="acciones-ficha acciones-ficha--3">
-        <button className="boton boton--sec boton--dorado-texto" onClick={() => ir(`/evoluciones/comparador/${j.id}`)}>Comparar</button>
+        <button className="boton boton--sec boton--dorado-texto" onClick={() => ir(`/estadisticas/comparador/${j.id}`)}>Comparar</button>
         <button className="boton boton--sec editable" onClick={() => setHojaEspecial(true)}>Diseño especial</button>
         <button className="boton boton--sec editable" onClick={() => ir(`/jugador/${j.id}/editar`)}>Editar</button>
       </div>

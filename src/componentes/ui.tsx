@@ -90,9 +90,9 @@ export function Cabecera({ titulo, sub, atras, acciones }: { titulo: string; sub
   )
 }
 
-export function Subpestanas({ opciones, activa }: { opciones: { id: string; texto: string; ruta: string }[]; activa: string }) {
+export function Subpestanas({ opciones, activa, clase = '' }: { opciones: { id: string; texto: string; ruta: string }[]; activa: string; clase?: string }) {
   return (
-    <nav className="subpestanas">
+    <nav className={`subpestanas ${clase}`}>
       {opciones.map((o) => (
         <button key={o.id} className={o.id === activa ? 'activa' : ''} onClick={() => ir(o.ruta, true)}>
           {o.texto}

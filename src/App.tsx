@@ -21,7 +21,6 @@ const EditarMister = lazy(() => import('./pantallas/EditarMister').then((m) => (
 const DetallePartido = lazy(() => import('./pantallas/DetallePartido').then((m) => ({ default: m.DetallePartido })))
 const RegistroPartido = lazy(() => import('./pantallas/RegistroPartido').then((m) => ({ default: m.RegistroPartido })))
 const SecuenciaPartido = lazy(() => import('./pantallas/SecuenciaPartido').then((m) => ({ default: m.SecuenciaPartido })))
-const Evoluciones = lazy(() => import('./pantallas/Evoluciones').then((m) => ({ default: m.Evoluciones })))
 const Ajustes = lazy(() => import('./pantallas/Ajustes').then((m) => ({ default: m.Ajustes })))
 const Avanzado = lazy(() => import('./pantallas/Avanzado').then((m) => ({ default: m.Avanzado })))
 const Copias = lazy(() => import('./pantallas/Copias').then((m) => ({ default: m.Copias })))
@@ -66,6 +65,11 @@ function esEdicion(seg: string[]): boolean {
   return (a === 'jugador' && (b === 'nuevo' || c === 'editar')) || (a === 'mister' && b === 'editar') || (a === 'partido' && (b === 'nuevo' || c === 'editar')) || a === 'ajustes'
 }
 
+function Redirigir({ a }: { a: string }) {
+  useEffect(() => ir(a, true), [a])
+  return null
+}
+
 function Pantalla({ seg, datos }: { seg: string[]; datos: Datos }): ReactNode {
   const [a, b, c] = seg
   if (SOLO_LECTURA && esEdicion(seg)) return a === 'ajustes' ? <AjustesEspectador datos={datos} /> : <Inicio datos={datos} />
@@ -87,7 +91,7 @@ function Pantalla({ seg, datos }: { seg: string[]; datos: Datos }): ReactNode {
     case 'partidos': // rutas antiguas
       return <Liga datos={datos} vista={b === 'liga' ? 'clasificacion' : undefined} />
     case 'estadisticas':
-      return <Estadisticas datos={datos} vista={b} />
+      return <Estadisticas datos={datos} vista={b} id={c} />
     case 'mas':
       return <Mas datos={datos} vista={b} />
     case 'partido':
@@ -99,8 +103,8 @@ function Pantalla({ seg, datos }: { seg: string[]; datos: Datos }): ReactNode {
       return <Premios datos={datos} />
     case 'notificaciones':
       return <Notificaciones datos={datos} />
-    case 'evoluciones':
-      return <Evoluciones datos={datos} vista={b} id={c} />
+    case 'evoluciones': // rutas antiguas: ahora todo está en Estadísticas
+      return <Redirigir a={`/estadisticas/${b === 'comparador' || b === 'galeria' || b === 'graficos' ? b : 'ranking'}${c ? `/${c}` : ''}`} />
     case 'ajustes':
       if (b === 'avanzado') return <Avanzado datos={datos} />
       if (b === 'copias') return <Copias datos={datos} />

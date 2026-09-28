@@ -1388,3 +1388,7 @@ input[type='range'] { width: 100%; accent-color: var(--dorado); }
 
 /* Pestañas que se quedan abiertas: el envoltorio no cuenta para la maquetación (mantiene los espacios de .app). */
 .pestana-viva:not([hidden]) { display: contents; }
+
+/* Subpestanas en dos filas (Estadísticas: 7 apartados) */
+.subpestanas--dos-filas { grid-auto-flow: row; grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.subpestanas--dos-filas button { font-size: 12.5px; }

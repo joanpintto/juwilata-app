@@ -41,7 +41,6 @@ function Menu({ datos }: { datos: Datos }) {
     { icono: 'barras', titulo: 'Estadísticas del club', texto: 'Goles, rachas y medias de todas las temporadas', ruta: '/mas/club' },
     { icono: 'trofeo', titulo: 'Récords', texto: 'Mayor goleada, máximo goleador, mejor nota…', ruta: '/mas/records' },
     { icono: 'calendario', titulo: 'Historia de temporadas', texto: 'Resumen de cada temporada', ruta: '/mas/historia' },
-    { icono: 'evoluciones', titulo: 'Evoluciones y comparador', texto: 'Gráficas, versus y galería de cartas', ruta: '/evoluciones' },
     { icono: 'persona', titulo: 'Míster', texto: 'Carta, logros y balance del entrenador', ruta: '/mister' },
     { icono: 'descarga', titulo: 'Copias de seguridad', texto: copia, ruta: '/ajustes/copias' },
     { icono: 'ajustes', titulo: 'Ajustes', texto: 'Equipo, temporadas, compartir y Avanzado', ruta: '/ajustes' },

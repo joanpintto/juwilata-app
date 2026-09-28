@@ -7,19 +7,14 @@ import { Carta, MiniCarta } from '../componentes/Carta'
 import { DISENOS, disenoDe } from '../componentes/disenos'
 import { GraficoBarrasH, GraficoGoles, GraficoLineas, type Serie } from '../componentes/GraficosEquipo'
 import { COLORES_SERIE } from '../componentes/colores'
-import { Cabecera, Icono, Subpestanas, Vacio } from '../componentes/ui'
+import { Vacio } from '../componentes/ui'
 import { Tendencia } from './Jugadores'
 
-const SUBPESTANAS = [
-  { id: 'clasificacion', texto: 'Ranking', ruta: '/evoluciones' },
-  { id: 'comparador', texto: 'Comparar', ruta: '/evoluciones/comparador' },
-  { id: 'galeria', texto: 'Galería', ruta: '/evoluciones/galeria' },
-  { id: 'graficos', texto: 'Gráficos', ruta: '/evoluciones/graficos' },
-]
+// Pestañas de Estadísticas que antes estaban en «Evoluciones»: Ranking, Comparar, Galería y Gráficos.
 
 // ─── Ranking ──────────────────────────────────────────────────────────
 
-function Ranking({ datos }: { datos: Datos }) {
+export function Ranking({ datos }: { datos: Datos }) {
   const { calculo, config } = datos
   const lista = Object.values(calculo.jugadores).sort((a, b) => b.media - a.media)
   if (!lista.length) return <Vacio titulo="Sin jugadores" />
@@ -47,7 +42,7 @@ function Ranking({ datos }: { datos: Datos }) {
 
 // ─── Comparador ───────────────────────────────────────────────────────
 
-function Comparador({ datos, inicial }: { datos: Datos; inicial?: string }) {
+export function Comparador({ datos, inicial }: { datos: Datos; inicial?: string }) {
   const { calculo, config, jugadores } = datos
   const orden = [...jugadores].sort((a, b) => calculo.jugadores[b.id].media - calculo.jugadores[a.id].media)
   const [a, setA] = useState(inicial && calculo.jugadores[inicial] ? inicial : orden[0]?.id)
@@ -128,7 +123,7 @@ function Comparador({ datos, inicial }: { datos: Datos; inicial?: string }) {
 
 // ─── Galería ──────────────────────────────────────────────────────────
 
-function Galeria({ datos }: { datos: Datos }) {
+export function Galeria({ datos }: { datos: Datos }) {
   const { calculo, config } = datos
   const [texto, setTexto] = useState('')
   const [pos, setPos] = useState<Posicion | 'todas'>('todas')
@@ -188,7 +183,7 @@ function mediaTras(e: EstadoJugador, ids: string[]): number[] {
   return ids.map((id) => (m = porPartido.get(id) ?? m))
 }
 
-function Graficos({ datos }: { datos: Datos }) {
+export function Graficos({ datos }: { datos: Datos }) {
   const { calculo, programados } = datos
   const partidos = calculo.partidos.map((r) => r.partido)
   const jugadores = Object.values(calculo.jugadores).sort((a, b) => b.media - a.media)
@@ -264,29 +259,6 @@ function Graficos({ datos }: { datos: Datos }) {
       </section>
 
       <p className="nota centro">{fmt2(mediaEquipo[mediaEquipo.length - 1] ?? 0)} de media del equipo tras el último partido.</p>
-    </>
-  )
-}
-
-export function Evoluciones({ datos, vista, id }: { datos: Datos; vista?: string; id?: string }) {
-  const activa = SUBPESTANAS.some((s) => s.id === vista) ? vista! : 'clasificacion'
-  const subtitulo = { clasificacion: 'Clasificación interna por media', comparador: 'Cara a cara', galeria: 'Cartas activas', graficos: 'La temporada en gráficos' }[activa]
-  return (
-    <>
-      <Cabecera
-        titulo="Evoluciones"
-        sub={subtitulo}
-        acciones={
-          <button className="boton boton--peq boton--sec" onClick={() => ir('/premios')}>
-            <Icono nombre="estrella" tam={16} /> Premios
-          </button>
-        }
-      />
-      <Subpestanas opciones={SUBPESTANAS} activa={activa} />
-      {activa === 'clasificacion' && <Ranking datos={datos} />}
-      {activa === 'comparador' && <Comparador key={id} datos={datos} inicial={id} />}
-      {activa === 'galeria' && <Galeria datos={datos} />}
-      {activa === 'graficos' && <Graficos datos={datos} />}
     </>
   )
 }

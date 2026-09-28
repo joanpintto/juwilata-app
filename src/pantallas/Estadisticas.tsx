@@ -8,15 +8,21 @@ import { disenoDe } from '../componentes/disenos'
 import { BarrasGoles, LineaCristal } from '../componentes/GraficosCristal'
 import { COLORES_CRISTAL } from '../componentes/colores'
 import { Cabecera, Icono, Subpestanas, Vacio } from '../componentes/ui'
+import { Comparador, Galeria, Graficos, Ranking } from './Evoluciones'
 import { PastillasForma } from '../componentes/Piezas'
 import { mediaTras } from '../motor/equipo'
 
-// Estadísticas (§10): Equipo · Jugadores · Evolución.
+// Estadísticas (§10): Equipo · Jugadores · Ranking · Evolución · Gráficos · Comparar · Galería
+// (las cuatro últimas, junto con Ranking, eran antes la pantalla «Evoluciones» de Más).
 
 const SUBPESTANAS = [
   { id: 'equipo', texto: 'Equipo', ruta: '/estadisticas' },
   { id: 'jugadores', texto: 'Jugadores', ruta: '/estadisticas/jugadores' },
+  { id: 'ranking', texto: 'Ranking', ruta: '/estadisticas/ranking' },
   { id: 'evolucion', texto: 'Evolución', ruta: '/estadisticas/evolucion' },
+  { id: 'graficos', texto: 'Gráficos', ruta: '/estadisticas/graficos' },
+  { id: 'comparador', texto: 'Comparar', ruta: '/estadisticas/comparador' },
+  { id: 'galeria', texto: 'Galería', ruta: '/estadisticas/galeria' },
 ]
 
 function etiquetasPartidos(datos: Datos): string[] {
@@ -160,9 +166,9 @@ function Jugadores({ datos }: { datos: Datos }) {
           ))}
         </section>
       )}
-      <button className="boton boton--grande" onClick={() => ir('/evoluciones/comparador')}>Comparar dos jugadores</button>
+      <button className="boton boton--grande" onClick={() => ir('/estadisticas/comparador')}>Comparar dos jugadores</button>
       <div className="acciones-ficha">
-        <button className="boton boton--sec" onClick={() => ir('/evoluciones')}>Clasificación interna</button>
+        <button className="boton boton--sec" onClick={() => ir('/estadisticas/ranking')}>Clasificación interna</button>
         <button className="boton boton--sec" onClick={() => ir('/premios')}><Icono nombre="estrella" tam={16} /> Premios</button>
       </div>
     </>
@@ -244,7 +250,7 @@ function Evolucion({ datos }: { datos: Datos }) {
   )
 }
 
-export function Estadisticas({ datos, vista }: { datos: Datos; vista?: string }) {
+export function Estadisticas({ datos, vista, id }: { datos: Datos; vista?: string; id?: string }) {
   const activa = SUBPESTANAS.some((s) => s.id === vista) ? vista! : 'equipo'
   return (
     <>
@@ -256,10 +262,14 @@ export function Estadisticas({ datos, vista }: { datos: Datos; vista?: string })
           </select>
         }
       />
-      <Subpestanas opciones={SUBPESTANAS} activa={activa} />
+      <Subpestanas opciones={SUBPESTANAS} activa={activa} clase="subpestanas--dos-filas" />
       {activa === 'equipo' && <Equipo datos={datos} />}
       {activa === 'jugadores' && <Jugadores datos={datos} />}
+      {activa === 'ranking' && <Ranking datos={datos} />}
       {activa === 'evolucion' && <Evolucion datos={datos} />}
+      {activa === 'graficos' && <Graficos datos={datos} />}
+      {activa === 'comparador' && <Comparador key={id} datos={datos} inicial={id} />}
+      {activa === 'galeria' && <Galeria datos={datos} />}
     </>
   )
 }
