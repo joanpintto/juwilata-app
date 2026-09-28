@@ -8,9 +8,9 @@ export type Atributos = [number, number, number, number, number, number]
 export const POSICIONES: { id: Posicion; nombre: string; plural: string; corto: string }[] = [
   { id: 'POR', nombre: 'Portero', plural: 'Porteros', corto: 'POR' },
   { id: 'DFC', nombre: 'Central', plural: 'Centrales', corto: 'DFC' },
-  { id: 'LAT', nombre: 'Lateral', plural: 'Laterales', corto: 'LAT' },
-  { id: 'MED', nombre: 'Centrocampista', plural: 'Centrocampistas', corto: 'MED' },
-  { id: 'DEL', nombre: 'Delantero', plural: 'Delanteros', corto: 'DEL' },
+  { id: 'LAT', nombre: 'Lateral', plural: 'Laterales', corto: 'LI · LD' },
+  { id: 'MED', nombre: 'Centrocampista', plural: 'Centrocampistas', corto: 'MC' },
+  { id: 'DEL', nombre: 'Delantero', plural: 'Delanteros', corto: 'DC' },
 ]
 
 export const ETIQUETAS_CAMPO = ['RIT', 'TIR', 'PAS', 'REG', 'DEF', 'FIS'] as const
@@ -389,24 +389,27 @@ export const ladoDe = (j: { lado?: Lado | null; pierna: string }): Lado => j.lad
  * Sigla que se ve «por fuera» (formación, mini-cartas, listas): los centrocampistas
  * son todos MC y los laterales LI o LD; el resto, la sigla de su rol.
  */
-export function siglaJugador(cfg: Config, j: { posicion: Posicion; rol: string; lado?: Lado | null; pierna: string }): string {
-  if (j.posicion === 'MED') return 'MC'
-  if (j.posicion === 'LAT') return SIGLA_LADO[ladoDe(j)]
-  return rolPorId(cfg, j.rol).sigla
+/** Sigla de cada posición (la de los laterales depende de su banda: LI o LD). */
+export const SIGLA_POSICION: Record<Posicion, string> = { POR: 'POR', DFC: 'DFC', LAT: 'LD', MED: 'MC', DEL: 'DC' }
+
+/**
+ * Sigla de la posición, siempre la misma en cartas, formación y listas:
+ * POR, LD, DFC, LI, MC o DC. El rol va aparte (rolEnCarta).
+ */
+export function siglaJugador(_cfg: Config, j: { posicion: Posicion; lado?: Lado | null; pierna: string }): string {
+  return j.posicion === 'LAT' ? SIGLA_LADO[ladoDe(j)] : SIGLA_POSICION[j.posicion]
 }
 
-/** Rol que se ve dentro de la carta grande (solo centrocampistas y laterales): «Ofensivo», «Carrilero»… */
-export function rolEnCarta(cfg: Config, j: { posicion: Posicion; rol: string }): string | null {
-  if (j.posicion !== 'MED' && j.posicion !== 'LAT') return null
-  return rolPorId(cfg, j.rol).nombre.replace(/^(MC|Lateral)\s+/i, '')
+/** Rol dentro de su posición (se ve en pequeño dentro de la carta grande): «Ofensivo», «Carrilero», «Móvil», «Líbero»… */
+export function rolEnCarta(cfg: Config, j: { posicion: Posicion; rol: string }): string {
+  const rol = rolPorId(cfg, j.rol).nombre.replace(/^(MC|Lateral|Delantero|Portero|Central)\s+/i, '')
+  return rol.charAt(0).toUpperCase() + rol.slice(1)
 }
 
-/** Descripción completa de la posición: «Lateral izquierdo · Carrilero», «MC · Box to Box»… */
+/** Descripción completa: «Lateral izquierdo · Carrilero», «Centrocampista · Box to Box», «Portero · Líbero»… */
 export function descripcionPosicion(cfg: Config, j: { posicion: Posicion; rol: string; lado?: Lado | null; pierna: string }): string {
-  const rol = rolEnCarta(cfg, j)
-  if (j.posicion === 'LAT') return `Lateral ${ladoDe(j)} · ${rol}`
-  if (j.posicion === 'MED') return `Centrocampista · ${rol}`
-  return rolPorId(cfg, j.rol).nombre
+  const pos = j.posicion === 'LAT' ? `Lateral ${ladoDe(j)}` : nombrePosicion(j.posicion)
+  return `${pos} · ${rolEnCarta(cfg, j)}`
 }
 
 export function nombrePosicion(pos: Posicion): string {

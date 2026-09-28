@@ -1,6 +1,6 @@
 // Química de la formación (§10): enlaces entre titulares cercanos, coloreados
 // según los partidos que han jugado juntos (los dos con minutos).
-import { SIGLA_LADO, ladoDe, type Lado, type Posicion } from './config'
+import { SIGLA_LADO, SIGLA_POSICION, ladoDe, type Lado, type Posicion } from './config'
 import type { Temporada } from './temporada'
 
 export type ColorEnlace = 'verde' | 'naranja' | 'rojo'
@@ -70,5 +70,4 @@ export function encaje(hueco: { pos: Posicion; x: number }, j: { posicion: Posic
 }
 
 /** Siglas del hueco (en la peana cuando no es su posición principal): los laterales, LI o LD. */
-const SIGLA_POS: Record<Posicion, string> = { POR: 'POR', DFC: 'DFC', LAT: 'LAT', MED: 'MC', DEL: 'DC' }
-export const siglaHueco = (h: { pos: Posicion; x: number }) => (h.pos === 'LAT' ? SIGLA_LADO[ladoHueco(h)] : SIGLA_POS[h.pos])
+export const siglaHueco = (h: { pos: Posicion; x: number }) => (h.pos === 'LAT' ? SIGLA_LADO[ladoHueco(h)] : SIGLA_POSICION[h.pos])

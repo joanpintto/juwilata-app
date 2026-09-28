@@ -185,7 +185,7 @@ export function EditarJugador({ datos, id }: { datos: Datos; id?: string }) {
           <div className="opciones-rol">
             {rolesDePosicion(config, posicion).map((r) => (
               <button key={r.id} type="button" className={rol === r.id ? 'activa' : ''} onClick={() => setRol(r.id)}>
-                {rolEnCarta(config, { posicion: r.posicion, rol: r.id }) ? <strong>{rolEnCarta(config, { posicion: r.posicion, rol: r.id })}</strong> : <><strong>{r.sigla}</strong> {r.nombre}</>}
+                <strong>{rolEnCarta(config, { posicion: r.posicion, rol: r.id })}</strong>
               </button>
             ))}
           </div>
