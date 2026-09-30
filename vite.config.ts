@@ -5,6 +5,7 @@ import { VitePWA } from 'vite-plugin-pwa'
 // La app se publica en https://joanpintto.github.io/juwilata-app/
 export default defineConfig({
   base: '/juwilata-app/',
+  define: { __VERSION__: JSON.stringify(new Date().toISOString().slice(0, 16).replace('T', ' ')) },
   plugins: [
     react(),
     VitePWA({

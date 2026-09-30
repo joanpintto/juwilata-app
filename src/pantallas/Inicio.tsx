@@ -112,6 +112,8 @@ export function Inicio({ datos }: { datos: Datos }) {
         <Campana datos={datos} />
       </header>
 
+      {!SOLO_LECTURA && !datos.todosJugadores.length && !datos.partidos.length && <EnlaceCompanero />}
+
       {!jugadores.length ? (
         <section className="tarjeta bienvenida editable">
           <h2>¡Empieza la temporada!</h2>
@@ -314,5 +316,25 @@ function FondoEstadio() {
     <div className="estadio" aria-hidden="true">
       <canvas ref={lienzo} />
     </div>
+  )
+}
+
+/**
+ * App recién instalada y vacía: si quien la abre es un compañero, puede pegar aquí el
+ * enlace del equipo y esta app pasa a ser la de solo lectura (por si el móvil la
+ * añadió a la pantalla de inicio sin el código).
+ */
+function EnlaceCompanero() {
+  const [texto, setTexto] = useState('')
+  const codigo = texto.match(/(?:[?&]ver=|#\/ver\/)([A-Za-z0-9_-]{16,})/)?.[1] ?? null
+  return (
+    <section className="tarjeta formulario">
+      <h2>¿Te han pasado el enlace del equipo?</h2>
+      <p className="nota">Si eres un compañero, pega aquí el enlace que te mandó el administrador para ver el equipo (solo lectura, siempre actualizado).</p>
+      <input className="input" value={texto} onChange={(e) => setTexto(e.target.value)} placeholder="https://…/juwilata-app/?ver=…" autoComplete="off" />
+      <button className="boton" disabled={!codigo} onClick={() => codigo && window.location.replace(`${BASE}?ver=${codigo}#/`)}>
+        Ver el equipo
+      </button>
+    </section>
   )
 }

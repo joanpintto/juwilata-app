@@ -123,7 +123,7 @@ export function AjustesEspectador({ datos }: { datos: Datos }) {
         <button className="boton boton--sec" onClick={salir}>Salir del modo espectador</button>
       </section>
       <SeccionRendimiento idJugador={datos.jugadores[0]?.id ?? null} />
-      <footer className="pie">Juwilata United · espectador · {CODIGO_ESPECTADOR?.slice(0, 4)}…</footer>
+      <footer className="pie">Juwilata United · espectador · {CODIGO_ESPECTADOR?.slice(0, 4)}… · versión {__VERSION__}</footer>
     </>
   )
 }

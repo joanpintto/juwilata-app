@@ -118,7 +118,7 @@ export function Ajustes({ datos }: { datos: Datos }) {
         <p className="nota">Los datos solo viven en este dispositivo. Exporta la copia manual de vez en cuando.</p>
       </section>
 
-      <footer className="pie">Juwilata United · versión 1.0 (Fase 1)</footer>
+      <footer className="pie">Juwilata United · versión {__VERSION__}</footer>
     </>
   )
 }

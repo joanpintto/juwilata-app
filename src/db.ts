@@ -268,6 +268,18 @@ class JuwilataDB extends Dexie {
 // (la app de la pantalla de inicio no comparte lo guardado con Safari).
 
 const CLAVE_ESPECTADOR = 'juwilata-espectador'
+const RUTA_COOKIE = import.meta.env.BASE_URL
+
+// El código también va en una cookie: si el iPhone la copia a la app de la pantalla
+// de inicio, esa app sabe que es la de un compañero aunque arranque sin el código.
+function codigoEnCookie(): string | null {
+  return document.cookie.match(/(?:^|;\s*)juwilata_ver=([A-Za-z0-9_-]{16,})/)?.[1] ?? null
+}
+function guardarCookie(codigo: string | null) {
+  document.cookie = codigo
+    ? `juwilata_ver=${codigo}; path=${RUTA_COOKIE}; max-age=315360000; SameSite=Lax`
+    : `juwilata_ver=; path=${RUTA_COOKIE}; max-age=0`
+}
 
 function detectarEspectador(): string | null {
   if (typeof window === 'undefined') return null
@@ -277,11 +289,14 @@ function detectarEspectador(): string | null {
   try {
     if (m) {
       localStorage.setItem(CLAVE_ESPECTADOR, m)
+      guardarCookie(m)
       return m
     }
-    return localStorage.getItem(CLAVE_ESPECTADOR)
+    const guardado = localStorage.getItem(CLAVE_ESPECTADOR) ?? codigoEnCookie()
+    if (guardado) localStorage.setItem(CLAVE_ESPECTADOR, guardado)
+    return guardado
   } catch {
-    return m
+    return m ?? codigoEnCookie()
   }
 }
 
@@ -292,6 +307,7 @@ export const SOLO_LECTURA = CODIGO_ESPECTADOR !== null
 export function salirDeEspectador() {
   try {
     localStorage.removeItem(CLAVE_ESPECTADOR)
+    guardarCookie(null)
   } catch {
     // sin almacenamiento: al recargar sin el enlace ya no se entra
   }
