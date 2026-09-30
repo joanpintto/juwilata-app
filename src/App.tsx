@@ -8,6 +8,7 @@ import { DialogosRaiz, Icono } from './componentes/ui'
 import { infoPlantilla, plantillaLista, precalentarCapas, precargarCartas } from './componentes/plantillas'
 import { DISENOS, DISENOS_MISTER, disenoDe, disenoMister } from './componentes/disenos'
 import { prepararFotos } from './componentes/fotosCarta'
+import { aligerarFotosGuardadas } from './componentes/comprimirFotos'
 import { Inicio } from './pantallas/Inicio'
 import { EstadisticasOnce, Formacion, Suplentes } from './pantallas/Formacion'
 import { FichaJugador } from './pantallas/FichaJugador'
@@ -178,7 +179,9 @@ export default function App() {
       const d = datos!
       const archivos = Object.values(d.calculo.jugadores).map((e) => (DISENOS[disenoDe(e.jugador, e.media, d.config, e.rangosAlcanzados)] ?? DISENOS.bronce).archivo)
       archivos.push((DISENOS_MISTER[disenoMister(d.misterFicha, d.mister.media, d.config, d.mister.rangosAlcanzados)] ?? DISENOS_MISTER.debutante).archivo)
-      precalentarCapas(archivos).then(() => prepararFotos(fotos, infoPlantilla(plantillaLista('bronce') ?? document)?.silueta ?? ''))
+      precalentarCapas(archivos)
+        .then(() => prepararFotos(fotos, infoPlantilla(plantillaLista('bronce') ?? document)?.silueta ?? ''))
+        .then(() => (SOLO_LECTURA ? undefined : aligerarFotosGuardadas()))
     }, 300)
     return () => clearTimeout(t)
     // eslint-disable-next-line react-hooks/exhaustive-deps

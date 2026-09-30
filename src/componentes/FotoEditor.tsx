@@ -1,9 +1,10 @@
 import { useEffect, useRef, useState } from 'react'
 import { aplicarRecorte, modeloDescargado, segmentar, type Segmentacion } from './recorte'
+import { aligerar, aligerarOriginal } from './comprimirFotos'
 
 // Encuadre de la foto del jugador, con recorte automático del fondo opcional.
 // Todo ocurre en el propio móvil: la imagen nunca sale del dispositivo. Se guarda
-// como PNG (con transparencia si se quita el fondo).
+// como PNG si se quita el fondo (transparencia) y como JPEG si no.
 
 // Misma proporción que el hueco de la foto en la carta (388×485), con resolución
 // de sobra para que se vea nítida en pantallas de iPhone (×3).
@@ -138,7 +139,13 @@ export function FotoEditor({ origen, onListo, onCancelar }: { origen: File | str
         {estado && !trabajando && <p className="nota baja">{estado}</p>}
         <div className="dialogo__botones">
           <button className="boton boton--sec" onClick={onCancelar}>Cancelar</button>
-          <button className="boton" disabled={!fuente || trabajando} onClick={() => lienzo.current && img && onListo(lienzo.current.toDataURL('image/png'), typeof origen === 'string' ? origen : copiaOriginal(img, origen.type))}>
+          <button className="boton" disabled={!fuente || trabajando} onClick={async () => {
+            if (!lienzo.current || !img) return
+            // Más ligeras: JPEG si no hay fondo transparente; la original, como mucho 1.200 px.
+            const foto = await aligerar(lienzo.current.toDataURL('image/png')).catch(() => lienzo.current!.toDataURL('image/png'))
+            const original = typeof origen === 'string' ? origen : await aligerarOriginal(copiaOriginal(img, origen.type)).catch(() => copiaOriginal(img, origen.type))
+            onListo(foto, original)
+          }}>
             Usar foto
           </button>
         </div>

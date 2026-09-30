@@ -90,7 +90,7 @@ export interface Jugador {
   secundarias: Posicion[]
   pierna: Pierna
   lado?: Lado // banda, solo laterales (sin dato: la de su pierna buena)
-  foto: string | null // PNG en data URL
+  foto: string | null // data URL: PNG si tiene el fondo quitado, JPEG si no
   fotoOriginal?: string | null // foto sin encuadrar ni recortar (solo en este móvil), para volver a editarla
   atributosIniciales: Atributos
   rolInicial: string
