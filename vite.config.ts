@@ -10,21 +10,11 @@ export default defineConfig({
     VitePWA({
       registerType: 'autoUpdate',
       includeAssets: ['apple-touch-icon.png', 'escudo.png'],
-      manifest: {
-        name: 'Juwilata United',
-        short_name: 'Juwilata',
-        description: 'Cartas evolutivas del Juwilata United',
-        lang: 'es',
-        theme_color: '#000000',
-        background_color: '#000000',
-        display: 'standalone',
-        orientation: 'portrait',
-        icons: [
-          { src: 'pwa-192.png', sizes: '192x192', type: 'image/png' },
-          { src: 'pwa-512.png', sizes: '512x512', type: 'image/png' },
-          { src: 'pwa-maskable-512.png', sizes: '512x512', type: 'image/png', purpose: 'maskable' },
-        ],
-      },
+      // El manifiesto es un archivo propio (public/manifest.webmanifest) SIN start_url:
+      // así la app de la pantalla de inicio arranca en la dirección desde la que se
+      // añadió. Un compañero la añade desde su enlace (…/?ver=<código>) y queda en
+      // modo lectura; el administrador, desde la dirección normal.
+      manifest: false,
       workbox: {
         globPatterns: ['**/*.{js,css,html,png,jpg,svg,woff2,webp}'],
         // El recorte de fondo (modelo + motor, ~28 MB) no se descarga al instalar:

@@ -52,9 +52,9 @@ export async function cargarEspectador(): Promise<ResultadoCarga> {
 }
 
 /**
- * Deja la dirección como …/?ver=<código>#/ruta y cambia el manifiesto de la app por
- * uno que arranca en esa dirección: así, «Añadir a pantalla de inicio» crea la app
- * de solo lectura (y no la del administrador).
+ * Deja la dirección como …/?ver=<código>#/ruta. El manifiesto no tiene start_url, así
+ * que «Añadir a pantalla de inicio» usa esta dirección (con el código) y crea la app
+ * de solo lectura, no la del administrador.
  */
 export function prepararAppEspectador() {
   const codigo = CODIGO_ESPECTADOR!
@@ -63,20 +63,4 @@ export function prepararAppEspectador() {
   const ruta = window.location.hash.startsWith('#/ver/') || !window.location.hash ? '#/' : window.location.hash
   history.replaceState(null, '', `${inicio}${ruta}`)
   window.dispatchEvent(new HashChangeEvent('hashchange'))
-  const manifiesto = {
-    id: inicio, name: 'Juwilata United', short_name: 'Juwilata', lang: 'es', start_url: inicio, scope: base,
-    display: 'standalone', orientation: 'portrait', theme_color: '#000000', background_color: '#000000',
-    icons: [
-      { src: `${base}pwa-192.png`, sizes: '192x192', type: 'image/png' },
-      { src: `${base}pwa-512.png`, sizes: '512x512', type: 'image/png' },
-    ],
-  }
-  const url = URL.createObjectURL(new Blob([JSON.stringify(manifiesto)], { type: 'application/manifest+json' }))
-  let enlace = document.querySelector<HTMLLinkElement>('link[rel="manifest"]')
-  if (!enlace) {
-    enlace = document.createElement('link')
-    enlace.rel = 'manifest'
-    document.head.appendChild(enlace)
-  }
-  enlace.href = url
 }

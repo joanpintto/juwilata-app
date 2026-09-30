@@ -7,7 +7,6 @@ import { CAPAS_GENERADAS } from './capasGeneradas'
 const BASE = import.meta.env.BASE_URL
 const SVG_NS = 'http://www.w3.org/2000/svg'
 const listas = new Map<string, Document>()
-const imagenesCapas: string[] = []
 
 /** Huella corta de un texto (para saber si una capa ya generada sigue valiendo). */
 export function huellaTexto(t: string): string {
@@ -20,6 +19,7 @@ export function huellaTexto(t: string): string {
 // convierte en imágenes WebP: public/cartas/capas/). En Safari, una imagen SVG se
 // vuelve a dibujar entera cada vez que se pinta; una imagen de píxeles no.
 const capasSvg: Record<string, { texto: string; huella: string }> = {}
+const urlsCapas = new Map<string, string[]>() // plantilla → sus imágenes de capa
 ;(window as unknown as { __capasJuwilata: typeof capasSvg }).__capasJuwilata = capasSvg
 
 // Cada plantilla tiene ~2.000 elementos de decoración (panal, estrellas, brillos,
@@ -69,7 +69,7 @@ function aplanar(doc: Document, archivo: string) {
     const url = CAPAS_GENERADAS[clave] === huella
       ? `${BASE}cartas/capas/${clave}.webp?v=${huella}`
       : URL.createObjectURL(new Blob([texto], { type: 'image/svg+xml' }))
-    imagenesCapas.push(url)
+    urlsCapas.set(archivo, [...(urlsCapas.get(archivo) ?? []), url])
     return url
   }
   const imagen = (href: string, x: number, y: number) => {
@@ -157,11 +157,20 @@ export function cargarPlantilla(archivo: string): Promise<Document> {
 
 /** Descarga todas las plantillas al abrir la app, para que las listas salgan al instante. */
 export async function precargarCartas(): Promise<unknown> {
-  await Promise.all([...Object.values(DISENOS), ...Object.values(DISENOS_MISTER)].map((d) => cargarPlantilla(d.archivo).catch(() => null)))
-  // Deja preparadas las imágenes de decoración para que las cartas no salgan a medias.
-  return Promise.all(imagenesCapas.map((url) => {
-    const i = new Image()
-    i.src = url
-    return i.decode().catch(() => null)
-  }))
+  // Solo las plantillas (pequeñas). Las imágenes de las capas se cargan cuando una
+  // carta las necesita: descodificarlas todas al abrir ocupaba mucha memoria y
+  // retrasaba el arranque (y el service worker ya las tiene guardadas).
+  return Promise.all([...Object.values(DISENOS), ...Object.values(DISENOS_MISTER)].map((d) => cargarPlantilla(d.archivo).catch(() => null)))
+}
+
+/** Deja listas en segundo plano (sin bloquear) las imágenes de las plantillas que se usan. */
+export async function precalentarCapas(archivos: string[]) {
+  for (const a of new Set(archivos)) {
+    await cargarPlantilla(a).catch(() => null)
+    for (const url of urlsCapas.get(a) ?? []) {
+      const i = new Image()
+      i.src = url
+      await i.decode().catch(() => null)
+    }
+  }
 }

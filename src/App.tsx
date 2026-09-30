@@ -5,7 +5,8 @@ import { vigilarCambios } from './compartir/publicar'
 import { ir, useDatos, useRuta, type Datos } from './datos'
 import { EscudosRivales } from './componentes/escudos'
 import { DialogosRaiz, Icono } from './componentes/ui'
-import { infoPlantilla, plantillaLista, precargarCartas } from './componentes/plantillas'
+import { infoPlantilla, plantillaLista, precalentarCapas, precargarCartas } from './componentes/plantillas'
+import { DISENOS, DISENOS_MISTER, disenoDe, disenoMister } from './componentes/disenos'
 import { prepararFotos } from './componentes/fotosCarta'
 import { Inicio } from './pantallas/Inicio'
 import { EstadisticasOnce, Formacion, Suplentes } from './pantallas/Formacion'
@@ -172,7 +173,13 @@ export default function App() {
   const fotos = datos?.todosJugadores.map((j) => j.foto).concat(datos.misterFicha.foto)
   useEffect(() => {
     if (!listo || !fotos) return
-    const t = setTimeout(() => prepararFotos(fotos, infoPlantilla(plantillaLista('bronce') ?? document)?.silueta ?? ''), 400)
+    const t = setTimeout(() => {
+      // Primero las capas de los diseños que se ven (jugadores y míster); luego las fotos.
+      const d = datos!
+      const archivos = Object.values(d.calculo.jugadores).map((e) => (DISENOS[disenoDe(e.jugador, e.media, d.config, e.rangosAlcanzados)] ?? DISENOS.bronce).archivo)
+      archivos.push((DISENOS_MISTER[disenoMister(d.misterFicha, d.mister.media, d.config, d.mister.rangosAlcanzados)] ?? DISENOS_MISTER.debutante).archivo)
+      precalentarCapas(archivos).then(() => prepararFotos(fotos, infoPlantilla(plantillaLista('bronce') ?? document)?.silueta ?? ''))
+    }, 300)
     return () => clearTimeout(t)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [listo, fotos?.reduce((n, f) => n + (f?.length ?? 0), 0)])
