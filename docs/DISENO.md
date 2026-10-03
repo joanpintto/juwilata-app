@@ -124,7 +124,7 @@ Hay 9 roles de campo más el portero. Atributos: RIT, TIR, PAS, REG, DEF y FIS. 
 
 ### 6.1 Nota del partido (0-10)
 
-- **Base:** 5,0 para todas las posiciones, portero incluido. *(Cambio del usuario, 03-10-2026: antes era 6,0; se bajó un punto para que las notas no se amontonen entre 7 y 9. Todo lo que depende de la nota bajó también un punto, así que las medias no cambian; arriba hay escalones nuevos. Se aplicó a toda la temporada.)*
+- **Base:** 5,0 para todas las posiciones, portero incluido. *(Cambio del usuario, 03-10-2026: antes era 6,0; se bajó un punto para que las notas no se amontonen entre 7 y 9. Todo lo que depende de la nota bajó también un punto; el 5 suma algo y arriba hay escalones nuevos. Se aplicó a toda la temporada.)*
 - **Ajuste por resultado**, igual para todo el equipo:
 
 | Resultado | Ajuste |
@@ -165,7 +165,7 @@ Hay 9 roles de campo más el portero. Atributos: RIT, TIR, PAS, REG, DEF y FIS. 
 
 Idea: **subir es lo normal y bajar cuesta mucho**. No hay techo: cualquier jugador puede seguir subiendo, solo que cada vez más despacio. Las metas de abajo son una referencia de cómo debe comportarse la fórmula, no algo que se fuerce.
 
-**Metas (empezando en 60, 32 partidos con la misma nota, sin MVPs):** un 5,5 acaba en ~75, un 8 en ~90, un 8,5 en ~91, un 9 en ~92 y un 10 en ~94 (ver tabla). Con un 5 (partido normal) la media se mantiene.
+**Metas (empezando en 60, 32 partidos con la misma nota, sin MVPs):** un 5 acaba en ~71, un 5,5 en ~75, un 8 en ~90, un 8,5 en ~91, un 9 en ~92 y un 10 en ~94 (ver tabla). Con un 4,5 la media se mantiene. *(Decidido por el usuario: un 5 también tiene que sumar algo, un poco menos que un 5,5.)*
 
 1. **Nota ponderada** = 0,5 × último partido + 0,3 × media de los 2 anteriores + 0,2 × media de la temporada.
 
@@ -173,11 +173,11 @@ Idea: **subir es lo normal y bajar cuesta mucho**. No hay techo: cualquier jugad
 
    Ritmo, en puntos por partido (entre valores se interpola):
 
-| Nota | 5,0 | 5,5 | 6,0 | 6,5 | 7,0 | 7,5 | 8,0 | 8,5 | 9,0 | 10 |
-|---|---|---|---|---|---|---|---|---|---|---|
-| Ritmo | 0 | 0,40 | 0,53 | 0,65 | 0,80 | 0,98 | 1,14 | 1,25 | 1,40 | 1,70 |
+| Nota | 4,5 | 5,0 | 5,5 | 6,0 | 6,5 | 7,0 | 7,5 | 8,0 | 8,5 | 9,0 | 10 |
+|---|---|---|---|---|---|---|---|---|---|---|---|
+| Ritmo | 0 | 0,28 | 0,40 | 0,53 | 0,65 | 0,80 | 0,98 | 1,14 | 1,25 | 1,40 | 1,70 |
 
-   (Hasta el 8 es la tabla anterior un punto más abajo; 8,5, 9 y 10 son escalones nuevos. Al pasar a la escala nueva, cada móvil desplaza un punto la tabla que tuviera y le añade estos escalones.)
+   (De 5,5 a 8 es la tabla anterior un punto más abajo; el 5 suma algo menos que el 5,5; 8,5, 9 y 10 son escalones nuevos.)
 
    Multiplicador según la media actual (cuanto más alta, más cuesta subir):
 
@@ -199,6 +199,7 @@ Idea: **subir es lo normal y bajar cuesta mucho**. No hay techo: cualquier jugad
 
 | Nota | Partido 1 | Partido 4 | Partido 8 | Mitad (16) | Partido 24 | Final (32) |
 |---|---|---|---|---|---|---|
+| 5,0 | 60,4 | 61,5 | 63,0 | 65,9 | 68,6 | 71,0 |
 | 5,5 | 60,6 | 62,2 | 64,3 | 68,2 | 71,7 | 75,1 |
 | 6,0 | 60,7 | 62,9 | 65,6 | 70,6 | 75,0 | 78,9 |
 | 6,5 | 60,9 | 63,5 | 66,8 | 72,6 | 77,8 | 82,0 |
@@ -213,11 +214,11 @@ Idea: **subir es lo normal y bajar cuesta mucho**. No hay techo: cualquier jugad
 
 | Media | Nota 3 | Nota 4 | Nota 4,5 | Nota 5 | Nota 6,5 | Nota 8 |
 |---|---|---|---|---|---|---|
-| 62 | −0,09 | −0,03 | 0 | 0 | +0,87 | +1,50 |
-| 70 | −0,20 | −0,07 | 0 | 0 | +0,72 | +1,25 |
-| 78 | −0,36 | −0,12 | 0 | 0 | +0,57 | +1,00 |
-| 86 | −0,59 | −0,20 | 0 | 0 | +0,33 | +0,58 |
-| 92 | −0,68 | −0,23 | 0 | 0 | +0,19 | +0,33 |
+| 62 | −0,09 | −0,03 | 0 | +0,38 | +0,87 | +1,50 |
+| 70 | −0,20 | −0,07 | 0 | +0,31 | +0,72 | +1,25 |
+| 78 | −0,36 | −0,12 | 0 | +0,25 | +0,57 | +1,00 |
+| 86 | −0,59 | −0,20 | 0 | +0,14 | +0,33 | +0,58 |
+| 92 | −0,68 | −0,23 | 0 | +0,08 | +0,19 | +0,33 |
 
 **Tres partidos seguidos de 4,5:** media 62 → 61,8 · 70 → 69,6 · 78 → 77,3 · **86 → 84,8** · 92 → 90,6. Cuanto más alta la media, más se nota la bajada; con medias bajas cuesta mucho bajar.
 

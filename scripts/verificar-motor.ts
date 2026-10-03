@@ -4,7 +4,7 @@ import { CONFIG_INICIAL as cfg } from '../src/motor/config.ts'
 import { simular, cambioMedia, simularMister } from '../src/motor/calculo.ts'
 
 
-const metas: [number, number][] = [[5.5, 75], [6, 79], [6.5, 82], [7, 85], [7.5, 88], [8, 90], [8.5, 91.1], [9, 92.3], [10, 94]]
+const metas: [number, number][] = [[5, 71], [5.5, 75], [6, 79], [6.5, 82], [7, 85], [7.5, 88], [8, 90], [8.5, 91.1], [9, 92.3], [10, 94]]
 const idx = [1, 4, 8, 16, 24, 32]
 let ok = true
 console.log('Nota | partido 1, 4, 8, 16, 24, 32 (empezando en 60, sin MVPs)')
@@ -25,7 +25,7 @@ console.log('\nTres partidos seguidos de 3,5:')
 for (const m of [62, 70, 78, 86, 92]) console.log(`  media ${m} → ${serie(m, [3.5, 3.5, 3.5])}`)
 const caida86 = 86 - Number(serie(86, [3.5, 3.5, 3.5]))
 if (caida86 < 1 || caida86 > 1.5) ok = false
-console.log('Media 60 con 32 partidos de 5:', simular(5, 32, cfg)[31].toFixed(1))
+console.log('Media 60 con 32 partidos de 4,5:', simular(4.5, 32, cfg)[31].toFixed(1))
 // Míster (§20.3): 3 temporadas de 32 partidos con la misma nota.
 console.log('\nMíster | final 1ª, 2ª y 3ª temporada')
 const metasMister: [number, number[]][] = [[7, [78.9, 88.8, 92.6]], [8, [85.1, 92.7, 94.4]], [9, [89.8, 94.3, 95.3]]]

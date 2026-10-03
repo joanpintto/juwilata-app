@@ -350,17 +350,6 @@ export const ESQUEMAS: Record<string, { id: string; pos: Posicion; x: number; y:
 
 let inicializacion: Promise<void> | null = null
 
-/**
- * La tabla de ritmo que tuviera el móvil, un punto más abajo (lo que daba un 6 lo da
- * un 5…), más los escalones nuevos de arriba de la tabla actual (8,5 · 9 · 10).
- */
-function ritmoDesplazado(t: { x: number; y: number }[]) {
-  const bajada = t.map((p) => ({ x: Math.round((p.x - 1) * 10) / 10, y: p.y }))
-  const ultima = bajada[bajada.length - 1]
-  return [...bajada, ...CONFIG_INICIAL.ritmo.filter((p) => p.x > ultima.x && p.y > ultima.y)]
-}
-
-/** Crea el equipo, la temporada y la configuración la primera vez. */
 export function inicializar(): Promise<void> {
   inicializacion ??= db.transaction('rw', [db.equipo, db.temporadas, db.configuraciones, db.partidos], async () => {
     if (!(await db.configuraciones.count())) {
@@ -377,8 +366,8 @@ export function inicializar(): Promise<void> {
     }
     // Nueva escala de notas (§6.1, cambio del usuario): un partido normal empieza en 5 en
     // vez de 6. Si la configuración sigue en la escala anterior, todo lo que depende de la
-    // nota baja un punto (tabla de ritmo nueva con escalones arriba) y se recalcula toda la
-    // temporada. El míster mantiene su nota y su tabla.
+    // nota baja un punto, la tabla de ritmo pasa a la nueva (el 5 también suma, escalones
+    // arriba) y se recalcula toda la temporada. El míster mantiene su nota y su tabla.
     const actual = await db.configuraciones.orderBy('version').last()
     const d = actual?.datos
     if (actual && d && (d.notaBase ?? 6) > 5.5) {
@@ -388,7 +377,7 @@ export function inicializar(): Promise<void> {
         datos: {
           ...d,
           notaBase: d.notaBase - 1,
-          ritmo: ritmoDesplazado(d.ritmo ?? RITMO_ANTIGUO),
+          ritmo: CONFIG_INICIAL.ritmo,
           umbralBajada: (d.umbralBajada ?? 5.5) - 1,
           ifNotaMinima: (d.ifNotaMinima ?? 8) - 1,
           notaAlta: CONFIG_INICIAL.notaAlta,
