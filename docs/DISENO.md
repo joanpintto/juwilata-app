@@ -124,7 +124,7 @@ Hay 9 roles de campo más el portero. Atributos: RIT, TIR, PAS, REG, DEF y FIS. 
 
 ### 6.1 Nota del partido (0-10)
 
-- **Base:** 5,0 para todas las posiciones, portero incluido. *(Cambio del usuario, 03-10-2026: antes era 6,0; se bajó un punto para que las notas no se amontonen entre 7 y 9. Todo lo que depende de la nota bajó también un punto; el 5 suma algo y arriba hay escalones nuevos. Se aplicó a toda la temporada.)*
+- **Base:** 5,0 para todas las posiciones, portero incluido. *(Cambio del usuario, 03-10-2026: antes era 6,0; se bajó un punto para que las notas no se amontonen entre 7 y 9. Los umbrales que dependen de la nota (bajada, IF, partidos notables, colores) bajaron también un punto; la tabla de evolución es la de §6.2. Se aplicó a toda la temporada.)*
 - **Ajuste por resultado**, igual para todo el equipo:
 
 | Resultado | Ajuste |
@@ -165,7 +165,7 @@ Hay 9 roles de campo más el portero. Atributos: RIT, TIR, PAS, REG, DEF y FIS. 
 
 Idea: **subir es lo normal y bajar cuesta mucho**. No hay techo: cualquier jugador puede seguir subiendo, solo que cada vez más despacio. Las metas de abajo son una referencia de cómo debe comportarse la fórmula, no algo que se fuerce.
 
-**Metas (empezando en 60, 32 partidos con la misma nota, sin MVPs):** un 5 acaba en ~71, un 5,5 en ~75, un 8 en ~90, un 8,5 en ~91, un 9 en ~92 y un 10 en ~94 (ver tabla). Con un 4,5 la media se mantiene. *(Decidido por el usuario: un 5 también tiene que sumar algo, un poco menos que un 5,5.)*
+**Metas (empezando en 60, 32 partidos con la misma nota, sin MVPs):** un 5 acaba en ~65, un 6 en ~72, un 6,5 en ~75, un 9 en ~90 y un 10 en ~93 (ver tabla). Con un 4,5 la media se mantiene. *(Decidido por el usuario: de 6,5 a 9 se mantienen los resultados de antes; por debajo, escalones graduales desde el 5; arriba, 9,5 y 10 nuevos.)*
 
 1. **Nota ponderada** = 0,5 × último partido + 0,3 × media de los 2 anteriores + 0,2 × media de la temporada.
 
@@ -173,11 +173,9 @@ Idea: **subir es lo normal y bajar cuesta mucho**. No hay techo: cualquier jugad
 
    Ritmo, en puntos por partido (entre valores se interpola):
 
-| Nota | 4,5 | 5,0 | 5,5 | 6,0 | 6,5 | 7,0 | 7,5 | 8,0 | 8,5 | 9,0 | 10 |
-|---|---|---|---|---|---|---|---|---|---|---|---|
-| Ritmo | 0 | 0,28 | 0,40 | 0,53 | 0,65 | 0,80 | 0,98 | 1,14 | 1,25 | 1,40 | 1,70 |
-
-   (De 5,5 a 8 es la tabla anterior un punto más abajo; el 5 suma algo menos que el 5,5; 8,5, 9 y 10 son escalones nuevos.)
+| Nota | 4,5 | 5,0 | 5,5 | 6,0 | 6,5 | 7,0 | 7,5 | 8,0 | 8,5 | 9,0 | 9,5 | 10 |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| Ritmo | 0 | 0,12 | 0,21 | 0,31 | 0,40 | 0,53 | 0,65 | 0,80 | 0,98 | 1,14 | 1,30 | 1,51 |
 
    Multiplicador según la media actual (cuanto más alta, más cuesta subir):
 
@@ -193,32 +191,33 @@ Idea: **subir es lo normal y bajar cuesta mucho**. No hay techo: cualquier jugad
 
 4. **Factor de minutos** = `min(1, 0,65 + 0,02 × minutos)`: 5 min → 0,75 · 10 → 0,85 · 15 → 0,95 · 18 o más → 1. Vale para subidas y bajadas.
 
-5. **Premio de MVP y de nominado:** a partir de 75 se multiplica por `1 − ((media − 75) / 24) × 0,6`. Con MVP en los 32 partidos, un 9 acaba en ~94,6.
+5. **Premio de MVP y de nominado:** a partir de 75 se multiplica por `1 − ((media − 75) / 24) × 0,6`. Con MVP en los 32 partidos, un 9 acaba en ~92,6.
 
 **Resultado con la misma nota en los 32 partidos, empezando en 60 y sin MVPs:**
 
 | Nota | Partido 1 | Partido 4 | Partido 8 | Mitad (16) | Partido 24 | Final (32) |
 |---|---|---|---|---|---|---|
-| 5,0 | 60,4 | 61,5 | 63,0 | 65,9 | 68,6 | 71,0 |
-| 5,5 | 60,6 | 62,2 | 64,3 | 68,2 | 71,7 | 75,1 |
-| 6,0 | 60,7 | 62,9 | 65,6 | 70,6 | 75,0 | 78,9 |
-| 6,5 | 60,9 | 63,5 | 66,8 | 72,6 | 77,8 | 82,0 |
-| 7,0 | 61,1 | 64,3 | 68,2 | 75,1 | 80,8 | 85,1 |
-| 7,5 | 61,4 | 65,3 | 69,9 | 77,9 | 83,9 | 88,0 |
-| 8,0 | 61,5 | 65,9 | 71,2 | 80,1 | 86,0 | 90,0 |
-| 8,5 | 61,5 | 66,0 | 71,7 | 81,2 | 87,2 | 91,1 |
-| 9,0 | 61,5 | 66,0 | 72,0 | 82,2 | 88,4 | 92,3 |
-| 10 | 61,5 | 66,0 | 72,0 | 83,3 | 90,0 | 94,0 |
+| 5,0 | 60,2 | 60,7 | 61,3 | 62,6 | 63,9 | 65,1 |
+| 5,5 | 60,3 | 61,2 | 62,3 | 64,5 | 66,6 | 68,5 |
+| 6,0 | 60,4 | 61,7 | 63,4 | 66,5 | 69,4 | 72,1 |
+| 6,5 | 60,6 | 62,2 | 64,3 | 68,2 | 71,7 | 75,1 |
+| 7,0 | 60,7 | 62,9 | 65,6 | 70,6 | 75,0 | 78,9 |
+| 7,5 | 60,9 | 63,5 | 66,8 | 72,6 | 77,8 | 82,0 |
+| 8,0 | 61,1 | 64,3 | 68,2 | 75,1 | 80,8 | 85,1 |
+| 8,5 | 61,4 | 65,3 | 69,9 | 77,9 | 83,9 | 88,0 |
+| 9,0 | 61,5 | 65,9 | 71,2 | 80,1 | 86,0 | 90,0 |
+| 9,5 | 61,5 | 66,0 | 71,9 | 81,6 | 87,6 | 91,5 |
+| 10 | 61,5 | 66,0 | 72,0 | 82,8 | 89,1 | 93,0 |
 
 **Un partido completo según la media** (si el jugador viene jugando con esa nota):
 
 | Media | Nota 3 | Nota 4 | Nota 4,5 | Nota 5 | Nota 6,5 | Nota 8 |
 |---|---|---|---|---|---|---|
-| 62 | −0,09 | −0,03 | 0 | +0,38 | +0,87 | +1,50 |
-| 70 | −0,20 | −0,07 | 0 | +0,31 | +0,72 | +1,25 |
-| 78 | −0,36 | −0,12 | 0 | +0,25 | +0,57 | +1,00 |
-| 86 | −0,59 | −0,20 | 0 | +0,14 | +0,33 | +0,58 |
-| 92 | −0,68 | −0,23 | 0 | +0,08 | +0,19 | +0,33 |
+| 62 | −0,09 | −0,03 | 0 | +0,16 | +0,54 | +1,07 |
+| 70 | −0,20 | −0,07 | 0 | +0,13 | +0,44 | +0,88 |
+| 78 | −0,36 | −0,12 | 0 | +0,11 | +0,35 | +0,70 |
+| 86 | −0,59 | −0,20 | 0 | +0,06 | +0,20 | +0,41 |
+| 92 | −0,68 | −0,23 | 0 | +0,03 | +0,12 | +0,23 |
 
 **Tres partidos seguidos de 4,5:** media 62 → 61,8 · 70 → 69,6 · 78 → 77,3 · **86 → 84,8** · 92 → 90,6. Cuanto más alta la media, más se nota la bajada; con medias bajas cuesta mucho bajar.
 

@@ -192,14 +192,15 @@ export type RangoId =
 export const RANGOS_ANTIGUOS = [60, 65, 70, 75, 80, 85, 90, 95]
 
 /**
- * Tabla nota ponderada → puntos por partido de los jugadores, en la escala de notas
- * actual (un partido normal empieza en 5). Lo que antes era un 6,5 es ahora un 5,5, un
- * 7 un 6…; el 5 también suma (algo menos que el 5,5), con un 4,5 la media se mantiene
- * y arriba hay escalones nuevos (8,5 → ~91, 9 → ~92, 10 → ~94).
+ * Tabla nota ponderada → puntos por partido de los jugadores (un partido normal empieza
+ * en 5). Decidido por el usuario: de 6,5 a 9 da lo mismo que antes; por debajo sube de
+ * forma gradual (5 → ~65, 5,5 → ~68,5, 6 → ~72 al final de temporada; con 4,5 la media
+ * se mantiene) y arriba hay escalones nuevos (9,5 → ~91,5, 10 → ~93).
  */
 export const RITMO: Tabla = [
-  { x: 4.5, y: 0 }, { x: 5.0, y: 0.28 }, { x: 5.5, y: 0.4 }, { x: 6.0, y: 0.53 }, { x: 6.5, y: 0.65 }, { x: 7.0, y: 0.8 },
-  { x: 7.5, y: 0.98 }, { x: 8.0, y: 1.14 }, { x: 8.5, y: 1.25 }, { x: 9.0, y: 1.4 }, { x: 10.0, y: 1.7 },
+  { x: 4.5, y: 0 }, { x: 5.0, y: 0.12 }, { x: 5.5, y: 0.21 }, { x: 6.0, y: 0.31 }, { x: 6.5, y: 0.4 },
+  { x: 7.0, y: 0.53 }, { x: 7.5, y: 0.65 }, { x: 8.0, y: 0.8 }, { x: 8.5, y: 0.98 }, { x: 9.0, y: 1.14 },
+  { x: 9.5, y: 1.3 }, { x: 10.0, y: 1.51 },
 ]
 /** La tabla de la escala anterior (partido normal = 6). La sigue usando el míster, cuya nota no cambia. */
 export const RITMO_ANTIGUO: Tabla = [
@@ -252,8 +253,8 @@ export const CONFIG_INICIAL: Config = {
 
   pesosNotaPonderada: { ultimo: 0.5, dosAnteriores: 0.3, temporada: 0.2 },
   // Calibrado para que, empezando en 60 y jugando 32 partidos con la misma nota,
-  // un 5 acabe en ~71, un 5,5 en ~75, un 8 en ~90, un 9 en ~92 y un 10 en ~94 (sin
-  // MVPs). Con un 4,5 la media se mantiene.
+  // un 5 acabe en ~65, un 6,5 en ~75, un 9 en ~90 y un 10 en ~93 (sin MVPs).
+  // Con un 4,5 la media se mantiene.
   ritmo: RITMO,
   multiplicadorMedia: [
     { x: 60, y: 1.4 }, { x: 65, y: 1.25 }, { x: 70, y: 1.1 }, { x: 75, y: 1.0 }, { x: 80, y: 0.8 },
