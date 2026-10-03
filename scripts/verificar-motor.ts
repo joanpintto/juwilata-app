@@ -4,7 +4,7 @@ import { CONFIG_INICIAL as cfg } from '../src/motor/config.ts'
 import { simular, cambioMedia, simularMister } from '../src/motor/calculo.ts'
 
 
-const metas: [number, number][] = [[5, 65], [5.5, 68.5], [6, 72], [6.5, 75], [7, 79], [7.5, 82], [8, 85], [8.5, 88], [9, 90], [9.5, 91.5], [10, 93]]
+const metas: [number, number][] = [[5, 66], [5.5, 70], [6, 74.5], [6.5, 77.5], [7, 81], [7.5, 83.5], [8, 86], [8.5, 89], [9, 90.5], [9.5, 92], [10, 93]]
 const idx = [1, 4, 8, 16, 24, 32]
 let ok = true
 console.log('Nota | partido 1, 4, 8, 16, 24, 32 (empezando en 60, sin MVPs)')

@@ -381,6 +381,7 @@ export function inicializar(): Promise<void> {
           umbralBajada: (d.umbralBajada ?? 5.5) - 1,
           ifNotaMinima: (d.ifNotaMinima ?? 8) - 1,
           notaAlta: CONFIG_INICIAL.notaAlta,
+          multiplicadorMedia: CONFIG_INICIAL.multiplicadorMedia,
           mister: {
             ...CONFIG_INICIAL.mister, ...d.mister,
             ritmo: d.mister?.ritmo ?? d.ritmo ?? RITMO_ANTIGUO,

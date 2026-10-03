@@ -256,9 +256,10 @@ export const CONFIG_INICIAL: Config = {
   // un 5 acabe en ~65, un 6,5 en ~75, un 9 en ~90 y un 10 en ~93 (sin MVPs).
   // Con un 4,5 la media se mantiene.
   ritmo: RITMO,
+  // Curva de nivel: hasta 76 se sube con facilidad; a partir de ahí cuesta cada vez más.
   multiplicadorMedia: [
-    { x: 60, y: 1.4 }, { x: 65, y: 1.25 }, { x: 70, y: 1.1 }, { x: 75, y: 1.0 }, { x: 80, y: 0.8 },
-    { x: 85, y: 0.55 }, { x: 90, y: 0.35 }, { x: 95, y: 0.2 }, { x: 99, y: 0.1 },
+    { x: 60, y: 1.6 }, { x: 65, y: 1.5 }, { x: 70, y: 1.4 }, { x: 74, y: 1.3 }, { x: 76, y: 1.15 }, { x: 78, y: 0.85 },
+    { x: 80, y: 0.72 }, { x: 85, y: 0.55 }, { x: 90, y: 0.38 }, { x: 95, y: 0.22 }, { x: 99, y: 0.1 },
   ],
   umbralBajada: 4.5,
   bajadaPorPunto: 0.45,
