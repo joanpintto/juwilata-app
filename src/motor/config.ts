@@ -116,6 +116,7 @@ export interface ConfigMister {
   rivalBajoDerrota: number // perder con uno de la mitad baja (negativo)
 
   // Evolución (§20.3): sin techo ni factor de minutos
+  ritmo: Tabla // nota ponderada → puntos por partido (la de los jugadores antes del cambio de escala)
   multiplicadorMedia: Tabla
   umbralBajada: number // 6,0
   bajadaPorPunto: number // 0,5
@@ -189,6 +190,17 @@ export type RangoId =
 /** Umbrales de los rangos hasta septiembre de 2026 (se actualizan solos si no se habían tocado). */
 export const RANGOS_ANTIGUOS = [60, 65, 70, 75, 80, 85, 90, 95]
 
+/** Tabla nota ponderada → puntos por partido de los jugadores. */
+export const RITMO: Tabla = [
+  { x: 5.0, y: 0 }, { x: 6.0, y: 0.4 }, { x: 6.5, y: 0.53 }, { x: 7.0, y: 0.65 },
+  { x: 7.5, y: 0.8 }, { x: 8.0, y: 0.98 }, { x: 8.5, y: 1.14 }, { x: 9.0, y: 1.35 },
+]
+/** La tabla anterior (con un 6 se mantenía). El míster la sigue usando. */
+export const RITMO_ANTIGUO: Tabla = [
+  { x: 6.0, y: 0 }, { x: 6.5, y: 0.4 }, { x: 7.0, y: 0.53 }, { x: 7.5, y: 0.65 },
+  { x: 8.0, y: 0.8 }, { x: 8.5, y: 0.98 }, { x: 9.0, y: 1.14 },
+]
+
 export const CONFIG_INICIAL: Config = {
   roles: [
     { id: 'DC', nombre: 'Delantero Posicional', sigla: 'DC', posicion: 'DEL', pesos: [15, 35, 10, 15, 5, 20] },
@@ -234,16 +246,14 @@ export const CONFIG_INICIAL: Config = {
 
   pesosNotaPonderada: { ultimo: 0.5, dosAnteriores: 0.3, temporada: 0.2 },
   // Calibrado para que, empezando en 60 y jugando 32 partidos con la misma nota,
-  // un 6,5 acabe en ~75 y un 9 en ~90 (sin MVPs). Con un 6 la media se mantiene.
-  ritmo: [
-    { x: 6.0, y: 0 }, { x: 6.5, y: 0.4 }, { x: 7.0, y: 0.53 }, { x: 7.5, y: 0.65 },
-    { x: 8.0, y: 0.8 }, { x: 8.5, y: 0.98 }, { x: 9.0, y: 1.14 },
-  ],
+  // un 6 acabe en ~75, un 8,5 en ~90 y un 9 en ~92 (sin MVPs). Con un 5 la media se
+  // mantiene (cambio del usuario: lo que antes daba un 6 lo da un 5, lo de un 6,5 un 6…).
+  ritmo: RITMO,
   multiplicadorMedia: [
     { x: 60, y: 1.4 }, { x: 65, y: 1.25 }, { x: 70, y: 1.1 }, { x: 75, y: 1.0 }, { x: 80, y: 0.8 },
     { x: 85, y: 0.55 }, { x: 90, y: 0.35 }, { x: 95, y: 0.2 }, { x: 99, y: 0.1 },
   ],
-  umbralBajada: 5.5,
+  umbralBajada: 4.5,
   bajadaPorPunto: 0.45,
   nivelBajada: [
     { x: 60, y: 0.1 }, { x: 70, y: 0.3 }, { x: 80, y: 0.6 }, { x: 85, y: 0.85 }, { x: 90, y: 1.0 },
@@ -290,6 +300,7 @@ export const CONFIG_INICIAL: Config = {
   logrosCasa: LOGROS_CASA_INICIALES,
 
   mister: {
+    ritmo: RITMO_ANTIGUO,
     notaBase: 6.0,
     resultado: { victoria: 1.2, empate: 0.2, derrota: -0.8 },
     porGol: 0.15,

@@ -280,7 +280,7 @@ export function corrector(attrs: Atributos, pesos: Atributos, cfg: Config): Atri
 export function cambioMediaMister(np: number, nota: number, mediaActual: number, cfg: Config): number {
   const m = cfg.mister
   if (nota < m.umbralBajada) return -Math.min(m.topeBajada, m.bajadaPorPunto * (m.umbralBajada - nota))
-  return Math.min(m.topeSubida, Math.max(0, interpolar(cfg.ritmo, np) * interpolar(m.multiplicadorMedia, mediaActual)))
+  return Math.min(m.topeSubida, Math.max(0, interpolar(m.ritmo ?? cfg.ritmo, np) * interpolar(m.multiplicadorMedia, mediaActual)))
 }
 
 /** Media tras cada partido dirigido con la misma nota (para la simulación de Ajustes → Avanzado). */

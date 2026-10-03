@@ -165,7 +165,7 @@ Hay 9 roles de campo más el portero. Atributos: RIT, TIR, PAS, REG, DEF y FIS. 
 
 Idea: **subir es lo normal y bajar cuesta mucho**. No hay techo: cualquier jugador puede seguir subiendo, solo que cada vez más despacio. Las metas de abajo son una referencia de cómo debe comportarse la fórmula, no algo que se fuerce.
 
-**Metas (empezando en 60, 32 partidos con la misma nota, sin MVPs):** un 6,5 acaba en ~75 y un 9 en ~90 (ver tabla). Con un 6 la media se mantiene.
+**Metas (empezando en 60, 32 partidos con la misma nota, sin MVPs):** un 6 acaba en ~75, un 8,5 en ~90 y un 9 en ~92 (ver tabla). Con un 5 la media se mantiene. *(Cambio del usuario, 03-10-2026: la escala se desplazó; lo que antes daba un 6 lo da un 5, lo de un 6,5 un 6, lo de un 7 un 6,5… y el 9 tiene un escalón nuevo. Se aplicó a toda la temporada.)*
 
 1. **Nota ponderada** = 0,5 × último partido + 0,3 × media de los 2 anteriores + 0,2 × media de la temporada.
 
@@ -173,9 +173,11 @@ Idea: **subir es lo normal y bajar cuesta mucho**. No hay techo: cualquier jugad
 
    Ritmo, en puntos por partido (entre valores se interpola):
 
-| Nota | 6,0 | 6,5 | 7,0 | 7,5 | 8,0 | 8,5 | 9,0 |
-|---|---|---|---|---|---|---|---|
-| Ritmo | 0 | 0,40 | 0,53 | 0,65 | 0,80 | 0,98 | 1,14 |
+| Nota | 5,0 | 6,0 | 6,5 | 7,0 | 7,5 | 8,0 | 8,5 | 9,0 |
+|---|---|---|---|---|---|---|---|---|
+| Ritmo | 0 | 0,40 | 0,53 | 0,65 | 0,80 | 0,98 | 1,14 | 1,35 |
+
+   (Un 5,5 da 0,20, a medio camino entre el 5 y el 6.)
 
    Multiplicador según la media actual (cuanto más alta, más cuesta subir):
 
@@ -183,7 +185,7 @@ Idea: **subir es lo normal y bajar cuesta mucho**. No hay techo: cualquier jugad
 |---|---|---|---|---|---|---|---|---|---|
 | Multiplicador | ×1,40 | ×1,25 | ×1,10 | ×1,00 | ×0,80 | ×0,55 | ×0,35 | ×0,20 | ×0,10 |
 
-3. **Bajada (partido malo):** si la nota **del partido** es menor que 5,5, la media baja 0,45 por cada punto por debajo de 5,5, multiplicado por cuánto se nota la bajada según la media. **Tope: −0,8 por partido.** Un 5,5 o más nunca hace bajar (entre 5,5 y 6 la media se queda igual).
+3. **Bajada (partido malo):** si la nota **del partido** es menor que 4,5, la media baja 0,45 por cada punto por debajo de 4,5, multiplicado por cuánto se nota la bajada según la media. **Tope: −0,8 por partido.** Un 4,5 o más nunca hace bajar (entre 4,5 y 5 la media se queda igual).
 
 | Media | 60 | 70 | 80 | 85 | 90 o más |
 |---|---|---|---|---|---|
@@ -191,7 +193,7 @@ Idea: **subir es lo normal y bajar cuesta mucho**. No hay techo: cualquier jugad
 
 4. **Factor de minutos** = `min(1, 0,65 + 0,02 × minutos)`: 5 min → 0,75 · 10 → 0,85 · 15 → 0,95 · 18 o más → 1. Vale para subidas y bajadas.
 
-5. **Premio de MVP y de nominado:** a partir de 75 se multiplica por `1 − ((media − 75) / 24) × 0,6`. Con MVP en los 32 partidos, un 9 acaba en ~92,6.
+5. **Premio de MVP y de nominado:** a partir de 75 se multiplica por `1 − ((media − 75) / 24) × 0,6`. Con MVP en los 32 partidos, un 9 acaba en ~94,2.
 
 **Resultado con la misma nota en los 32 partidos, empezando en 60 y sin MVPs:**
 
@@ -634,7 +636,7 @@ La nota final siempre queda entre 0 y 10.
 
 ### 20.3 Evolución de la media
 
-- Usa la **misma nota ponderada y la misma tabla de ritmo** que los jugadores (sección 6.2). La nota neutra es **6,0**.
+- Usa la **misma nota ponderada** que los jugadores y la **tabla de ritmo anterior** al cambio de escala de §6.2 (6,0 → 0; 6,5 → 0,40; 7,0 → 0,53; 7,5 → 0,65; 8,0 → 0,80; 8,5 → 0,98; 9,0 → 1,14). La nota neutra es **6,0**.
 - **Sin techo por nota** y **sin factor de minutos**.
 - **Multiplicador del míster:** igual que el de los jugadores hasta 85, pero más duro a partir de ahí. Así el máximo natural queda en ~94-95.
 
@@ -642,7 +644,7 @@ La nota final siempre queda entre 0 y 10.
 |---|---|---|---|---|---|---|---|---|---|---|
 | Multiplicador | ×1,40 | ×1,25 | ×1,10 | ×1,00 | ×0,80 | ×0,55 | ×0,30 | ×0,15 | ×0,05 | 0 |
 
-- **Bajadas:** cuando la nota es menor de 6,0, −0,5 por punto (tope −1,0), sin multiplicador. Decidido por el usuario: el míster mantiene esta regla aunque los jugadores usen ahora la de §6.2 (solo bajan con nota < 5,5, según la media). No existe la "vuelta al techo" porque no hay techo.
+- **Bajadas:** cuando la nota es menor de 6,0, −0,5 por punto (tope −1,0), sin multiplicador. Decidido por el usuario: el míster mantiene esta regla aunque los jugadores usen ahora la de §6.2 (solo bajan con nota < 4,5, según la media). No existe la "vuelta al techo" porque no hay techo.
 - **Tope de subida:** +1,5 por partido.
 - **Referencia:**
 

@@ -1,5 +1,5 @@
 import Dexie, { type Table } from 'dexie'
-import { CONFIG_INICIAL, RANGOS_ANTIGUOS, rolPorId, type Atributos, type Config, type Lado, type Posicion } from './motor/config'
+import { CONFIG_INICIAL, RANGOS_ANTIGUOS, RITMO_ANTIGUO, rolPorId, type Atributos, type Config, type Lado, type Posicion } from './motor/config'
 import { atributosIniciales } from './motor/calculo'
 import type { Acciones } from './motor/calculo'
 
@@ -349,10 +349,11 @@ export const ESQUEMAS: Record<string, { id: string; pos: Posicion; x: number; y:
 }
 
 let inicializacion: Promise<void> | null = null
+const DESCRIPCION_ESCALA = 'Nueva escala de notas'
 
 /** Crea el equipo, la temporada y la configuración la primera vez. */
 export function inicializar(): Promise<void> {
-  inicializacion ??= db.transaction('rw', [db.equipo, db.temporadas, db.configuraciones], async () => {
+  inicializacion ??= db.transaction('rw', [db.equipo, db.temporadas, db.configuraciones, db.partidos], async () => {
     if (!(await db.configuraciones.count())) {
       await db.configuraciones.put({ version: 1, datos: CONFIG_INICIAL, creada: new Date().toISOString(), descripcion: 'Valores iniciales del documento de diseño' })
     }
@@ -364,6 +365,24 @@ export function inicializar(): Promise<void> {
         version: ultima.version + 1, datos: { ...ultima.datos, rangos: CONFIG_INICIAL.rangos },
         creada: new Date().toISOString(), descripcion: 'Nuevos umbrales de los rangos',
       })
+    }
+    // Nueva escala de las notas (§6.2), una sola vez: la tabla de ritmo pasa a la nueva
+    // (con un 5 se mantiene; umbral de bajada 4,5) y se recalcula toda la temporada con
+    // ella. El míster se queda con la tabla que tuviera (su evolución no cambia).
+    const todas = await db.configuraciones.orderBy('version').toArray()
+    const actual = todas[todas.length - 1]
+    const yaHecha = todas.some((c) => c.descripcion?.startsWith(DESCRIPCION_ESCALA))
+    if (actual && !yaHecha && JSON.stringify(actual.datos.ritmo) !== JSON.stringify(CONFIG_INICIAL.ritmo)) {
+      const version = actual.version + 1
+      await db.configuraciones.put({
+        version,
+        datos: {
+          ...actual.datos, ritmo: CONFIG_INICIAL.ritmo, umbralBajada: CONFIG_INICIAL.umbralBajada,
+          mister: { ...CONFIG_INICIAL.mister, ...actual.datos.mister, ritmo: actual.datos.mister?.ritmo ?? actual.datos.ritmo ?? RITMO_ANTIGUO },
+        },
+        creada: new Date().toISOString(), descripcion: `${DESCRIPCION_ESCALA}: con un 5 se mantiene la media (toda la temporada)`,
+      })
+      await db.partidos.toCollection().modify({ configVersion: version })
     }
     if (!(await db.equipo.get('equipo'))) {
       const temporada: Temporada = { id: nuevoId(), nombre: '2026-2027', inicio: new Date().toISOString().slice(0, 10) }
