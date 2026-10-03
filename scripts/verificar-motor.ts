@@ -4,7 +4,7 @@ import { CONFIG_INICIAL as cfg } from '../src/motor/config.ts'
 import { simular, cambioMedia, simularMister } from '../src/motor/calculo.ts'
 
 
-const metas: [number, number][] = [[6, 75], [6.5, 79], [7, 82], [7.5, 85], [8, 88], [8.5, 90], [9, 92]]
+const metas: [number, number][] = [[5.5, 75], [6, 79], [6.5, 82], [7, 85], [7.5, 88], [8, 90], [8.5, 91.1], [9, 92.3], [10, 94]]
 const idx = [1, 4, 8, 16, 24, 32]
 let ok = true
 console.log('Nota | partido 1, 4, 8, 16, 24, 32 (empezando en 60, sin MVPs)')
@@ -16,9 +16,9 @@ for (const [nota, meta] of metas) {
 }
 console.log('Con MVP en los 32 partidos, un 9 acaba en', simular(9, 32, cfg, { mvp: true })[31].toFixed(1))
 console.log('\nUn partido completo según la media:')
-console.log('Media | nota 3    4    4,5   5    7,5   9')
+console.log('Media | nota 3    4    4,5   5    6,5   8')
 for (const m of [62, 70, 78, 86, 92]) {
-  console.log(String(m).padEnd(5), [3, 4, 4.5, 5, 7.5, 9].map((n) => cambioMedia(n, n, m, 50, cfg).toFixed(2).padStart(5)).join(' '))
+  console.log(String(m).padEnd(5), [3, 4, 4.5, 5, 6.5, 8].map((n) => cambioMedia(n, n, m, 50, cfg).toFixed(2).padStart(5)).join(' '))
 }
 const serie = (ini: number, notas: number[]) => notas.reduce((m, n) => m + cambioMedia(n, n, m, 50, cfg), ini).toFixed(1)
 console.log('\nTres partidos seguidos de 3,5:')

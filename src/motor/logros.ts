@@ -48,7 +48,7 @@ export const LOGROS: LogroDef[] = [
   { id: 'primer-mvp', nombre: 'Primer MVP', descripcion: 'Sé MVP por primera vez.', icono: 'estrella', categoria: 'Rendimiento', ambito: 'jugador' },
   { id: 'coleccionista', nombre: 'Coleccionista', descripcion: 'Suma MVPs: 5, 10 y 20.', icono: 'estrella', categoria: 'Rendimiento', ambito: 'jugador', niveles: [5, 10, 20], unidad: plural('MVP', 'MVPs') },
   { id: 'partido-10', nombre: 'Partido de 10', descripcion: 'Saca un 10 en un partido.', icono: 'diez', categoria: 'Rendimiento', ambito: 'jugador', repetible: true },
-  { id: 'en-racha', nombre: 'En racha', descripcion: '3 partidos seguidos con 7,5 o más.', icono: 'fuego', categoria: 'Rendimiento', ambito: 'jugador', repetible: true },
+  { id: 'en-racha', nombre: 'En racha', descripcion: '3 partidos seguidos con 6,5 o más.', icono: 'fuego', categoria: 'Rendimiento', ambito: 'jugador', repetible: true },
   // Evolución
   { id: 'primera-plata', nombre: 'Primera Plata', descripcion: 'Llega a carta de Plata.', icono: 'flecha', categoria: 'Evolución', ambito: 'jugador' },
   { id: 'primer-oro', nombre: 'Primer Oro', descripcion: 'Llega a carta de Oro.', icono: 'flecha', categoria: 'Evolución', ambito: 'jugador' },
@@ -204,7 +204,7 @@ class Registro {
  * Valor de una medida de la casa en un partido; null = neutro (no suma ni corta
  * rachas: p. ej. una baja, o no haber jugado para medidas que piden jugar).
  */
-function valorCasa(c: LogroCasa, a: Actuacion, paso: Paso | undefined): number | null {
+function valorCasa(c: LogroCasa, a: Actuacion, paso: Paso | undefined, notaAlta: number): number | null {
   switch (c.medida) {
     case 'titular':
     case 'suplente':
@@ -218,14 +218,14 @@ function valorCasa(c: LogroCasa, a: Actuacion, paso: Paso | undefined): number |
     case 'sin_tarjeta':
       return paso ? ((a.acciones.amarilla ?? 0) + (a.acciones.roja ?? 0) === 0 ? 1 : 0) : null
     case 'nota_alta':
-      return paso ? (paso.nota >= 7.5 ? 1 : 0) : null
+      return paso ? (paso.nota >= notaAlta - 1e-9 ? 1 : 0) : null
     default:
       return paso ? (a.acciones[c.medida] ?? 0) : null
   }
 }
 
-function evaluarCasa(c: LogroCasa, a: Actuacion, paso: Paso | undefined, st: { total: number; racha: number }, reg: Registro, fecha: string, partidoId: string) {
-  const v = valorCasa(c, a, paso)
+function evaluarCasa(c: LogroCasa, a: Actuacion, paso: Paso | undefined, st: { total: number; racha: number }, reg: Registro, fecha: string, partidoId: string, notaAlta: number) {
+  const v = valorCasa(c, a, paso, notaAlta)
   if (v === null) return
   const meta = c.metas[0] ?? 1
   if (c.tipo === 'total') {
@@ -270,6 +270,7 @@ export function calcularLogros(d: EntradaLogros): ResultadoLogros {
   const jugadores: Record<string, EstadoLogro[]> = {}
   const todos: Desbloqueo[] = []
   const casa = d.config.logrosCasa ?? []
+  const notaAlta = d.config.notaAlta ?? 6.5
   const defs = [...LOGROS, ...LOGROS_MISTER, ...defsCasa(d.config)]
   const reiniciables = [...DE_TEMPORADA, ...casa.filter((c) => c.tipo === 'total' && c.porTemporada !== false).map((c) => c.id)]
 
@@ -298,7 +299,7 @@ export function calcularLogros(d: EntradaLogros): ResultadoLogros {
         if (!a) continue // aún no estaba en el equipo
         const f = p.fecha
         // Logros de la casa (reglas de la configuración).
-        for (const c of casa) evaluarCasa(c, a, pasos.get(p.id), estadoCasa.get(c.id)!, reg, f, p.id)
+        for (const c of casa) evaluarCasa(c, a, pasos.get(p.id), estadoCasa.get(c.id)!, reg, f, p.id, notaAlta)
 
         const paso = pasos.get(p.id)
         if (!paso) continue // no jugó minutos
@@ -338,7 +339,7 @@ export function calcularLogros(d: EntradaLogros): ResultadoLogros {
           reg.valor('coleccionista', mvps, f, p.id)
         }
         if (paso.nota >= 10) reg.conseguir('partido-10', f, p.id)
-        rachaNota = paso.nota >= 7.5 ? rachaNota + 1 : 0
+        rachaNota = paso.nota >= notaAlta - 1e-9 ? rachaNota + 1 : 0
         if (rachaNota === 3) {
           reg.conseguir('en-racha', f, p.id)
           rachaNota = 0

@@ -560,7 +560,7 @@ export function EstadisticasOnce({ datos }: { datos: Datos }) {
           {forma.map(({ x, nota }) => (
             <div key={x.h.id}>
               <span>{nota === null ? '—' : fmt1(nota)}</span>
-              <span className="forma-once__pista"><span className={nota !== null && nota >= 7.5 ? 'alta' : ''} style={{ height: `${nota === null ? 0 : Math.max(4, Math.min(100, ((nota - 5) / 4) * 100))}%` }} /></span>
+              <span className="forma-once__pista"><span className={nota !== null && nota >= config.notaAlta ? 'alta' : ''} style={{ height: `${nota === null ? 0 : Math.max(4, Math.min(100, ((nota - 4) / 5) * 100))}%` }} /></span>
               <small>{nombreVisible(x.e.jugador).slice(0, 4).toUpperCase()}</small>
             </div>
           ))}

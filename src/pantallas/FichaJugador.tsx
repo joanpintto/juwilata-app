@@ -193,7 +193,7 @@ export function FichaJugador({ datos, id }: { datos: Datos; id: string }) {
           <p className="nota">Aún no ha jugado esta temporada.</p>
         ) : (
           forma.map((p) => (
-            <button key={p.partidoId} className={`nota-caja ${p.nota >= 7.5 ? 'nota-caja--alta' : ''}`} onClick={() => ir(`/partido/${p.partidoId}`)}>
+            <button key={p.partidoId} className={`nota-caja ${p.nota >= config.notaAlta ? 'nota-caja--alta' : ''}`} onClick={() => ir(`/partido/${p.partidoId}`)}>
               {fmt1(p.nota)}
             </button>
           ))

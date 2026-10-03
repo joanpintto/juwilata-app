@@ -185,10 +185,11 @@ export function hoy(): string {
 }
 
 export function colorNota(nota: number): string {
-  if (nota >= 8) return 'var(--ok)'
-  if (nota >= 7) return '#8fbf6a'
-  if (nota >= 6) return 'var(--dorado)'
-  if (nota >= 5) return '#d98a4e'
+  // Escala de notas: un partido normal es un 5.
+  if (nota >= 7) return 'var(--ok)'
+  if (nota >= 6) return '#8fbf6a'
+  if (nota >= 5) return 'var(--dorado)'
+  if (nota >= 4) return '#d98a4e'
   return 'var(--alerta)'
 }
 

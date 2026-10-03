@@ -42,9 +42,9 @@ const CLAVES: Record<Apartado, (keyof Config)[]> = {
   mister: ['mister'],
 }
 
-const NOTAS_SIM = [6, 6.5, 7, 7.5, 8, 8.5, 9]
+const NOTAS_SIM = [5.5, 6, 6.5, 7, 7.5, 8, 9, 10]
 const PARTIDOS_SIM = [1, 4, 8, 16, 24, 32]
-const NOTAS_PARTIDO = [4, 5, 6, 7.5, 9]
+const NOTAS_PARTIDO = [3, 4, 5, 6.5, 8]
 const MEDIAS_PARTIDO = [62, 70, 78, 86, 92]
 
 function errores(c: Config): string[] {

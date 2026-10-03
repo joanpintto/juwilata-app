@@ -349,7 +349,16 @@ export const ESQUEMAS: Record<string, { id: string; pos: Posicion; x: number; y:
 }
 
 let inicializacion: Promise<void> | null = null
-const DESCRIPCION_ESCALA = 'Nueva escala de notas'
+
+/**
+ * La tabla de ritmo que tuviera el móvil, un punto más abajo (lo que daba un 6 lo da
+ * un 5…), más los escalones nuevos de arriba de la tabla actual (8,5 · 9 · 10).
+ */
+function ritmoDesplazado(t: { x: number; y: number }[]) {
+  const bajada = t.map((p) => ({ x: Math.round((p.x - 1) * 10) / 10, y: p.y }))
+  const ultima = bajada[bajada.length - 1]
+  return [...bajada, ...CONFIG_INICIAL.ritmo.filter((p) => p.x > ultima.x && p.y > ultima.y)]
+}
 
 /** Crea el equipo, la temporada y la configuración la primera vez. */
 export function inicializar(): Promise<void> {
@@ -366,21 +375,30 @@ export function inicializar(): Promise<void> {
         creada: new Date().toISOString(), descripcion: 'Nuevos umbrales de los rangos',
       })
     }
-    // Nueva escala de las notas (§6.2), una sola vez: la tabla de ritmo pasa a la nueva
-    // (con un 5 se mantiene; umbral de bajada 4,5) y se recalcula toda la temporada con
-    // ella. El míster se queda con la tabla que tuviera (su evolución no cambia).
-    const todas = await db.configuraciones.orderBy('version').toArray()
-    const actual = todas[todas.length - 1]
-    const yaHecha = todas.some((c) => c.descripcion?.startsWith(DESCRIPCION_ESCALA))
-    if (actual && !yaHecha && JSON.stringify(actual.datos.ritmo) !== JSON.stringify(CONFIG_INICIAL.ritmo)) {
+    // Nueva escala de notas (§6.1, cambio del usuario): un partido normal empieza en 5 en
+    // vez de 6. Si la configuración sigue en la escala anterior, todo lo que depende de la
+    // nota baja un punto (tabla de ritmo nueva con escalones arriba) y se recalcula toda la
+    // temporada. El míster mantiene su nota y su tabla.
+    const actual = await db.configuraciones.orderBy('version').last()
+    const d = actual?.datos
+    if (actual && d && (d.notaBase ?? 6) > 5.5) {
       const version = actual.version + 1
       await db.configuraciones.put({
         version,
         datos: {
-          ...actual.datos, ritmo: CONFIG_INICIAL.ritmo, umbralBajada: CONFIG_INICIAL.umbralBajada,
-          mister: { ...CONFIG_INICIAL.mister, ...actual.datos.mister, ritmo: actual.datos.mister?.ritmo ?? actual.datos.ritmo ?? RITMO_ANTIGUO },
+          ...d,
+          notaBase: d.notaBase - 1,
+          ritmo: ritmoDesplazado(d.ritmo ?? RITMO_ANTIGUO),
+          umbralBajada: (d.umbralBajada ?? 5.5) - 1,
+          ifNotaMinima: (d.ifNotaMinima ?? 8) - 1,
+          notaAlta: CONFIG_INICIAL.notaAlta,
+          mister: {
+            ...CONFIG_INICIAL.mister, ...d.mister,
+            ritmo: d.mister?.ritmo ?? d.ritmo ?? RITMO_ANTIGUO,
+            grupoReferencia: (d.mister?.grupoReferencia ?? 6.5) - 1,
+          },
         },
-        creada: new Date().toISOString(), descripcion: `${DESCRIPCION_ESCALA}: con un 5 se mantiene la media (toda la temporada)`,
+        creada: new Date().toISOString(), descripcion: 'Nueva escala de notas: un partido normal es un 5 (toda la temporada)',
       })
       await db.partidos.toCollection().modify({ configVersion: version })
     }

@@ -124,7 +124,7 @@ Hay 9 roles de campo más el portero. Atributos: RIT, TIR, PAS, REG, DEF y FIS. 
 
 ### 6.1 Nota del partido (0-10)
 
-- **Base:** 6,0 para todas las posiciones, portero incluido.
+- **Base:** 5,0 para todas las posiciones, portero incluido. *(Cambio del usuario, 03-10-2026: antes era 6,0; se bajó un punto para que las notas no se amontonen entre 7 y 9. Todo lo que depende de la nota bajó también un punto, así que las medias no cambian; arriba hay escalones nuevos. Se aplicó a toda la temporada.)*
 - **Ajuste por resultado**, igual para todo el equipo:
 
 | Resultado | Ajuste |
@@ -165,7 +165,7 @@ Hay 9 roles de campo más el portero. Atributos: RIT, TIR, PAS, REG, DEF y FIS. 
 
 Idea: **subir es lo normal y bajar cuesta mucho**. No hay techo: cualquier jugador puede seguir subiendo, solo que cada vez más despacio. Las metas de abajo son una referencia de cómo debe comportarse la fórmula, no algo que se fuerce.
 
-**Metas (empezando en 60, 32 partidos con la misma nota, sin MVPs):** un 6 acaba en ~75, un 8,5 en ~90 y un 9 en ~92 (ver tabla). Con un 5 la media se mantiene. *(Cambio del usuario, 03-10-2026: la escala se desplazó; lo que antes daba un 6 lo da un 5, lo de un 6,5 un 6, lo de un 7 un 6,5… y el 9 tiene un escalón nuevo. Se aplicó a toda la temporada.)*
+**Metas (empezando en 60, 32 partidos con la misma nota, sin MVPs):** un 5,5 acaba en ~75, un 8 en ~90, un 8,5 en ~91, un 9 en ~92 y un 10 en ~94 (ver tabla). Con un 5 (partido normal) la media se mantiene.
 
 1. **Nota ponderada** = 0,5 × último partido + 0,3 × media de los 2 anteriores + 0,2 × media de la temporada.
 
@@ -173,11 +173,11 @@ Idea: **subir es lo normal y bajar cuesta mucho**. No hay techo: cualquier jugad
 
    Ritmo, en puntos por partido (entre valores se interpola):
 
-| Nota | 5,0 | 6,0 | 6,5 | 7,0 | 7,5 | 8,0 | 8,5 | 9,0 |
-|---|---|---|---|---|---|---|---|---|
-| Ritmo | 0 | 0,40 | 0,53 | 0,65 | 0,80 | 0,98 | 1,14 | 1,35 |
+| Nota | 5,0 | 5,5 | 6,0 | 6,5 | 7,0 | 7,5 | 8,0 | 8,5 | 9,0 | 10 |
+|---|---|---|---|---|---|---|---|---|---|---|
+| Ritmo | 0 | 0,40 | 0,53 | 0,65 | 0,80 | 0,98 | 1,14 | 1,25 | 1,40 | 1,70 |
 
-   (Un 5,5 da 0,20, a medio camino entre el 5 y el 6.)
+   (Hasta el 8 es la tabla anterior un punto más abajo; 8,5, 9 y 10 son escalones nuevos. Al pasar a la escala nueva, cada móvil desplaza un punto la tabla que tuviera y le añade estos escalones.)
 
    Multiplicador según la media actual (cuanto más alta, más cuesta subir):
 
@@ -193,22 +193,25 @@ Idea: **subir es lo normal y bajar cuesta mucho**. No hay techo: cualquier jugad
 
 4. **Factor de minutos** = `min(1, 0,65 + 0,02 × minutos)`: 5 min → 0,75 · 10 → 0,85 · 15 → 0,95 · 18 o más → 1. Vale para subidas y bajadas.
 
-5. **Premio de MVP y de nominado:** a partir de 75 se multiplica por `1 − ((media − 75) / 24) × 0,6`. Con MVP en los 32 partidos, un 9 acaba en ~94,2.
+5. **Premio de MVP y de nominado:** a partir de 75 se multiplica por `1 − ((media − 75) / 24) × 0,6`. Con MVP en los 32 partidos, un 9 acaba en ~94,6.
 
 **Resultado con la misma nota en los 32 partidos, empezando en 60 y sin MVPs:**
 
 | Nota | Partido 1 | Partido 4 | Partido 8 | Mitad (16) | Partido 24 | Final (32) |
 |---|---|---|---|---|---|---|
-| 6,5 | 60,6 | 62,2 | 64,3 | 68,2 | 71,7 | 75,1 |
-| 7,0 | 60,7 | 62,9 | 65,6 | 70,6 | 75,0 | 78,9 |
-| 7,5 | 60,9 | 63,5 | 66,8 | 72,6 | 77,8 | 82,0 |
-| 8,0 | 61,1 | 64,3 | 68,2 | 75,1 | 80,8 | 85,1 |
-| 8,5 | 61,4 | 65,3 | 69,9 | 77,9 | 83,9 | 88,0 |
-| 9,0 | 61,5 | 65,9 | 71,2 | 80,1 | 86,0 | 90,0 |
+| 5,5 | 60,6 | 62,2 | 64,3 | 68,2 | 71,7 | 75,1 |
+| 6,0 | 60,7 | 62,9 | 65,6 | 70,6 | 75,0 | 78,9 |
+| 6,5 | 60,9 | 63,5 | 66,8 | 72,6 | 77,8 | 82,0 |
+| 7,0 | 61,1 | 64,3 | 68,2 | 75,1 | 80,8 | 85,1 |
+| 7,5 | 61,4 | 65,3 | 69,9 | 77,9 | 83,9 | 88,0 |
+| 8,0 | 61,5 | 65,9 | 71,2 | 80,1 | 86,0 | 90,0 |
+| 8,5 | 61,5 | 66,0 | 71,7 | 81,2 | 87,2 | 91,1 |
+| 9,0 | 61,5 | 66,0 | 72,0 | 82,2 | 88,4 | 92,3 |
+| 10 | 61,5 | 66,0 | 72,0 | 83,3 | 90,0 | 94,0 |
 
 **Un partido completo según la media** (si el jugador viene jugando con esa nota):
 
-| Media | Nota 4 | Nota 5 | Nota 5,5 | Nota 6 | Nota 7,5 | Nota 9 |
+| Media | Nota 3 | Nota 4 | Nota 4,5 | Nota 5 | Nota 6,5 | Nota 8 |
 |---|---|---|---|---|---|---|
 | 62 | −0,09 | −0,03 | 0 | 0 | +0,87 | +1,50 |
 | 70 | −0,20 | −0,07 | 0 | 0 | +0,72 | +1,25 |
@@ -300,7 +303,7 @@ Idea: **subir es lo normal y bajar cuesta mucho**. No hay techo: cualquier jugad
 
 - **MVP del partido:** la app propone los 3 mejores. Eliges uno o pulsas "Ningún MVP esta jornada".
 - **Premio en la media:** el MVP suma +0,20 y los otros dos nominados +0,10. Se aplica después de la evolución y se reparte entre los 6 atributos.
-- **IF (sugerida):** el jugador con mejor nota ponderada de la jornada, si llega a 8,0 o más.
+- **IF (sugerida):** el jugador con mejor nota ponderada de la jornada, si llega a 7,0 o más.
 - **POTM (sugerido), por mes natural:** 0,6 × media de notas + 0,5 × MVPs + 0,1 × (goles + asistencias), ajustado por minutos.
 - **TOTY:** el 7 ideal en formación 1-3-2-1. Puntuación = 0,5 × media de notas + 0,2 × evolución + 0,2 × producción + 0,1 × MVPs, ajustada por partidos jugados.
 - Todo esto son sugerencias: siempre decide el administrador.
@@ -407,7 +410,7 @@ Idea: **subir es lo normal y bajar cuesta mucho**. No hay techo: cualquier jugad
 | Gol | Primer gol · Doblete · Hat-trick · Goleador (10 / 25 / 50) |
 | Pase | Primera asistencia · Doble asistencia · Asistente (10 / 25 / 50) |
 | Defensa y portería | Muro (5 / 15 / 30 porterías a cero) · Penalti parado · Noche de paradas (6 o más) |
-| Rendimiento | Primer MVP · Coleccionista (5 / 10 / 20 MVPs) · **Partido de 10** · En racha (3 partidos seguidos con 7,5 o más) |
+| Rendimiento | Primer MVP · Coleccionista (5 / 10 / 20 MVPs) · **Partido de 10** · En racha (3 partidos seguidos con 6,5 o más) |
 | Evolución | Primera Plata · Primer Oro · Élite · Leyenda · Salto de temporada (+10 de media) |
 | Constancia (por temporada, repetibles) | Veterano (10 / 25 / 32 partidos) · Juego limpio (10 / 25 / 32 partidos seguidos sin tarjeta) |
 | Cartas especiales | Primera IF · Primer POTM · TOTY |
@@ -537,7 +540,7 @@ Puntos que el diseño dejaba abiertos y que se han concretado al construir la Fa
 - Los contadores (goles, asistencias, MVPs, titularidades…) cuentan la temporada activa. Sumarán varias temporadas cuando llegue el historial (Fase 3).
 - **Muro:** porterías a cero jugando de portero, central o lateral más de la mitad del partido.
 - **Falsas promesas:** 3 partidos seguidos como no convocado; la baja ni suma ni corta la racha. Repetible.
-- **En racha (individual):** cada 3 partidos seguidos con 7,5 o más cuenta una vez.
+- **En racha (individual):** cada 3 partidos seguidos con 6,5 o más cuenta una vez.
 - **Líder:** ir 1º tras cualquier jornada de un split (o ahora mismo); se puede ganar en cada split. **Campeones:** 1º de un split cuando todos sus partidos de liga del calendario están jugados; hasta dos por temporada. **Temporada invicta:** jugados todos los partidos de la temporada sin perder.
 - Escudos: marco bronce/plata/oro para los de niveles (con puntos de nivel), dorado champán con interior granate para los únicos, cinta con el hito (meta alcanzada, «×n» si se repite, o la fecha), gris con barra de progreso si están pendientes.
 - Se ven en la ficha del jugador (pestaña Logros) y en Inicio (vitrina del equipo y últimos logros).
@@ -548,7 +551,7 @@ Puntos que el diseño dejaba abiertos y que se han concretado al construir la Fa
 
 ### Premios (IF, POTM, TOTY)
 - Pantalla Premios (desde Evoluciones) con botones para darlos; lo que se da queda registrado para no sugerirlo otra vez.
-- **IF:** la mejor nota ponderada de cada partido si llega a 8,0; también aparece en el detalle del partido.
+- **IF:** la mejor nota ponderada de cada partido si llega a 7,0; también aparece en el detalle del partido.
 - **POTM:** «ajustado por minutos» = × mín(1, minutos jugados / 75% de los minutos posibles del mes).
 - **TOTY:** «ajustado por partidos» = × mín(1, partidos jugados / 50% de los del equipo). Producción = goles + asistencias. Defensas = centrales y laterales. Es provisional hasta acabar la temporada.
 - Todas estas constantes están en la configuración.
@@ -568,7 +571,7 @@ Puntos que el diseño dejaba abiertos y que se han concretado al construir la Fa
 
 ### Logros de la casa configurables
 - Cada uno es una regla: **total** (suma, con 1 meta o 3 niveles; por temporada o de carrera), **racha** (N partidos seguidos, repetible) o **en un partido** (N o más en un mismo partido, repetible).
-- Se puede contar: titularidades, suplencias, sin convocar (las bajas ni suman ni cortan), partidos jugados, MVPs, partidos sin tarjeta, partidos con 7,5 o más, o cualquier acción del registro.
+- Se puede contar: titularidades, suplencias, sin convocar (las bajas ni suman ni cortan), partidos jugados, MVPs, partidos sin tarjeta, partidos con 6,5 o más, o cualquier acción del registro.
 - Los 5 iniciales quedan como ejemplos editables (Debut de gala es de carrera; los demás, por temporada). Se pueden crear, editar y borrar, con icono propio.
 
 ### Varias temporadas
@@ -628,7 +631,7 @@ El entrenador tiene su propia carta, que evoluciona según cómo rinde el equipo
 |---|---|
 | Resultado | Victoria +1,2 · empate +0,2 · derrota −0,8 |
 | Diferencia de goles | ±0,15 por gol, con un tope de ±0,6 |
-| Rendimiento del grupo | (nota media de los jugadores que jugaron − 6,5) × 0,8 |
+| Rendimiento del grupo | (nota media de los jugadores que jugaron − 5,5) × 0,8 (antes − 6,5, con la escala anterior de los jugadores) |
 | Portería a cero | +0,3 |
 | Rival | Ganar a un equipo de la mitad alta de la clasificación: +0,3 · perder con uno de la mitad baja: −0,3. Sin clasificación todavía, no se aplica |
 
@@ -636,7 +639,7 @@ La nota final siempre queda entre 0 y 10.
 
 ### 20.3 Evolución de la media
 
-- Usa la **misma nota ponderada** que los jugadores y la **tabla de ritmo anterior** al cambio de escala de §6.2 (6,0 → 0; 6,5 → 0,40; 7,0 → 0,53; 7,5 → 0,65; 8,0 → 0,80; 8,5 → 0,98; 9,0 → 1,14). La nota neutra es **6,0**.
+- Usa la **misma nota ponderada** que los jugadores y la **tabla de ritmo anterior** a la escala nueva de §6.1 (su nota no cambió: un partido normal del míster sigue siendo un 6). La nota neutra es **6,0**.
 - **Sin techo por nota** y **sin factor de minutos**.
 - **Multiplicador del míster:** igual que el de los jugadores hasta 85, pero más duro a partir de ahí. Así el máximo natural queda en ~94-95.
 

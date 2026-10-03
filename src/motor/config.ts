@@ -87,6 +87,7 @@ export interface Config {
 
   // Sugerencias de cartas especiales (§9)
   ifNotaMinima: number // nota ponderada mínima para sugerir IF
+  notaAlta: number // nota de un «partidazo» (logros «En racha» y partidos notables, resaltes)
   potmPesos: { notas: number; mvps: number; produccion: number }
   potmMinutos: number // fracción de los minutos posibles del mes para no penalizar
   totyPesos: { notas: number; evolucion: number; produccion: number; mvps: number }
@@ -109,14 +110,14 @@ export interface ConfigMister {
   resultado: { victoria: number; empate: number; derrota: number }
   porGol: number // por gol de diferencia
   topeGoles: number // ± tope de la diferencia de goles
-  grupoReferencia: number // 6,5: nota media del grupo que no suma ni resta
+  grupoReferencia: number // 5,5: nota media del grupo (escala de los jugadores) que no suma ni resta
   grupoFactor: number // 0,8
   porteriaCero: number
   rivalAltoVictoria: number // ganar a uno de la mitad alta
   rivalBajoDerrota: number // perder con uno de la mitad baja (negativo)
 
   // Evolución (§20.3): sin techo ni factor de minutos
-  ritmo: Tabla // nota ponderada → puntos por partido (la de los jugadores antes del cambio de escala)
+  ritmo: Tabla // nota ponderada → puntos por partido (el míster mantiene la escala anterior)
   multiplicadorMedia: Tabla
   umbralBajada: number // 6,0
   bajadaPorPunto: number // 0,5
@@ -172,7 +173,7 @@ export const MEDIDAS_CASA: { id: MedidaCasa; nombre: string; singular: string; p
   { id: 'jugado', nombre: 'Partidos jugados', singular: 'partido', plural: 'partidos', tipos: ['total', 'racha'] },
   { id: 'mvp', nombre: 'MVPs', singular: 'MVP', plural: 'MVPs', tipos: ['total', 'racha'] },
   { id: 'sin_tarjeta', nombre: 'Partidos sin tarjeta', singular: 'sin tarjeta', plural: 'sin tarjeta', tipos: ['total', 'racha'] },
-  { id: 'nota_alta', nombre: 'Partidos con 7,5 o más', singular: 'notable', plural: 'notables', tipos: ['total', 'racha'] },
+  { id: 'nota_alta', nombre: 'Partidos con 6,5 o más', singular: 'notable', plural: 'notables', tipos: ['total', 'racha'] },
 ]
 
 export const LOGROS_CASA_INICIALES: LogroCasa[] = [
@@ -190,12 +191,16 @@ export type RangoId =
 /** Umbrales de los rangos hasta septiembre de 2026 (se actualizan solos si no se habían tocado). */
 export const RANGOS_ANTIGUOS = [60, 65, 70, 75, 80, 85, 90, 95]
 
-/** Tabla nota ponderada → puntos por partido de los jugadores. */
+/**
+ * Tabla nota ponderada → puntos por partido de los jugadores, en la escala de notas
+ * actual (un partido normal empieza en 5). Lo que antes era un 6 es ahora un 5, un
+ * 6,5 un 5,5… y arriba hay escalones nuevos (8,5 → ~91, 9 → ~92, 10 → ~94).
+ */
 export const RITMO: Tabla = [
-  { x: 5.0, y: 0 }, { x: 6.0, y: 0.4 }, { x: 6.5, y: 0.53 }, { x: 7.0, y: 0.65 },
-  { x: 7.5, y: 0.8 }, { x: 8.0, y: 0.98 }, { x: 8.5, y: 1.14 }, { x: 9.0, y: 1.35 },
+  { x: 5.0, y: 0 }, { x: 5.5, y: 0.4 }, { x: 6.0, y: 0.53 }, { x: 6.5, y: 0.65 }, { x: 7.0, y: 0.8 },
+  { x: 7.5, y: 0.98 }, { x: 8.0, y: 1.14 }, { x: 8.5, y: 1.25 }, { x: 9.0, y: 1.4 }, { x: 10.0, y: 1.7 },
 ]
-/** La tabla anterior (con un 6 se mantenía). El míster la sigue usando. */
+/** La tabla de la escala anterior (partido normal = 6). La sigue usando el míster, cuya nota no cambia. */
 export const RITMO_ANTIGUO: Tabla = [
   { x: 6.0, y: 0 }, { x: 6.5, y: 0.4 }, { x: 7.0, y: 0.53 }, { x: 7.5, y: 0.65 },
   { x: 8.0, y: 0.8 }, { x: 8.5, y: 0.98 }, { x: 9.0, y: 1.14 },
@@ -220,7 +225,7 @@ export const CONFIG_INICIAL: Config = {
   atributoMin: 1,
   atributoMax: 99,
 
-  notaBase: 6.0,
+  notaBase: 5.0,
   ajusteResultado: { ganarAmplio: 0.35, ganar: 0.2, empate: 0, perder: -0.2, perderAmplio: -0.35 },
   margenAmplio: 3,
   ofensivas: { gol: 1.2, asistencia: 0.8, paseClave: 0.25, ocasionCreada: 0.2, disparoPuerta: 0.15, regate: 0.15 },
@@ -246,8 +251,8 @@ export const CONFIG_INICIAL: Config = {
 
   pesosNotaPonderada: { ultimo: 0.5, dosAnteriores: 0.3, temporada: 0.2 },
   // Calibrado para que, empezando en 60 y jugando 32 partidos con la misma nota,
-  // un 6 acabe en ~75, un 8,5 en ~90 y un 9 en ~92 (sin MVPs). Con un 5 la media se
-  // mantiene (cambio del usuario: lo que antes daba un 6 lo da un 5, lo de un 6,5 un 6…).
+  // un 5,5 acabe en ~75, un 8 en ~90, un 9 en ~92 y un 10 en ~94 (sin MVPs).
+  // Con un 5 (partido normal) la media se mantiene.
   ritmo: RITMO,
   multiplicadorMedia: [
     { x: 60, y: 1.4 }, { x: 65, y: 1.25 }, { x: 70, y: 1.1 }, { x: 75, y: 1.0 }, { x: 80, y: 0.8 },
@@ -278,7 +283,8 @@ export const CONFIG_INICIAL: Config = {
   correctorUmbral: 4.5,
   correctorAjuste: 0.4,
 
-  ifNotaMinima: 8.0,
+  ifNotaMinima: 7.0,
+  notaAlta: 6.5,
   potmPesos: { notas: 0.6, mvps: 0.5, produccion: 0.1 },
   potmMinutos: 0.75,
   totyPesos: { notas: 0.5, evolucion: 0.2, produccion: 0.2, mvps: 0.1 },
@@ -305,7 +311,7 @@ export const CONFIG_INICIAL: Config = {
     resultado: { victoria: 1.2, empate: 0.2, derrota: -0.8 },
     porGol: 0.15,
     topeGoles: 0.6,
-    grupoReferencia: 6.5,
+    grupoReferencia: 5.5,
     grupoFactor: 0.8,
     porteriaCero: 0.3,
     rivalAltoVictoria: 0.3,
