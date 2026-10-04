@@ -125,15 +125,7 @@ Hay 9 roles de campo más el portero. Atributos: RIT, TIR, PAS, REG, DEF y FIS. 
 ### 6.1 Nota del partido (0-10)
 
 - **Base:** 5,0 para todas las posiciones, portero incluido. *(Cambio del usuario, 03-10-2026: antes era 6,0; se bajó un punto para que las notas no se amontonen entre 7 y 9. Los umbrales que dependen de la nota (bajada, IF, partidos notables, colores) bajaron también un punto; la tabla de evolución es la de §6.2. Se aplicó a toda la temporada.)*
-- **Ajuste por resultado**, igual para todo el equipo:
-
-| Resultado | Ajuste |
-|---|---|
-| Victoria por 3 goles o más | +0,35 |
-| Victoria por 1-2 goles | +0,20 |
-| Empate | 0 |
-| Derrota por 1-2 goles | −0,20 |
-| Derrota por 3 goles o más | −0,35 |
+- **Ajuste por diferencia de goles**, igual para todo el equipo: **±0,15 por cada gol de diferencia, como mucho ±1,0.** Empate 0 · 1-0 +0,15 · 3-1 +0,30 · 3-0 +0,45 · 5-0 +0,75 · 7-0 o más +1,0 (y lo mismo en negativo al perder). *(Cambio del usuario, 04-10-2026: antes eran cinco escalones, ±0,20 por ganar o perder de 1-2 goles y ±0,35 de 3 o más. Se aplicó a toda la temporada.)*
 
 - **Acciones ofensivas** (valores de un delantero): gol +1,20 · asistencia +0,80 · pase clave +0,25 · ocasión creada +0,20 · disparo a puerta +0,15 · regate +0,15.
 - **Acciones defensivas** (valores de un central): recuperación, intercepción y entrada ganada +0,15 · despeje y duelo ganado +0,10.
@@ -808,3 +800,4 @@ Las Fases 1-4 de la app ya están hechas; el míster se construye encima en dos 
 - **Compañeros, redes de seguridad:** (1) el código del equipo se guarda también en una cookie (si el iPhone la copia a la app de la pantalla de inicio, esa app abre en lectura aunque arranque sin el código); (2) si la app está recién instalada y vacía (sin jugadores ni partidos), Inicio muestra «¿Te han pasado el enlace del equipo?» para pegarlo y pasar a solo lectura; (3) al abrir, si hay una versión nueva, la app se recarga sola con ella (solo en los primeros segundos); (4) Ajustes muestra la versión (fecha y hora de publicación).
 - **Fotos ligeras:** la foto de la carta (720×900) se guarda en PNG solo si tiene el fondo quitado (transparencia); si no, en JPEG. La original para volver a encuadrar se guarda como mucho a 1.200 px y en JPEG (PNG solo si tiene transparencia). Las fotos que ya había se aligeran solas una vez al abrir la app (en segundo plano, solo si así ocupan menos).
 - **Curva de nivel (cambio del usuario):** llegar a media 76 es asequible (un 6,5 de media lo consigue en una temporada) y a partir de ahí cuesta cada vez más (§6.2). Se aplica con la nueva escala de notas a toda la temporada.
+- **Diferencia de goles (cambio del usuario):** cada gol de diferencia suma o resta 0,15 a la nota de todo el equipo, con un máximo de ±1,0 (§6.1). Se edita en Ajustes → Avanzado → Base y resultado.

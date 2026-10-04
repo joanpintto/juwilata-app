@@ -87,13 +87,8 @@ export interface ContextoPartido {
 }
 
 export function ajusteResultado(ctx: ContextoPartido, cfg: Config): number {
-  const dif = ctx.golesFavor - ctx.golesContra
-  const r = cfg.ajusteResultado
-  if (dif >= cfg.margenAmplio) return r.ganarAmplio
-  if (dif > 0) return r.ganar
-  if (dif === 0) return r.empate
-  if (dif > -cfg.margenAmplio) return r.perder
-  return r.perderAmplio
+  const ajuste = (ctx.golesFavor - ctx.golesContra) * cfg.porGolDiferencia
+  return Math.max(-cfg.topeDiferencia, Math.min(cfg.topeDiferencia, ajuste))
 }
 
 export function porteriaCero(ctx: ContextoPartido, minutos: number): boolean {

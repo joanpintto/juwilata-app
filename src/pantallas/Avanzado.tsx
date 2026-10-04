@@ -33,7 +33,7 @@ const CLAVES: Record<Apartado, (keyof Config)[]> = {
     'ritmo', 'multiplicadorMedia', 'nivelBajada', 'pesosNotaPonderada', 'umbralBajada', 'bajadaPorPunto', 'topeSubida',
     'topeBajada', 'minutosBase', 'minutosPorMinuto', 'premioMvp', 'premioNominado', 'premioDesde', 'premioReduccion',
   ],
-  nota: ['notaBase', 'ajusteResultado', 'margenAmplio', 'ofensivas', 'defensivas', 'porteriaCeroCampo', 'multiplicadores', 'negativasPosicion', 'negativasGenerales', 'portero'],
+  nota: ['notaBase', 'porGolDiferencia', 'topeDiferencia', 'ofensivas', 'defensivas', 'porteriaCeroCampo', 'multiplicadores', 'negativasPosicion', 'negativasGenerales', 'portero'],
   roles: ['roles'],
   rangos: ['rangos'],
   atributos: ['atributosBase', 'atributosEscala', 'atributoMin', 'atributoMax', 'mediaMin', 'mediaMax', 'atribTope', 'atribFactorSecundario', 'atribMinutos', 'correctorCada', 'correctorUmbral', 'correctorAjuste'],
@@ -198,7 +198,6 @@ function Nota({ b, set, config }: Editar) {
     { texto: 'Portero: 5 paradas, pierde 1-2', pos: 'POR', acciones: { parada: 5, golEncajado: 2 }, ctx: { golesFavor: 1, golesContra: 2, duracion: 50 } },
     { texto: 'Medio: amarilla y error, empata 2-2', pos: 'MED', acciones: { amarilla: 1, error: 1 }, ctx: { golesFavor: 2, golesContra: 2, duracion: 50 } },
   ]
-  const r = b.ajusteResultado
   return (
     <>
       <section className="tarjeta">
@@ -221,12 +220,8 @@ function Nota({ b, set, config }: Editar) {
       <section className="tarjeta">
         <h2>Base y resultado</h2>
         <Constante texto="Nota base" valor={b.notaBase} onChange={(v) => set('notaBase', v)} />
-        <Constante texto="Goleada: diferencia desde" valor={b.margenAmplio} onChange={(v) => set('margenAmplio', v)} />
-        <Constante texto="Ganar por goleada" valor={r.ganarAmplio} onChange={(v) => set('ajusteResultado', { ...r, ganarAmplio: v })} />
-        <Constante texto="Ganar" valor={r.ganar} onChange={(v) => set('ajusteResultado', { ...r, ganar: v })} />
-        <Constante texto="Empatar" valor={r.empate} onChange={(v) => set('ajusteResultado', { ...r, empate: v })} />
-        <Constante texto="Perder" valor={r.perder} onChange={(v) => set('ajusteResultado', { ...r, perder: v })} />
-        <Constante texto="Perder por goleada" valor={r.perderAmplio} onChange={(v) => set('ajusteResultado', { ...r, perderAmplio: v })} />
+        <Constante texto="Por cada gol de diferencia" valor={b.porGolDiferencia} onChange={(v) => set('porGolDiferencia', v)} />
+        <Constante texto="Máximo por diferencia de goles" valor={b.topeDiferencia} onChange={(v) => set('topeDiferencia', v)} />
       </section>
 
       <section className="tarjeta">

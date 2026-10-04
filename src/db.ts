@@ -392,6 +392,18 @@ export function inicializar(): Promise<void> {
       })
       await db.partidos.toCollection().modify({ configVersion: version })
     }
+    // Diferencia de goles (§6.1, cambio del usuario): cada gol de diferencia suma o resta
+    // 0,15 (máximo ±1,0) en vez de los cinco escalones. Se recalcula toda la temporada.
+    const conGoles = await db.configuraciones.orderBy('version').last()
+    if (conGoles && conGoles.datos.porGolDiferencia === undefined) {
+      const version = conGoles.version + 1
+      await db.configuraciones.put({
+        version,
+        datos: { ...conGoles.datos, porGolDiferencia: CONFIG_INICIAL.porGolDiferencia, topeDiferencia: CONFIG_INICIAL.topeDiferencia },
+        creada: new Date().toISOString(), descripcion: 'Cada gol de diferencia suma o resta 0,15 (toda la temporada)',
+      })
+      await db.partidos.toCollection().modify({ configVersion: version })
+    }
     if (!(await db.equipo.get('equipo'))) {
       const temporada: Temporada = { id: nuevoId(), nombre: '2026-2027', inicio: new Date().toISOString().slice(0, 10) }
       await db.temporadas.put(temporada)

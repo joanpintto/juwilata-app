@@ -43,8 +43,8 @@ export interface Config {
 
   // Nota del partido
   notaBase: number
-  ajusteResultado: { ganarAmplio: number; ganar: number; empate: number; perder: number; perderAmplio: number }
-  margenAmplio: number // 3 goles o más
+  porGolDiferencia: number // cada gol de diferencia suma (o resta) esto a todo el equipo: 0,15
+  topeDiferencia: number // como mucho ±1,0
   ofensivas: Partial<Record<AccionId, number>>
   defensivas: Partial<Record<AccionId, number>>
   porteriaCeroCampo: Record<Exclude<Posicion, 'POR'>, number>
@@ -228,8 +228,8 @@ export const CONFIG_INICIAL: Config = {
   atributoMax: 99,
 
   notaBase: 5.0,
-  ajusteResultado: { ganarAmplio: 0.35, ganar: 0.2, empate: 0, perder: -0.2, perderAmplio: -0.35 },
-  margenAmplio: 3,
+  porGolDiferencia: 0.15,
+  topeDiferencia: 1.0,
   ofensivas: { gol: 1.2, asistencia: 0.8, paseClave: 0.25, ocasionCreada: 0.2, disparoPuerta: 0.15, regate: 0.15 },
   defensivas: { recuperacion: 0.15, intercepcion: 0.15, entrada: 0.15, despeje: 0.1, duelo: 0.1 },
   porteriaCeroCampo: { DFC: 0.5, LAT: 0.4, MED: 0.3, DEL: 0.2 },
