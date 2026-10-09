@@ -3,6 +3,7 @@ import { conSigno, fechaCorta, fmt1, fmt2, ir, nombreVisible, textoJornada, type
 import { mediaVisible, rango } from '../motor/calculo'
 import { POSICIONES, etiquetas, siglaJugador, type Posicion } from '../motor/config'
 import type { EstadoJugador } from '../motor/temporada'
+import { mediaTras } from '../motor/equipo'
 import { Carta, MiniCarta } from '../componentes/Carta'
 import { DISENOS, disenoDe } from '../componentes/disenos'
 import { GraficoBarrasH, GraficoGoles, GraficoLineas, type Serie } from '../componentes/GraficosEquipo'
@@ -176,12 +177,6 @@ export function Galeria({ datos }: { datos: Datos }) {
 
 // ─── Gráficos ─────────────────────────────────────────────────────────
 
-/** Media de un jugador tras cada partido de la temporada (la inicial hasta que juega). */
-function mediaTras(e: EstadoJugador, ids: string[]): number[] {
-  const porPartido = new Map(e.historial.map((h) => [h.partidoId, h.mediaDespues]))
-  let m = e.mediaInicial
-  return ids.map((id) => (m = porPartido.get(id) ?? m))
-}
 
 export function Graficos({ datos }: { datos: Datos }) {
   const { calculo, programados } = datos

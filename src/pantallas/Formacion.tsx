@@ -1,4 +1,4 @@
-import { useEffect, useId, useRef, useState, type MouseEvent as EventoRaton, type PointerEvent as EventoPuntero } from 'react'
+import { Fragment, useEffect, useId, useRef, useState, type MouseEvent as EventoRaton, type PointerEvent as EventoPuntero } from 'react'
 import { SOLO_LECTURA, db, ESQUEMAS, type Jugador } from '../db'
 import { fechaLarga, fmt1, ir, nombreMister, nombreRival, nombreVisible, proximoPartido, type Datos } from '../datos'
 import { rango } from '../motor/calculo'
@@ -434,19 +434,22 @@ export function Suplentes({ datos }: { datos: Datos }) {
       {o.banquillo.length === 0 ? (
         <Vacio titulo="Sin suplentes" texto={datos.jugadores.length ? 'Todos los jugadores están en el once.' : 'Añade jugadores a la plantilla.'} />
       ) : (
-        o.banquillo.map((j) => {
+        [...o.banquillo.filter((j) => !j.invitado), ...o.banquillo.filter((j) => j.invitado)].map((j, i, lista) => {
           const e = calculo.jugadores[j.id]
           return (
-            <div key={j.id} className="tarjeta fila-suplente">
+            <Fragment key={j.id}>
+            {j.invitado && !lista[i - 1]?.invitado && <h2 className="grupo__titulo">Invitados</h2>}
+            <div className="tarjeta fila-suplente">
               <button onClick={() => ir(`/jugador/${j.id}`)} aria-label={`Ficha de ${nombreVisible(j)}`}>
                 <MiniCarta jugador={j} media={e.media} diseno={disenoDe(j, e.media, config, e.rangosAlcanzados)} config={config} ancho={62} />
               </button>
               <div className="fila-suplente__texto">
                 <strong>{nombreVisible(j)}</strong>
-                <span>{siglaJugador(config, j)} · media {Math.floor(e.media)} · {e.estadisticas.minutos}′ jugados</span>
+                <span>{siglaJugador(config, j)} · media {Math.floor(e.media)} · {e.estadisticas.minutos}′ jugados{j.invitado ? ' · Invitado' : ''}</span>
               </div>
               <button className="boton-dorado-suave editable" onClick={() => setElegido(j)}>Al campo</button>
             </div>
+            </Fragment>
           )
         })
       )}

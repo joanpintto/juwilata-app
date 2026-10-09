@@ -1,11 +1,11 @@
 // Utilidades pequeñas sobre la temporada ya calculada (sin tocar la base de datos).
 import type { EstadoJugador } from './temporada'
 
-/** Media de un jugador tras cada uno de los partidos dados (la anterior si no jugó). */
+/** Media de un jugador tras cada uno de los partidos dados (la anterior si no jugó; un invitado sigue al equipo). */
 export function mediaTras(e: EstadoJugador, ids: string[]): number[] {
   const porPartido = new Map(e.historial.map((h) => [h.partidoId, h.mediaDespues]))
   let m = e.mediaInicial
-  return ids.map((id) => (m = porPartido.get(id) ?? m))
+  return ids.map((id) => (m = porPartido.get(id) ?? e.seguido[id] ?? m))
 }
 
 export type Res = 'V' | 'E' | 'D'

@@ -156,11 +156,20 @@ export function FichaJugador({ datos, id }: { datos: Datos; id: string }) {
       <section className="tarjeta ficha-media">
         <div className="progreso__texto">
           <span>Media <strong>{fmt1(e.media)}</strong></span>
-          <span>{sig ? <>Faltan {fmt1(sig.desde - e.media)} para <b>{sig.nombre}</b></> : 'Rango máximo'}</span>
+          {j.invitado
+            ? <span><b>Invitado</b></span>
+            : <span>{sig ? <>Faltan {fmt1(sig.desde - e.media)} para <b>{sig.nombre}</b></> : 'Rango máximo'}</span>}
         </div>
-        <div className="progreso__barra">
-          <div style={{ width: `${sig ? Math.max(3, ((e.media - actual.desde) / (sig.desde - actual.desde)) * 100) : 100}%` }} />
-        </div>
+        {j.invitado ? (
+          <p className="nota">
+            En los partidos a los que no viene, su media sigue a la del equipo
+            {Math.abs(e.seguimiento) >= 0.05 ? <> (esta temporada, <strong>{conSigno(e.seguimiento)}</strong>)</> : null}.
+          </p>
+        ) : (
+          <div className="progreso__barra">
+            <div style={{ width: `${sig ? Math.max(3, ((e.media - actual.desde) / (sig.desde - actual.desde)) * 100) : 100}%` }} />
+          </div>
+        )}
       </section>
 
       <section className="cifras cifras--cristal">
@@ -200,9 +209,9 @@ export function FichaJugador({ datos, id }: { datos: Datos; id: string }) {
         )}
       </div>
 
-      <div className="acciones-ficha acciones-ficha--3">
+      <div className="acciones-ficha acciones-ficha--3" style={j.invitado ? { gridTemplateColumns: "repeat(2, minmax(0, 1fr))" } : undefined}>
         <button className="boton boton--sec boton--dorado-texto" onClick={() => ir(`/estadisticas/comparador/${j.id}`)}>Comparar</button>
-        <button className="boton boton--sec editable" onClick={() => setHojaEspecial(true)}>Diseño especial</button>
+        {!j.invitado && <button className="boton boton--sec editable" onClick={() => setHojaEspecial(true)}>Diseño especial</button>}
         <button className="boton boton--sec editable" onClick={() => ir(`/jugador/${j.id}/editar`)}>Editar</button>
       </div>
 

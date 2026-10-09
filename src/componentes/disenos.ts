@@ -23,17 +23,20 @@ export const DISENOS: Record<string, Diseno> = {
   IF: { id: 'IF', nombre: 'IF', archivo: 'if' },
   POTM: { id: 'POTM', nombre: 'POTM', archivo: 'potm' },
   TOTY: { id: 'TOTY', nombre: 'TOTY', archivo: 'toty' },
+  invitado: { id: 'invitado', nombre: 'Invitado', archivo: 'invitado' }, // jugadores provisionales (§7.4)
 }
 
 export const ORDEN_DISENOS = ['bronce', 'bronce-brillante', 'plata', 'plata-brillante', 'oro', 'oro-brillante', 'elite', 'leyenda', 'IF', 'POTM', 'TOTY']
 
 /** Diseños que el jugador puede usar: rangos alcanzados + especiales asignados. */
 export function disenosDesbloqueados(j: Jugador, rangosAlcanzados: string[]): string[] {
+  if (j.invitado) return ['invitado']
   const esp = new Set(j.especiales.map((e) => e.tipo as string))
   return ORDEN_DISENOS.filter((d) => rangosAlcanzados.includes(d) || esp.has(d))
 }
 
 export function disenoDe(j: Jugador, mediaActual: number, cfg: Config, rangosAlcanzados: string[]): string {
+  if (j.invitado) return 'invitado'
   if (j.disenoActivo && disenosDesbloqueados(j, rangosAlcanzados).includes(j.disenoActivo)) return j.disenoActivo
   return rango(cfg, mediaActual).id
 }
@@ -67,7 +70,7 @@ const LUZ_DISENO: Record<string, string> = {
   plata: '205,215,230', 'plata-brillante': '232,240,255',
   oro: '240,188,78', 'oro-brillante': '255,206,92',
   elite: '120,130,255', leyenda: '236,206,120',
-  IF: '242,196,100', POTM: '220,90,125', TOTY: '90,145,255',
+  IF: '242,196,100', POTM: '220,90,125', TOTY: '90,145,255', invitado: '57,255,110',
 }
 const LUZ_MISTER: Record<string, string> = {
   debutante: '120,205,145', consolidado: '205,215,230', elite: '67,212,255',

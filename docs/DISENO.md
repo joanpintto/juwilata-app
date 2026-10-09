@@ -276,6 +276,19 @@ Idea: **subir es lo normal y bajar cuesta mucho**. No hay techo: cualquier jugad
 
 ---
 
+### 7.4 Invitados (jugadores provisionales)
+
+*(Decidido por el usuario, 09-10-2026.)* Jugadores que vienen a algún partido suelto pero no son del equipo.
+
+- **Se crean** desde «Nuevo jugador» eligiendo **Tipo: Invitado**. Tienen posición, rol, dorsal y foto como cualquiera.
+- **Carta INVITADO:** negra con verde neón (mismo estilo que las demás, basada en la de Élite), con «INVITADO» de marca de agua. Es su única carta: no cambia con los rangos ni admite diseños especiales. Resplandor verde neón en la ficha.
+- **Media:** empieza con la **media del equipo** (la media de los jugadores del equipo al empezar la temporada; si llega a mitad de temporada, ya ha ido siguiendo al equipo, así que se pone a la altura). Sus 6 estadísticas dependen de su posición y su rol, como las de todos.
+- **En los partidos que juega:** igual que un jugador normal (nota, subida o bajada de media, atributos, MVP y nominaciones).
+- **En los partidos que no juega:** su media sube o baja lo mismo que **la media del equipo** en ese partido (lo que cambió de media cada jugador del equipo convocable, contando 0 los que no jugaron). El cambio se reparte entre sus 6 estadísticas sin alterar su perfil.
+- **Todo lo demás, como un jugador normal:** cuenta en ranking, estadísticas, logros y premios.
+- **Pasar a jugador del equipo:** en Editar, Tipo → Del equipo. Conserva su media y su historial; desde ese día usa las cartas por rango y su media solo cambia con sus partidos (se guarda la fecha en `invitadoHasta`).
+- En Plantilla → Jugadores salen aparte, en «Invitados».
+
 ## 8. Registro de partido
 
 1. **Datos:** rival, fecha, competición, local o visitante.
@@ -801,3 +814,4 @@ Las Fases 1-4 de la app ya están hechas; el míster se construye encima en dos 
 - **Fotos ligeras:** la foto de la carta (720×900) se guarda en PNG solo si tiene el fondo quitado (transparencia); si no, en JPEG. La original para volver a encuadrar se guarda como mucho a 1.200 px y en JPEG (PNG solo si tiene transparencia). Las fotos que ya había se aligeran solas una vez al abrir la app (en segundo plano, solo si así ocupan menos).
 - **Curva de nivel (cambio del usuario):** llegar a media 76 es asequible (un 6,5 de media lo consigue en una temporada) y a partir de ahí cuesta cada vez más (§6.2). Se aplica con la nueva escala de notas a toda la temporada.
 - **Diferencia de goles (cambio del usuario):** cada gol de diferencia suma o resta 0,15 a la nota de todo el equipo, con un máximo de ±1,0 (§6.1). Se edita en Ajustes → Avanzado → Base y resultado.
+- **Invitados (§7.4):** carta INVITADO negra y verde neón (`design/cartas/carta-invitado.svg`, capas `invitado-*.webp`); empiezan con la media del equipo y, cuando no juegan, su media sigue a la del equipo; en todo lo demás son jugadores normales.

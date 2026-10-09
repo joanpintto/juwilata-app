@@ -1,7 +1,8 @@
 import { useState } from 'react'
 import { db, nuevoId, type Jugador, type Pierna } from '../db'
 import { fmt1, ir, volver, type Datos } from '../datos'
-import { atributosIniciales, media, mediaVisible } from '../motor/calculo'
+import { atributosIniciales, llevarMediaA, media, mediaVisible } from '../motor/calculo'
+import { fueInvitado } from '../motor/temporada'
 import { POSICIONES, SIGLA_LADO, ladoDe, rolEnCarta, rolesDePosicion, rolPorId, type Lado, type Posicion } from '../motor/config'
 import { Carta } from '../componentes/Carta'
 import { disenoDe } from '../componentes/disenos'
@@ -32,6 +33,7 @@ export function EditarJugador({ datos, id }: { datos: Datos; id?: string }) {
   const [fotoOriginal, setFotoOriginal] = useState<string | null>(existente?.fotoOriginal ?? null)
   const [archivo, setArchivo] = useState<File | string | null>(null)
   const [guardando, setGuardando] = useState(false)
+  const [invitado, setInvitado] = useState(existente?.invitado ?? false)
 
   if (id && !existente) return <Cabecera titulo="Jugador no encontrado" atras="/plantilla/jugadores" />
 
@@ -48,12 +50,16 @@ export function EditarJugador({ datos, id }: { datos: Datos; id?: string }) {
   // Vista previa de la carta con los datos del formulario.
   const pesos = rolPorId(config, rol).pesos
   const sinPartidos = !estado || estado.historial.length === 0
-  const attrsPrevia = existente && !sinPartidos ? estado!.atributos : atributosIniciales(pesos, config)
+  // Un invitado sin partidos empieza con la media del equipo (§7.4).
+  const delEquipo = Object.values(calculo.jugadores).filter((e) => !fueInvitado(e.jugador))
+  const mediaEquipo = delEquipo.length ? delEquipo.reduce((s, e) => s + e.media, 0) / delEquipo.length : config.atributosBase
+  let attrsPrevia = existente && !sinPartidos ? estado!.atributos : atributosIniciales(pesos, config)
+  if (invitado && sinPartidos) attrsPrevia = llevarMediaA(attrsPrevia, pesos, existente?.invitado && estado ? estado.media : mediaEquipo, config)
   const mediaPrevia = media(attrsPrevia, pesos)
   const previa: Jugador = {
     ...(existente ?? ({} as Jugador)),
     id: existente?.id ?? 'previa', nombre: nombre || 'Nombre', apodo, dorsal: Number(dorsal) || 0,
-    posicion, rol, secundarias, pierna, lado, foto, especiales: existente?.especiales ?? [], disenoActivo: existente?.disenoActivo ?? null,
+    posicion, rol, secundarias, pierna, lado, foto, especiales: existente?.especiales ?? [], disenoActivo: existente?.disenoActivo ?? null, invitado,
   }
 
   const guardar = async () => {
@@ -65,6 +71,14 @@ export function EditarJugador({ datos, id }: { datos: Datos; id?: string }) {
       return avisar(`El dorsal ${d} ya lo lleva ${otro.nombre}.`)
     }
 
+    if (existente && !invitado && existente.invitado) {
+      const ok = await confirmar({
+        titulo: 'Pasar a jugador del equipo',
+        texto: `${existente.nombre} deja de ser invitado: usará las cartas por rango y, desde hoy, su media solo cambiará con sus partidos. Conserva su media y su historial.`,
+        aceptar: 'Confirmar',
+      })
+      if (!ok) return
+    }
     if (existente && rol !== existente.rol && estado) {
       const antes = mediaVisible(estado.media)
       const despues = mediaVisible(mediaPrevia)
@@ -86,7 +100,12 @@ export function EditarJugador({ datos, id }: { datos: Datos; id?: string }) {
     setGuardando(true)
     try {
       if (existente) {
-        const cambios: Partial<Jugador> = { nombre: nombre.trim(), apodo: apodo.trim(), dorsal: d, posicion, rol, secundarias, pierna, lado, foto, fotoOriginal }
+        const cambios: Partial<Jugador> = { nombre: nombre.trim(), apodo: apodo.trim(), dorsal: d, posicion, rol, secundarias, pierna, lado, foto, fotoOriginal, invitado }
+        // Al pasar al equipo se guarda hasta cuándo fue invitado, para que su media de esos partidos no cambie.
+        // (hasta hoy o hasta el último partido registrado, si hay alguno con fecha posterior).
+        if (existente.invitado && !invitado) {
+          cambios.invitadoHasta = calculo.partidos.reduce((m, r) => (r.partido.fecha > m ? r.partido.fecha : m), new Date().toISOString().slice(0, 10))
+        }
         if (sinPartidos && rol !== existente.rol) {
           cambios.atributosIniciales = atributosIniciales(pesos, config)
           cambios.rolInicial = rol
@@ -98,10 +117,10 @@ export function EditarJugador({ datos, id }: { datos: Datos; id?: string }) {
         const nuevo: Jugador = {
           id: nuevoId(), nombre: nombre.trim(), apodo: apodo.trim(), dorsal: d, posicion, rol, secundarias, pierna, lado, foto, fotoOriginal,
           atributosIniciales: atributosIniciales(pesos, config), rolInicial: rol, temporadaId: temporada.id,
-          creado: new Date().toISOString(), disenoActivo: null, especiales: [],
+          creado: new Date().toISOString(), disenoActivo: null, especiales: [], ...(invitado ? { invitado } : {}),
         }
         await db.jugadores.add(nuevo)
-        avisar(`${nuevo.nombre} se une a la plantilla`)
+        avisar(invitado ? `${nuevo.nombre} se une como invitado` : `${nuevo.nombre} se une a la plantilla`)
         ir(`/jugador/${nuevo.id}`, true)
       }
     } finally {
@@ -109,7 +128,7 @@ export function EditarJugador({ datos, id }: { datos: Datos; id?: string }) {
     }
   }
 
-  const diseno = existente && estado ? disenoDe(previa, mediaPrevia, config, estado.rangosAlcanzados) : 'bronce'
+  const diseno = invitado ? 'invitado' : existente && estado ? disenoDe(previa, mediaPrevia, config, estado.rangosAlcanzados) : 'bronce'
 
   return (
     <>
@@ -141,6 +160,18 @@ export function EditarJugador({ datos, id }: { datos: Datos; id?: string }) {
       </div>
 
       <section className="tarjeta formulario">
+        <div className="campo">
+          <span>Tipo</span>
+          <div className="segmentos">
+            <button type="button" className={!invitado ? 'activa' : ''} onClick={() => setInvitado(false)}>Del equipo</button>
+            <button type="button" className={invitado ? 'activa' : ''} onClick={() => setInvitado(true)}>Invitado</button>
+          </div>
+          {invitado && (
+            <p className="nota">
+              Viene a algún partido suelto. Lleva la carta INVITADO, empieza con la media del equipo y, en los partidos a los que no viene, su media sube o baja lo mismo que la del equipo. En los que juega, como cualquier jugador.
+            </p>
+          )}
+        </div>
         <label className="campo">
           <span>Nombre</span>
           <input value={nombre} onChange={(e) => setNombre(e.target.value)} placeholder="Nombre y apellido" autoComplete="off" />
@@ -221,7 +252,7 @@ export function EditarJugador({ datos, id }: { datos: Datos; id?: string }) {
       </section>
 
       <button className="boton boton--grande" onClick={guardar} disabled={guardando}>
-        {existente ? 'Guardar cambios' : 'Añadir a la plantilla'}
+        {existente ? 'Guardar cambios' : invitado ? 'Añadir como invitado' : 'Añadir a la plantilla'}
       </button>
 
       {archivo && (

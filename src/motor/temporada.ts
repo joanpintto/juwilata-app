@@ -8,6 +8,10 @@ import {
 } from './calculo'
 import { rolPorId, type Atributos, type Config } from './config'
 
+/** ¿Era invitado (§7.4) en un partido de esa fecha? */
+export const invitadoEn = (j: Jugador, fecha: string) => !!j.invitado || (!!j.invitadoHasta && fecha <= j.invitadoHasta)
+export const fueInvitado = (j: Jugador) => !!j.invitado || !!j.invitadoHasta
+
 export interface Paso {
   partidoId: string
   fecha: string
@@ -55,6 +59,8 @@ export interface EstadoJugador {
   tendencia: number // cambio en su último partido
   estadisticas: Estadisticas
   rangosAlcanzados: string[]
+  seguimiento: number // (invitados) lo que ha cambiado su media siguiendo al equipo en los partidos que no jugó
+  seguido: Record<string, number> // (invitados) partidoId → media tras seguir al equipo en ese partido
 }
 
 export interface ResultadoPartido {
@@ -106,8 +112,24 @@ export function reproducirTemporada(
       historial: [],
       notas: [],
       tendencia: 0,
+      seguimiento: 0,
+      seguido: {},
       estadisticas: statsVacias(),
       rangosAlcanzados: [...new Set([...(previo?.rangos ?? []), rango(cfgActual, m).id])],
+    }
+  }
+  // Invitados nuevos (§7.4): empiezan con la media media de los del equipo.
+  const delEquipo = jugadores.filter((j) => !fueInvitado(j))
+  if (delEquipo.length) {
+    const mediaEquipo = delEquipo.reduce((s, j) => s + estados[j.id].media, 0) / delEquipo.length
+    for (const j of jugadores) {
+      if (!fueInvitado(j) || inicios[j.id]) continue
+      const e = estados[j.id]
+      const pesos = rolPorId(cfgActual, j.rolInicial).pesos
+      e.atributos = llevarMediaA(e.atributos, pesos, mediaEquipo, cfgActual)
+      e.atributosIniciales = [...e.atributos] as Atributos
+      e.media = e.mediaInicial = media(e.atributos, pesos)
+      e.rangosAlcanzados = [rango(cfgActual, e.media).id]
     }
   }
 
@@ -175,6 +197,23 @@ export function reproducirTemporada(
       })
       res.notas[a.jugadorId] = nota
       res.cambios[a.jugadorId] = mediaDespues - mediaAntes
+    }
+
+    // Invitados que no jugaron: su media cambia lo mismo que la media del equipo
+    // (lo que subieron o bajaron de media los del equipo convocables, contando 0 los que no jugaron).
+    const delPartido = p.actuaciones.filter((a) => estados[a.jugadorId] && !invitadoEn(estados[a.jugadorId].jugador, p.fecha))
+    if (delPartido.length) {
+      const cambioEquipo = delPartido.reduce((s, a) => s + (res.cambios[a.jugadorId] ?? 0), 0) / delPartido.length
+      for (const e of Object.values(estados)) {
+        if (!invitadoEn(e.jugador, p.fecha) || e.jugador.id in res.cambios || !cambioEquipo) continue
+        const pesos = rolPorId(cfg, e.jugador.rol).pesos
+        const objetivo = Math.min(cfg.mediaMax, Math.max(cfg.mediaMin, media(e.atributos, pesos) + cambioEquipo))
+        e.atributos = llevarMediaA(e.atributos, pesos, objetivo, cfg)
+        e.seguimiento += cambioEquipo
+        e.seguido[p.id] = media(e.atributos, pesos)
+        const r = rango(cfg, media(e.atributos, pesos)).id
+        if (!e.rangosAlcanzados.includes(r)) e.rangosAlcanzados.push(r)
+      }
     }
     resultados.push(res)
   }

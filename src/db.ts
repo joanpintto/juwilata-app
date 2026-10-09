@@ -99,6 +99,8 @@ export interface Jugador {
   disenoActivo: string | null // null = el del rango actual
   especiales: Especial[]
   fueraEn?: string[] // temporadas (posteriores a su alta) en las que no está en la plantilla
+  invitado?: boolean // jugador provisional: carta INVITADO y, cuando no juega, sigue la media del equipo
+  invitadoHasta?: string // AAAA-MM-DD: fue invitado hasta ese día (luego pasó a ser del equipo)
 }
 
 export type EstadoConvocatoria = 'titular' | 'suplente' | 'no_convocado' | 'baja'

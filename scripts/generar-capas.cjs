@@ -18,7 +18,7 @@ const ESCALA = 2 // 928×1264: nítido hasta en la carta grande de la ficha
   const b = await chromium.launch()
   const p = await b.newPage()
   await p.goto(URL)
-  await p.waitForFunction(() => Object.keys(window.__capasJuwilata ?? {}).length >= 17, null, { timeout: 30000 })
+  await p.waitForFunction(() => Object.keys(window.__capasJuwilata ?? {}).length >= 18, null, { timeout: 30000 })
   await p.waitForTimeout(1000)
   const capas = await p.evaluate(async (escala) => {
     const out = {}
