@@ -1392,3 +1392,8 @@ input[type='range'] { width: 100%; accent-color: var(--dorado); }
 /* Subpestanas en dos filas (Estadísticas: 7 apartados) */
 .subpestanas--dos-filas { grid-auto-flow: row; grid-template-columns: repeat(4, minmax(0, 1fr)); }
 .subpestanas--dos-filas button { font-size: 12.5px; }
+
+/* Nota del míster en el registro (paso «Notas») */
+.pildora--vacia { background: transparent; border: 1px dashed rgba(204, 163, 124, 0.55); color: var(--texto-2); }
+.nota-mister .contador span { min-width: 34px; font-family: 'Barlow Condensed', sans-serif; font-weight: 700; font-size: 18px; }
+.nota-mister--vacia input[type='range'] { opacity: 0.45; }

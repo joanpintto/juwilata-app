@@ -95,6 +95,11 @@ export function porteriaCero(ctx: ContextoPartido, minutos: number): boolean {
   return ctx.golesContra === 0 && minutos > ctx.duracion / 2
 }
 
+/** Nota de una actuación: la que puso el míster o, en partidos antiguos sin ella, la calculada. */
+export function notaDe(a: { nota?: number; posicion: Posicion; acciones: Acciones; minutos: number }, ctx: ContextoPartido, cfg: Config): number {
+  return a.nota ?? calcularNota(a.posicion, a.acciones, a.minutos, ctx, cfg)
+}
+
 export function calcularNota(pos: Posicion, acciones: Acciones, minutos: number, ctx: ContextoPartido, cfg: Config): number {
   let nota = cfg.notaBase + ajusteResultado(ctx, cfg)
   const cero = porteriaCero(ctx, minutos)

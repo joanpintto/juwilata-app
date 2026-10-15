@@ -4,7 +4,7 @@ import { colorNota, conSigno, fechaCorta, fmt1, fmt2, hoy, ir, nombreRival, nomb
 import { SelectorRival } from '../componentes/SelectorRival'
 import { rivalPorNombre } from '../componentes/rivales'
 import { esLiga, rivalesDelSplit } from '../motor/liga'
-import { calcularNota, mediaVisible, rango } from '../motor/calculo'
+import { calcularNota, mediaVisible, notaDe, rango } from '../motor/calculo'
 import { ACCIONES, ACCIONES_RAPIDAS, siglaJugador, type AccionId } from '../motor/config'
 import { reproducirTemporada } from '../motor/temporada'
 import { MiniCarta } from '../componentes/Carta'
@@ -12,7 +12,7 @@ import { disenoDe } from '../componentes/disenos'
 import { Contador, Icono } from '../componentes/ui'
 import { avisar, confirmar } from '../componentes/dialogos'
 
-const PASOS = ['Datos', 'Resultado', 'Convocatoria', 'Minutos', 'Acciones', 'Goles', 'Resumen', 'Confirmar']
+const PASOS = ['Datos', 'Resultado', 'Convocatoria', 'Minutos', 'Acciones', 'Goles', 'Notas', 'Resumen', 'Confirmar']
 
 const ESTADOS: { id: EstadoConvocatoria; texto: string }[] = [
   { id: 'titular', texto: 'Titular' },
@@ -83,10 +83,8 @@ export function RegistroPartido({ datos, id, programadoId }: { datos: Datos; id?
   const nTitulares = p.actuaciones.filter((a) => a.estado === 'titular').length
   const golesJugadores = jugaron.reduce((s, a) => s + (a.acciones.gol ?? 0), 0)
 
-  // Notas del borrador y candidatos a MVP (los 3 mejores).
-  const notas: Record<string, number> = Object.fromEntries(
-    jugaron.map((a) => [a.jugadorId, calcularNota(a.posicion, a.acciones, a.minutos, ctx, cfgPartido)]),
-  )
+  // Notas del borrador (las pone el míster) y candidatos a MVP (los 3 mejores).
+  const notas: Record<string, number> = Object.fromEntries(jugaron.map((a) => [a.jugadorId, notaDe(a, ctx, cfgPartido)]))
   const candidatos = [...jugaron]
     .sort((a, b) => notas[b.jugadorId] - notas[a.jugadorId] || b.minutos - a.minutos || (b.acciones.gol ?? 0) - (a.acciones.gol ?? 0))
     .slice(0, 3)
@@ -95,7 +93,7 @@ export function RegistroPartido({ datos, id, programadoId }: { datos: Datos; id?
 
   // Simulación exacta: se reproduce la temporada con este partido incluido.
   const simulacion = (() => {
-    if (paso < 6) return null
+    if (paso < 7) return null
     const final: Partido = { ...p, nominados: candidatos, mvpId: mvpValido }
     const otros = partidos.filter((x) => x.id !== p.id)
     const mapa = new Map(configs.map((c) => [c.version, c.datos]))
@@ -110,6 +108,10 @@ export function RegistroPartido({ datos, id, programadoId }: { datos: Datos; id?
     if (paso === 2 && convocados.length === 0) return 'Convoca al menos a un jugador.'
     if (paso === 3 && convocados.some((a) => a.minutos < 0 || a.minutos > duracion)) return `Los minutos van de 0 a ${duracion}.`
     if (paso === 3 && jugaron.length === 0) return 'Nadie ha jugado minutos.'
+    if (paso === 6) {
+      const falta = jugaron.find((a) => a.nota === undefined)
+      if (falta) return `Falta la nota de ${nombreVisible(jugador(falta.jugadorId))}.`
+    }
     return null
   }
 
@@ -128,6 +130,17 @@ export function RegistroPartido({ datos, id, programadoId }: { datos: Datos; id?
     setP((x) => ({ ...x, goles: lista }))
   }
   const hayGoles = p.golesFavor + p.golesContra > 0
+
+  /** Al editar un partido antiguo (sin notas del míster), se parte de la nota que tenía. */
+  const prepararNotas = () => {
+    if (!original || original.actuaciones.some((a) => a.nota !== undefined)) return
+    setP((x) => ({
+      ...x,
+      actuaciones: x.actuaciones.map((a) =>
+        juega(a) && a.nota === undefined ? { ...a, nota: Math.round(calcularNota(a.posicion, a.acciones, a.minutos, ctx, cfgPartido) * 10) / 10 } : a),
+    }))
+  }
+  const ponerNota = (jid: string, v: number) => setAct(jid, { nota: Math.round(Math.min(10, Math.max(0, v)) * 10) / 10 })
   const setGol = (gid: string, cambio: Partial<GolPartido>) =>
     setP((x) => ({ ...x, goles: (x.goles ?? []).map((g) => (g.id === gid ? { ...g, ...cambio } : g)) }))
 
@@ -161,6 +174,7 @@ export function RegistroPartido({ datos, id, programadoId }: { datos: Datos; id?
       })
       if (!ok) return
     }
+    if (paso === 4 || paso === 5) prepararNotas()
     if (paso === 4) {
       prepararGoles()
       // Sin goles en el partido, el paso de los minutos de gol se salta.
@@ -192,7 +206,7 @@ export function RegistroPartido({ datos, id, programadoId }: { datos: Datos; id?
         rival: rival?.nombre ?? p.rival.trim(),
         nominados: candidatos,
         mvpId: mvpValido,
-        actuaciones: p.actuaciones.map((a) => (juega(a) ? a : { ...a, acciones: {}, minutos: a.estado === 'titular' || a.estado === 'suplente' ? a.minutos : 0 })),
+        actuaciones: p.actuaciones.map(({ nota, ...a }) => (juega(a) ? { ...a, ...(nota !== undefined ? { nota } : {}) } : { ...a, acciones: {}, minutos: a.estado === 'titular' || a.estado === 'suplente' ? a.minutos : 0 })),
         editado: original ? new Date().toISOString() : null,
       }
       await db.transaction('rw', db.partidos, db.deshacer, db.equipo, async () => {
@@ -421,17 +435,16 @@ export function RegistroPartido({ datos, id, programadoId }: { datos: Datos; id?
         <>
           <div className="barra-info">
             <span className={golesJugadores !== p.golesFavor ? 'mal' : ''}>Goles: {golesJugadores} de {p.golesFavor}</span>
-            <span>Nota en directo</span>
+            <span>La nota la pones en el paso «Notas»</span>
           </div>
           <ul className="reg-lista">
             {jugaron.map((a) => {
               const esPor = a.posicion === 'POR'
-              const nota = notas[a.jugadorId]
               const lista = ACCIONES.filter((x) => !ACCIONES_RAPIDAS.includes(x.id) && (esPor || !x.soloPortero))
               const grupos = esPor ? ['portero', 'ofensiva', 'defensiva', 'negativa'] : ['ofensiva', 'defensiva', 'negativa']
               return (
                 <li key={a.jugadorId} className="reg-jugador">
-                  {cabeceraJugador(a.jugadorId, <span className="pildora" style={{ background: colorNota(nota) }}>{fmt1(nota)}</span>)}
+                  {cabeceraJugador(a.jugadorId)}
                   <div className="rapidas">
                     {ACCIONES_RAPIDAS.map((id) => {
                       const def = ACCIONES.find((x) => x.id === id)!
@@ -512,7 +525,37 @@ export function RegistroPartido({ datos, id, programadoId }: { datos: Datos; id?
         </>
       )}
 
-      {paso === 6 && simulacion && (
+      {paso === 6 && (
+        <>
+          <p className="nota">Pon la nota de cada jugador (de 0 a 10). Un partido normal es un 5. Las acciones del paso anterior no cambian la nota: cuentan para las estadísticas, los atributos y los logros.</p>
+          <ul className="reg-lista">
+            {jugaron.map((a) => (
+              <li key={a.jugadorId} className="reg-jugador">
+                {cabeceraJugador(
+                  a.jugadorId,
+                  a.nota === undefined
+                    ? <span className="pildora pildora--vacia">—</span>
+                    : <span className="pildora" style={{ background: colorNota(a.nota) }}>{fmt1(a.nota)}</span>,
+                )}
+                <div className={`minutos nota-mister ${a.nota === undefined ? 'nota-mister--vacia' : ''}`}>
+                  <input
+                    type="range" min={0} max={10} step={0.1} value={a.nota ?? 5}
+                    onChange={(e) => ponerNota(a.jugadorId, Number(e.target.value))}
+                    aria-label={`Nota de ${nombreVisible(jugador(a.jugadorId))}`}
+                  />
+                  <div className="contador">
+                    <button type="button" onClick={() => ponerNota(a.jugadorId, (a.nota ?? 5.1) - 0.1)} aria-label="Bajar una décima"><Icono nombre="menos" tam={18} /></button>
+                    <span>{a.nota === undefined ? '—' : fmt1(a.nota)}</span>
+                    <button type="button" onClick={() => ponerNota(a.jugadorId, (a.nota ?? 4.9) + 0.1)} aria-label="Subir una décima"><Icono nombre="mas" tam={18} /></button>
+                  </div>
+                </div>
+              </li>
+            ))}
+          </ul>
+        </>
+      )}
+
+      {paso === 7 && simulacion && (
         <>
           <section className="tarjeta">
             <h2>MVP del partido</h2>
@@ -559,7 +602,7 @@ export function RegistroPartido({ datos, id, programadoId }: { datos: Datos; id?
         </>
       )}
 
-      {paso === 7 && (
+      {paso === 8 && (
         <section className="tarjeta confirmar">
           <div className="marcador">
             <span>{p.local ? equipo.nombre : p.rival}</span>

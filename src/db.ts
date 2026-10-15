@@ -112,6 +112,7 @@ export interface Actuacion {
   acciones: Acciones
   posicion: Posicion // posición principal del jugador en ese partido
   rol: string
+  nota?: number // nota que pone el míster (0-10). Sin dato (partidos antiguos): la calculada con las acciones
 }
 
 export interface Rival {
@@ -403,6 +404,24 @@ export function inicializar(): Promise<void> {
         version,
         datos: { ...conGoles.datos, porGolDiferencia: CONFIG_INICIAL.porGolDiferencia, topeDiferencia: CONFIG_INICIAL.topeDiferencia },
         creada: new Date().toISOString(), descripcion: 'Cada gol de diferencia suma o resta 0,15 (toda la temporada)',
+      })
+      await db.partidos.toCollection().modify({ configVersion: version })
+    }
+    // Nota del míster a mano y reparto 60/25/15 (§6.1, §6.2 y §20, cambio del usuario):
+    // la nota ponderada da más peso al último partido y el míster pasa a la escala del 5
+    // (su nota base, su tabla, su umbral y sus sugerencias bajan un punto). Toda la temporada.
+    const conNota = await db.configuraciones.orderBy('version').last()
+    if (conNota && !conNota.datos.migraciones?.includes('nota-manual')) {
+      const d = conNota.datos
+      const m = { ...CONFIG_INICIAL.mister, ...d.mister }
+      const mister = m.notaBase > 5.5
+        ? { ...m, notaBase: m.notaBase - 1, ritmo: m.ritmo.map((p) => ({ x: p.x - 1, y: p.y })), umbralBajada: m.umbralBajada - 1, motmNota: m.motmNota - 1, totyNota: m.totyNota - 1 }
+        : m
+      const version = conNota.version + 1
+      await db.configuraciones.put({
+        version,
+        datos: { ...d, pesosNotaPonderada: CONFIG_INICIAL.pesosNotaPonderada, mister, migraciones: [...(d.migraciones ?? []), 'nota-manual'] },
+        creada: new Date().toISOString(), descripcion: 'Nota ponderada 60/25/15 y míster en la escala del 5 (toda la temporada)',
       })
       await db.partidos.toCollection().modify({ configVersion: version })
     }

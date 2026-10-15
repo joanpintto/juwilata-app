@@ -88,6 +88,7 @@ export interface Config {
   // Sugerencias de cartas especiales (§9)
   ifNotaMinima: number // nota ponderada mínima para sugerir IF
   notaAlta: number // nota de un «partidazo» (logros «En racha» y partidos notables, resaltes)
+  migraciones?: string[] // cambios de una sola vez ya aplicados a esta configuración (src/db.ts)
   potmPesos: { notas: number; mvps: number; produccion: number }
   potmMinutos: number // fracción de los minutos posibles del mes para no penalizar
   totyPesos: { notas: number; evolucion: number; produccion: number; mvps: number }
@@ -106,7 +107,7 @@ export interface Config {
 /** Constantes del míster (§20). Usa además la nota ponderada, el ritmo, los topes de atributos y el corrector de los jugadores. */
 export interface ConfigMister {
   // Nota por partido (§20.2)
-  notaBase: number // 6,0
+  notaBase: number // 5,0
   resultado: { victoria: number; empate: number; derrota: number }
   porGol: number // por gol de diferencia
   topeGoles: number // ± tope de la diferencia de goles
@@ -117,9 +118,9 @@ export interface ConfigMister {
   rivalBajoDerrota: number // perder con uno de la mitad baja (negativo)
 
   // Evolución (§20.3): sin techo ni factor de minutos
-  ritmo: Tabla // nota ponderada → puntos por partido (el míster mantiene la escala anterior)
+  ritmo: Tabla // nota ponderada → puntos por partido (la de antes, un punto más abajo)
   multiplicadorMedia: Tabla
-  umbralBajada: number // 6,0
+  umbralBajada: number // 5,0
   bajadaPorPunto: number // 0,5
   topeBajada: number // 1,0
   topeSubida: number // 1,5
@@ -202,11 +203,13 @@ export const RITMO: Tabla = [
   { x: 7.0, y: 0.53 }, { x: 7.5, y: 0.65 }, { x: 8.0, y: 0.8 }, { x: 8.5, y: 0.98 }, { x: 9.0, y: 1.14 },
   { x: 9.5, y: 1.3 }, { x: 10.0, y: 1.51 },
 ]
-/** La tabla de la escala anterior (partido normal = 6). La sigue usando el míster, cuya nota no cambia. */
+/** La tabla de la escala anterior (partido normal = 6). Solo para pasar configuraciones antiguas. */
 export const RITMO_ANTIGUO: Tabla = [
   { x: 6.0, y: 0 }, { x: 6.5, y: 0.4 }, { x: 7.0, y: 0.53 }, { x: 7.5, y: 0.65 },
   { x: 8.0, y: 0.8 }, { x: 8.5, y: 0.98 }, { x: 9.0, y: 1.14 },
 ]
+/** Tabla del míster: la misma de antes, un punto más abajo (su partido normal también es un 5). */
+export const RITMO_MISTER: Tabla = RITMO_ANTIGUO.map((p) => ({ x: p.x - 1, y: p.y }))
 
 export const CONFIG_INICIAL: Config = {
   roles: [
@@ -251,7 +254,8 @@ export const CONFIG_INICIAL: Config = {
     golEncajado: -0.3, salida: 0.15, gol: 2.5, asistencia: 1.5,
   },
 
-  pesosNotaPonderada: { ultimo: 0.5, dosAnteriores: 0.3, temporada: 0.2 },
+  pesosNotaPonderada: { ultimo: 0.6, dosAnteriores: 0.25, temporada: 0.15 },
+  migraciones: ['nota-manual'],
   // Calibrado para que, empezando en 60 y jugando 32 partidos con la misma nota,
   // un 5 acabe en ~65, un 6,5 en ~75, un 9 en ~90 y un 10 en ~93 (sin MVPs).
   // Con un 4,5 la media se mantiene.
@@ -309,8 +313,8 @@ export const CONFIG_INICIAL: Config = {
   logrosCasa: LOGROS_CASA_INICIALES,
 
   mister: {
-    ritmo: RITMO_ANTIGUO,
-    notaBase: 6.0,
+    ritmo: RITMO_MISTER,
+    notaBase: 5.0,
     resultado: { victoria: 1.2, empate: 0.2, derrota: -0.8 },
     porGol: 0.15,
     topeGoles: 0.6,
@@ -325,7 +329,7 @@ export const CONFIG_INICIAL: Config = {
       { x: 60, y: 1.4 }, { x: 65, y: 1.25 }, { x: 70, y: 1.1 }, { x: 75, y: 1.0 }, { x: 80, y: 0.8 },
       { x: 85, y: 0.55 }, { x: 90, y: 0.3 }, { x: 92, y: 0.15 }, { x: 94, y: 0.05 }, { x: 96, y: 0 },
     ],
-    umbralBajada: 6.0,
+    umbralBajada: 5.0,
     bajadaPorPunto: 0.5,
     topeBajada: 1.0,
     topeSubida: 1.5,
@@ -346,9 +350,9 @@ export const CONFIG_INICIAL: Config = {
       { id: 'leyenda', nombre: 'Leyenda del banquillo', desde: 90 },
     ],
 
-    motmNota: 7.5,
+    motmNota: 6.5,
     motmPuntos: 0.75,
-    totyNota: 7.5,
+    totyNota: 6.5,
   },
 }
 

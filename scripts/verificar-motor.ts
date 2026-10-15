@@ -28,7 +28,7 @@ if (caida86 < 1 || caida86 > 1.5) ok = false
 console.log('Media 60 con 32 partidos de 4,5:', simular(4.5, 32, cfg)[31].toFixed(1))
 // Míster (§20.3): 3 temporadas de 32 partidos con la misma nota.
 console.log('\nMíster | final 1ª, 2ª y 3ª temporada')
-const metasMister: [number, number[]][] = [[7, [78.9, 88.8, 92.6]], [8, [85.1, 92.7, 94.4]], [9, [89.8, 94.3, 95.3]]]
+const metasMister: [number, number[]][] = [[6, [78.9, 88.8, 92.6]], [7, [85.1, 92.7, 94.4]], [8, [89.8, 94.3, 95.3]]]
 for (const [nota, meta] of metasMister) {
   const finales: number[] = []
   let m = cfg.mediaMin

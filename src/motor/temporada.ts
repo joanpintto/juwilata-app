@@ -3,8 +3,8 @@
 // en cascada todo lo posterior sin pasos extra.
 import type { Jugador, Partido } from '../db'
 import {
-  calcularNota, cambioMedia, cambiosAtributos, corrector, factorPremio, llevarMediaA, media,
-  notaPonderada, rango, type Acciones,
+  cambioMedia, cambiosAtributos, corrector, factorPremio, llevarMediaA, media,
+  notaDe, notaPonderada, rango, type Acciones,
 } from './calculo'
 import { rolPorId, type Atributos, type Config } from './config'
 
@@ -149,7 +149,7 @@ export function reproducirTemporada(
 
       const pesos = rolPorId(cfg, a.rol).pesos
       const mediaAntes = media(e.atributos, pesos)
-      const nota = calcularNota(a.posicion, a.acciones, a.minutos, ctx, cfg)
+      const nota = notaDe(a, ctx, cfg)
       e.notas.push(nota)
       const np = notaPonderada(e.notas, cfg)
       const evolucion = cambioMedia(np, nota, mediaAntes, a.minutos, cfg)

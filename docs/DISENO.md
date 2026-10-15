@@ -124,6 +124,8 @@ Hay 9 roles de campo más el portero. Atributos: RIT, TIR, PAS, REG, DEF y FIS. 
 
 ### 6.1 Nota del partido (0-10)
 
+**La nota la pone el míster a mano** *(cambio del usuario, 15-10-2026)*. Al registrar el partido, después de las acciones y los goles, el paso **«Notas»** pide la nota de cada jugador que jugó (de 0 a 10, en décimas; un partido normal es un 5). Las acciones (goles, asistencias, fallos…) se siguen apuntando: cuentan para las estadísticas, los atributos, los logros y la nota del míster, pero **no cambian la nota**. Los partidos registrados antes no tienen nota puesta a mano y conservan la calculada con la fórmula de abajo (al editarlos, el paso «Notas» parte de esa nota). La fórmula de abajo queda solo para esos partidos antiguos.
+
 - **Base:** 5,0 para todas las posiciones, portero incluido. *(Cambio del usuario, 03-10-2026: antes era 6,0; se bajó un punto para que las notas no se amontonen entre 7 y 9. Los umbrales que dependen de la nota (bajada, IF, partidos notables, colores) bajaron también un punto; la tabla de evolución es la de §6.2. Se aplicó a toda la temporada.)*
 - **Ajuste por diferencia de goles**, igual para todo el equipo: **±0,15 por cada gol de diferencia, como mucho ±1,0.** Empate 0 · 1-0 +0,15 · 3-1 +0,30 · 3-0 +0,45 · 5-0 +0,75 · 7-0 o más +1,0 (y lo mismo en negativo al perder). *(Cambio del usuario, 04-10-2026: antes eran cinco escalones, ±0,20 por ganar o perder de 1-2 goles y ±0,35 de 3 o más. Se aplicó a toda la temporada.)*
 
@@ -159,7 +161,7 @@ Idea: **subir es lo normal y bajar cuesta mucho**. No hay techo: cualquier jugad
 
 **Metas (empezando en 60, 32 partidos con la misma nota, sin MVPs):** un 5 acaba en ~66, un 6 en ~74,5, un 6,5 en ~77,5, un 7 en ~81, un 8 en ~86, un 9 en ~90,5 y un 10 en ~93 (ver tabla). Con un 4,5 la media se mantiene. *(Decidido por el usuario: escalones graduales desde el 5; **curva de nivel**: llegar a media 76 es asequible y a partir de ahí se va poniendo más difícil.)*
 
-1. **Nota ponderada** = 0,5 × último partido + 0,3 × media de los 2 anteriores + 0,2 × media de la temporada.
+1. **Nota ponderada** = 0,6 × último partido + 0,25 × media de los 2 anteriores + 0,15 × media de la temporada. *(Cambio del usuario, 15-10-2026: antes 0,5 · 0,3 · 0,2.)*
 
 2. **Subida** (si el partido no fue malo) = ritmo (según la nota ponderada) × multiplicador (según la media actual) × factor de minutos. **Tope: +1,5 por partido.**
 
@@ -634,7 +636,7 @@ El entrenador tiene su propia carta, que evoluciona según cómo rinde el equipo
 
 ### 20.2 Nota del míster por partido (0-10)
 
-| Factor | Efecto sobre la base de 6,0 |
+| Factor | Efecto sobre la base de 5,0 |
 |---|---|
 | Resultado | Victoria +1,2 · empate +0,2 · derrota −0,8 |
 | Diferencia de goles | ±0,15 por gol, con un tope de ±0,6 |
@@ -646,7 +648,7 @@ La nota final siempre queda entre 0 y 10.
 
 ### 20.3 Evolución de la media
 
-- Usa la **misma nota ponderada** que los jugadores y la **tabla de ritmo anterior** a la escala nueva de §6.1 (su nota no cambió: un partido normal del míster sigue siendo un 6). La nota neutra es **6,0**.
+- Usa la **misma nota ponderada** que los jugadores. Desde el 15-10-2026 (cambio del usuario) está en la **escala del 5**, como los jugadores: su nota base es **5,0** y su tabla de ritmo es la que tenía, un punto más abajo (5,0 → 0 · 5,5 → 0,40 · 6,0 → 0,53 · 6,5 → 0,65 · 7,0 → 0,80 · 7,5 → 0,98 · 8,0 → 1,14). La evolución de su media es la misma que antes; solo la nota se ve un punto más baja. Es la única nota que se calcula sola (los jugadores la reciben a mano, §6.1).
 - **Sin techo por nota** y **sin factor de minutos**.
 - **Multiplicador del míster:** igual que el de los jugadores hasta 85, pero más duro a partir de ahí. Así el máximo natural queda en ~94-95.
 
@@ -654,15 +656,15 @@ La nota final siempre queda entre 0 y 10.
 |---|---|---|---|---|---|---|---|---|---|---|
 | Multiplicador | ×1,40 | ×1,25 | ×1,10 | ×1,00 | ×0,80 | ×0,55 | ×0,30 | ×0,15 | ×0,05 | 0 |
 
-- **Bajadas:** cuando la nota es menor de 6,0, −0,5 por punto (tope −1,0), sin multiplicador. Decidido por el usuario: el míster mantiene esta regla aunque los jugadores usen ahora la de §6.2 (solo bajan con nota < 4,5, según la media). No existe la "vuelta al techo" porque no hay techo.
+- **Bajadas:** cuando la nota es menor de 5,0, −0,5 por punto (tope −1,0), sin multiplicador. Decidido por el usuario: el míster mantiene esta regla (un punto más abajo con la escala del 5) aunque los jugadores usen la de §6.2 (solo bajan con nota < 4,5, según la media). No existe la "vuelta al techo" porque no hay techo.
 - **Tope de subida:** +1,5 por partido.
 - **Referencia:**
 
 | Nota constante | Final 1ª temporada | Final 2ª | Final 3ª |
 |---|---|---|---|
-| 7,0 | 78,9 | 88,8 | 92,6 |
-| 8,0 | 85,1 | 92,7 | 94,4 |
-| 9,0 | 89,8 | 94,3 | 95,3 |
+| 6,0 | 78,9 | 88,8 | 92,6 |
+| 7,0 | 85,1 | 92,7 | 94,4 |
+| 8,0 | 89,8 | 94,3 | 95,3 |
 
 - Todos estos valores se pueden editar en Ajustes → Avanzado, en un apartado propio del míster.
 
@@ -705,8 +707,8 @@ La nota final siempre queda entre 0 y 10.
 
 | Especial | Diseño | Cuándo se sugiere |
 |---|---|---|
-| **MOTM** (Entrenador del mes) | Paleta POTM: granate con rayas y escudo de marca de agua, campo en champán y un pequeño calendario del mes | Mes con nota media del míster de 7,5 o más, o con el 75% de los puntos o más |
-| **TOTY** (Entrenador del año) | Paleta TOTY: azul noche con estrellas, campo en dorado discontinuo y posiciones como constelaciones | Final de temporada con nota media de 7,5 o más, o si el equipo es campeón |
+| **MOTM** (Entrenador del mes) | Paleta POTM: granate con rayas y escudo de marca de agua, campo en champán y un pequeño calendario del mes | Mes con nota media del míster de 6,5 o más, o con el 75% de los puntos o más |
+| **TOTY** (Entrenador del año) | Paleta TOTY: azul noche con estrellas, campo en dorado discontinuo y posiciones como constelaciones | Final de temporada con nota media de 6,5 o más, o si el equipo es campeón |
 
 - **Plantillas en el repositorio:** `design/cartas-entrenador/` (debutante, consolidado, elite, leyenda, motm, toty), con el hueco de la foto vacío y el nombre "MÍSTER" provisional: la app pone la foto y el nombre reales del míster. Los originales aprobados llevan la foto de Kampi y, como el repositorio es público, se guardan fuera de git (`docs/cartas-entrenador/`), igual que los de jugador (`docs/cartas/` → `design/cartas/` sin foto → `npm run cartas` → `public/cartas/`).
 
@@ -764,8 +766,8 @@ Las Fases 1-4 de la app ya están hechas; el míster se construye encima en dos 
 ### 20.10 Concreciones de la parte 2 (construida)
 
 - **Premios → "Míster · MOTM y TOTY":**
-  - MOTM por mes natural (con lo que dirigió ese mes): se sugiere si la nota media llega a 7,5 o si consigue el 75% de los puntos (3 por victoria, 1 por empate). Los meses que no llegan también se listan, con "no llega".
-  - TOTY: provisional durante la temporada; se sugiere con nota media de 7,5 o más, o si el equipo es campeón de algún split en esa temporada.
+  - MOTM por mes natural (con lo que dirigió ese mes): se sugiere si la nota media llega a 6,5 o si consigue el 75% de los puntos (3 por victoria, 1 por empate). Los meses que no llegan también se listan, con "no llega".
+  - TOTY: provisional durante la temporada; se sugiere con nota media de 6,5 o más, o si el equipo es campeón de algún split en esa temporada.
   - "Dar MOTM/TOTY" le pone la carta especial y la deja como activa. Los umbrales se editan en Ajustes → Avanzado → Míster.
 - **Avisos:** MOTM sugerido de los meses ya acabados, subida de pizarra del míster ("¡Pizarra Élite!") y sus logros. En Inicio, el MOTM pendiente sale en Sugerencias y sus logros en Últimos logros.
 - **Logros del míster** (pestaña Logros de su ficha), solo con los partidos que dirigió:
@@ -815,3 +817,4 @@ Las Fases 1-4 de la app ya están hechas; el míster se construye encima en dos 
 - **Curva de nivel (cambio del usuario):** llegar a media 76 es asequible (un 6,5 de media lo consigue en una temporada) y a partir de ahí cuesta cada vez más (§6.2). Se aplica con la nueva escala de notas a toda la temporada.
 - **Diferencia de goles (cambio del usuario):** cada gol de diferencia suma o resta 0,15 a la nota de todo el equipo, con un máximo de ±1,0 (§6.1). Se edita en Ajustes → Avanzado → Base y resultado.
 - **Invitados (§7.4):** carta INVITADO negra y verde neón (`design/cartas/carta-invitado.svg`, capas `invitado-*.webp`); empiezan con la media del equipo y, cuando no juegan, su media sigue a la del equipo; en todo lo demás son jugadores normales.
+- **Nota a mano (§6.1):** paso «Notas» en el registro (barra de 0 a 10 y botones de ±0,1), obligatorio para todos los que jugaron. Los candidatos a MVP salen de esas notas. Nota ponderada 0,6 · 0,25 · 0,15 y míster en la escala del 5 (base 5,0, bajada con menos de 5,0, MOTM y TOTY con 6,5); aplicado a toda la temporada.
