@@ -30,7 +30,7 @@ const APARTADOS: { id: Apartado; texto: string }[] = [
 /** Qué claves de la configuración pertenecen a cada apartado (para «Valores del documento»). */
 const CLAVES: Record<Apartado, (keyof Config)[]> = {
   evolucion: [
-    'ritmo', 'multiplicadorMedia', 'nivelBajada', 'pesosNotaPonderada', 'umbralBajada', 'bajadaPorPunto', 'topeSubida',
+    'ritmo', 'multiplicadorMedia', 'nivelBajada', 'pesosNotaPonderada', 'umbralBajada', 'bajadaPorPunto', 'topeSubida', 'bonusSubidaRol',
     'topeBajada', 'minutosBase', 'minutosPorMinuto', 'premioMvp', 'premioNominado', 'premioDesde', 'premioReduccion',
   ],
   nota: ['notaBase', 'porGolDiferencia', 'topeDiferencia', 'ofensivas', 'defensivas', 'porteriaCeroCampo', 'multiplicadores', 'negativasPosicion', 'negativasGenerales', 'portero'],
@@ -156,6 +156,9 @@ function Evolucion({ b, config, set, cambiado }: Editar) {
         <Constante texto="Bajada por cada punto por debajo" valor={b.bajadaPorPunto} onChange={(v) => set('bajadaPorPunto', v)} />
         <Constante texto="Tope de bajada por partido" valor={b.topeBajada} onChange={(v) => set('topeBajada', v)} />
         <Constante texto="Tope de subida por partido" valor={b.topeSubida} onChange={(v) => set('topeSubida', v)} />
+        {(['DFC', 'DFS', 'LAT'] as const).map((rol) => (
+          <Constante key={rol} texto={`Subida ×, ${b.roles.find((r) => r.id === rol)?.nombre ?? rol}`} valor={b.bonusSubidaRol?.[rol] ?? 1} onChange={(v) => set('bonusSubidaRol', { ...b.bonusSubidaRol, [rol]: v })} />
+        ))}
         <Constante texto="Factor de minutos: base" valor={b.minutosBase} onChange={(v) => set('minutosBase', v)} />
         <Constante texto="Factor de minutos: por minuto" valor={b.minutosPorMinuto} onChange={(v) => set('minutosPorMinuto', v)} />
       </section>

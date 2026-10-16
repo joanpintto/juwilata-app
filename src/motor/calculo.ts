@@ -162,13 +162,14 @@ export function factorMinutos(minutos: number, cfg: Config): number {
  * - Si no: subida según la nota ponderada, que se frena sola al subir la media.
  * No hay techo: nadie deja de poder subir.
  */
-export function cambioMedia(np: number, nota: number, mediaActual: number, minutos: number, cfg: Config): number {
+export function cambioMedia(np: number, nota: number, mediaActual: number, minutos: number, cfg: Config, rol?: string): number {
   const fm = factorMinutos(minutos, cfg)
   if (nota < cfg.umbralBajada) {
     const bajada = cfg.bajadaPorPunto * (cfg.umbralBajada - nota) * interpolar(cfg.nivelBajada, mediaActual) * fm
     return -Math.min(cfg.topeBajada, bajada)
   }
-  const subida = interpolar(cfg.ritmo, np) * interpolar(cfg.multiplicadorMedia, mediaActual) * fm
+  const bonus = (rol && cfg.bonusSubidaRol?.[rol]) || 1
+  const subida = interpolar(cfg.ritmo, np) * interpolar(cfg.multiplicadorMedia, mediaActual) * fm * bonus
   return Math.min(cfg.topeSubida, Math.max(0, subida))
 }
 
@@ -299,14 +300,14 @@ export function simularMister(nota: number, partidos: number, cfg: Config, inici
 // ─── Simulación (Ajustes → Avanzado) ──────────────────────────────────
 
 /** Media tras cada partido jugando siempre con la misma nota, 50 minutos. */
-export function simular(nota: number, partidos: number, cfg: Config, opciones?: { inicio?: number; mvp?: boolean }): number[] {
+export function simular(nota: number, partidos: number, cfg: Config, opciones?: { inicio?: number; mvp?: boolean; rol?: string }): number[] {
   let m = opciones?.inicio ?? cfg.mediaMin
   const notas: number[] = []
   const res: number[] = []
   for (let i = 0; i < partidos; i++) {
     notas.push(nota)
     const np = notaPonderada(notas, cfg)
-    m += cambioMedia(np, nota, m, 50, cfg)
+    m += cambioMedia(np, nota, m, 50, cfg, opciones?.rol)
     if (opciones?.mvp) m += cfg.premioMvp * factorPremio(m, cfg)
     m = clamp(m, cfg.mediaMin, cfg.mediaMax)
     res.push(m)

@@ -179,6 +179,8 @@ Idea: **subir es lo normal y bajar cuesta mucho**. No hay techo: cualquier jugad
 
    Con un 7 de media se llega a 76 en ~22 partidos, pero de 76 a 80 hacen falta ~8 más y de 80 a 85, ~15 más.
 
+   **Bonus defensivo** *(cambio del usuario, 16-10-2026)*: los defensas sacan menos goles y asistencias, así que con la misma nota **suben un poco más**. La subida se multiplica por **×1,10** en los roles **Central de Contención, Central de Salida y Lateral Defensivo** (el rol que tenga en ese partido). Solo afecta a las subidas, no a las bajadas, y se edita en Ajustes → Avanzado. Efecto en la temporada (media a final de los 32 partidos): con un 6,5 constante, 77,7 → 78,8; con un 7, 80,9 → 82,1; con un 8, 86,2 → 87,5.
+
 3. **Bajada (partido malo):** si la nota **del partido** es menor que 4,5, la media baja 0,45 por cada punto por debajo de 4,5, multiplicado por cuánto se nota la bajada según la media. **Tope: −0,8 por partido.** Un 4,5 o más nunca hace bajar (entre 4,5 y 5 la media se queda igual).
 
 | Media | 60 | 70 | 80 | 85 | 90 o más |
@@ -818,3 +820,4 @@ Las Fases 1-4 de la app ya están hechas; el míster se construye encima en dos 
 - **Diferencia de goles (cambio del usuario):** cada gol de diferencia suma o resta 0,15 a la nota de todo el equipo, con un máximo de ±1,0 (§6.1). Se edita en Ajustes → Avanzado → Base y resultado.
 - **Invitados (§7.4):** carta INVITADO negra y verde neón (`design/cartas/carta-invitado.svg`, capas `invitado-*.webp`); empiezan con la media del equipo y, cuando no juegan, su media sigue a la del equipo; en todo lo demás son jugadores normales.
 - **Nota a mano (§6.1):** paso «Notas» en el registro (barra de 0 a 10 y botones de ±0,1), obligatorio para todos los que jugaron. Los candidatos a MVP salen de esas notas. Nota ponderada 0,6 · 0,25 · 0,15 y míster en la escala del 5 (base 5,0, bajada con menos de 5,0, MOTM y TOTY con 6,5); aplicado a toda la temporada.
+- **Bonus defensivo (§6.2):** subida de media ×1,10 para Central de Contención, Central de Salida y Lateral Defensivo (`bonusSubidaRol`); los valores que faltan en configuraciones antiguas se toman de los iniciales, así que se aplica a toda la temporada.

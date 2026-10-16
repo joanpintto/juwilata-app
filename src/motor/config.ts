@@ -66,6 +66,7 @@ export interface Config {
   minutosBase: number // 0,65
   minutosPorMinuto: number // 0,02
   topeSubida: number
+  bonusSubidaRol?: Record<string, number> // rol → multiplicador de la subida de media (sin dato = ×1)
   topeBajada: number
   mediaMin: number
   mediaMax: number
@@ -273,6 +274,8 @@ export const CONFIG_INICIAL: Config = {
   minutosBase: 0.65,
   minutosPorMinuto: 0.02,
   topeSubida: 1.5,
+  // Los centrales y el lateral defensivo sacan menos goles y asistencias: con la misma nota suben un poco más.
+  bonusSubidaRol: { DFS: 1.1, DFC: 1.1, LAT: 1.1 },
   topeBajada: 0.8,
   mediaMin: 60,
   mediaMax: 99,
